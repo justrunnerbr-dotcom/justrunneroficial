@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: PageProps) {
   const collection = await getCollectionBySlug(slug)
   if (!collection) return {}
   return {
-    title: `${collection.name} — Just Have Fun`,
-    description: collection.description ?? `Explore a coleção ${collection.name} na Just Have Fun Store.`,
+    title: `${collection.name} — Just Runner`,
+    description: collection.description ?? `Explore a coleção ${collection.name} na Just Runner Store.`,
   }
 }
 
@@ -67,7 +67,7 @@ export default async function CollectionPage({ params }: PageProps) {
       id: 'virtual-mais-vendidos',
       name: 'Mais Vendidos',
       slug: 'mais-vendidos',
-      description: 'Os modelos mais desejados da Just Have Fun. Escolhidos a dedo pela nossa comunidade.',
+      description: 'Os modelos mais desejados da Just Runner. Escolhidos a dedo pela nossa comunidade.',
       image_url: '/BANNERS%20297/mais%20vendidos_pc.jpg',
       mobile_image_url: '/BANNERS%20297/maisvendidos_mobile.jpg',
       position: 0,

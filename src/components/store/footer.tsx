@@ -116,7 +116,7 @@ export function Footer() {
               letterSpacing: '-0.2px',
             }}
           >
-            JUST HAVE FUN
+            JUST RUNNER
           </div>
           <p
             style={{
@@ -247,7 +247,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="footer-bottom">
         <span style={{ fontSize: '12px', color: '#555', fontFamily: 'var(--font-montserrat), sans-serif' }}>
-          © 2026 Just Have Fun Store - Óculos. CNPJ: 58.512.462/0001-78
+          © 2026 Just Runner Store - Óculos. CNPJ: 62.880.024/0001-30
         </span>
         <span style={{ fontSize: '11px', color: '#444', fontFamily: 'var(--font-montserrat), sans-serif' }}>
           Av. Aparecida do Rio Negro, 368 — Piqueri, SP — CEP 05144-085

@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { Save, CheckCircle } from 'lucide-react'
 
 const FIELDS = [
-  { key: 'site_title',        label: 'Título do site',           placeholder: 'Just Have Fun Store', maxlen: 60, type: 'input' },
+  { key: 'site_title',        label: 'Título do site',           placeholder: 'Just Runner Store', maxlen: 60, type: 'input' },
   { key: 'site_description',  label: 'Meta description',         placeholder: 'Óculos de alta performance...', maxlen: 160, type: 'textarea' },
-  { key: 'og_title',          label: 'OG Title (redes sociais)', placeholder: 'Just Have Fun — Óculos Premium', maxlen: 60, type: 'input' },
+  { key: 'og_title',          label: 'OG Title (redes sociais)', placeholder: 'Just Runner — Óculos Premium', maxlen: 60, type: 'input' },
   { key: 'og_description',    label: 'OG Description',           placeholder: 'A melhor seleção de óculos...', maxlen: 200, type: 'textarea' },
-  { key: 'og_image',          label: 'OG Image (URL)',           placeholder: 'https://justhavefun.com.br/og-image.jpg', maxlen: 500, type: 'input' },
+  { key: 'og_image',          label: 'OG Image (URL)',           placeholder: 'https://justrunner.com.br/og-image.jpg', maxlen: 500, type: 'input' },
   { key: 'twitter_card',      label: 'Twitter Card',             placeholder: 'summary_large_image', maxlen: 30, type: 'input' },
 ]
 

@@ -23,10 +23,10 @@ export async function generateMetadata({ params }: PageProps) {
   const product = await getProductBySlug(slug)
   if (!product) return {}
   return {
-    title: `${product.name} — Just Have Fun`,
+    title: `${product.name} — Just Runner`,
     description: product.description
       ? product.description.replace(/<[^>]+>/g, '').trim().slice(0, 160)
-      : `Compre ${product.name} na Just Have Fun Store.`,
+      : `Compre ${product.name} na Just Runner Store.`,
   }
 }
 

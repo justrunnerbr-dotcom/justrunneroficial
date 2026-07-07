@@ -219,15 +219,15 @@ export function ProductEditor({
         </p>
         <div style={{ background: 'var(--admin-bg)', borderRadius: '8px', padding: '16px', border: '1px solid var(--admin-border)' }}>
           <div style={{ fontSize: '16px', color: '#1a0dab', marginBottom: '4px', fontWeight: 500 }}>
-            {form.name} — Just Have Fun
+            {form.name} — Just Runner
           </div>
           <div style={{ fontSize: '13px', color: '#006621', marginBottom: '4px' }}>
-            justhavefun.com.br/produto/{form.slug}
+            justrunner.com.br/produto/{form.slug}
           </div>
           <div style={{ fontSize: '13px', color: '#545454', lineHeight: 1.4 }}>
             {form.description
               ? form.description.replace(/<[^>]+>/g, '').slice(0, 160)
-              : `Compre ${form.name} na Just Have Fun Store.`}
+              : `Compre ${form.name} na Just Runner Store.`}
           </div>
         </div>
       </div>

@@ -33,7 +33,7 @@ export default async function ConfigPage() {
             { key: 'ADMIN_PASSWORD',           desc: 'Senha de acesso ao painel admin' },
             { key: 'ADMIN_SECRET',             desc: 'Token aleatório para cookie de sessão (qualquer string longa)' },
             { key: 'SUPABASE_SERVICE_ROLE_KEY',desc: 'Chave service role do Supabase (permite writes com bypass de RLS)' },
-            { key: 'NEXT_PUBLIC_SITE_URL',     desc: 'URL da loja (padrão: https://justhavefun.com.br)' },
+            { key: 'NEXT_PUBLIC_SITE_URL',     desc: 'URL da loja (padrão: https://justrunner.com.br)' },
           ].map(v => (
             <div key={v.key} style={{ display: 'flex', gap: '12px', padding: '10px 12px', background: 'var(--admin-bg)', borderRadius: '8px' }}>
               <code style={{ fontSize: '12px', color: 'var(--admin-accent)', minWidth: '240px', flexShrink: 0 }}>{v.key}</code>

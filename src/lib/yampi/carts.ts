@@ -279,8 +279,8 @@ export function buildWhatsappMessage(cart: AbandonedCart): string {
 
   const firstName = cart.customerName?.split(' ')[0] ?? ''
 
-  let msg = `Oi ${firstName}! Vi que você deixou ${productText} no carrinho da Just Have Fun 👀\n\n`
-  msg += `Separei pra você — é só finalizar por aqui:\n${cart.checkoutUrl ?? 'https://justhavefun.com.br'}\n\n`
+  let msg = `Oi ${firstName}! Vi que você deixou ${productText} no carrinho da Just Runner 👀\n\n`
+  msg += `Separei pra você — é só finalizar por aqui:\n${cart.checkoutUrl ?? 'https://justrunner.com.br'}\n\n`
   if (cart.items.length > 1) {
     msg += 'Seu Compre 1 Leve 2 ainda pode estar disponível enquanto durar o estoque promocional.\n\n'
   }

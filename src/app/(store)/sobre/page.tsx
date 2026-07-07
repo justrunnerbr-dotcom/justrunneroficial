@@ -11,7 +11,7 @@ export default function SobrePage() {
             marginBottom: '32px',
           }}
         >
-          Sobre a Just Have Fun
+          Sobre a Just Runner
         </h1>
 
         <div
@@ -26,7 +26,7 @@ export default function SobrePage() {
           }}
         >
           <p>
-            A Just Have Fun nasceu da paixão por óculos de alta performance. Somos especialistas
+            A Just Runner nasceu da paixão por óculos de alta performance. Somos especialistas
             em Oakley, trazendo os modelos mais desejados do mundo diretamente para você.
           </p>
           <p>

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Trocas e Devoluções | Just Have Fun',
-  description: 'Veja como funcionam trocas, devoluções e solicitações de arrependimento de compra na Just Have Fun.',
+  title: 'Trocas e Devoluções | Just Runner',
+  description: 'Veja como funcionam trocas, devoluções e solicitações de arrependimento de compra na Just Runner.',
 }
 
 const HEADING_STYLE = {
@@ -53,7 +53,7 @@ export default function TrocaseDevolucoes() {
 
           <h2 style={HEADING_STYLE}>1. Nosso compromisso</h2>
           <p style={TEXT_STYLE}>
-            A Just Have Fun quer garantir uma experiência de compra segura, transparente e satisfatória. Se algo não sair como esperado, estamos aqui para ajudar. Nossa equipe analisa cada solicitação com atenção e agilidade, sempre buscando a melhor solução para você.
+            A Just Runner quer garantir uma experiência de compra segura, transparente e satisfatória. Se algo não sair como esperado, estamos aqui para ajudar. Nossa equipe analisa cada solicitação com atenção e agilidade, sempre buscando a melhor solução para você.
           </p>
 
           <h2 style={HEADING_STYLE}>2. Direito de arrependimento</h2>
@@ -137,7 +137,7 @@ export default function TrocaseDevolucoes() {
           </p>
 
           <p style={{ ...TEXT_STYLE, fontSize: '13px', marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
-            Última atualização: junho de 2026 · Just Have Fun Store · CNPJ 58.512.462/0001-78
+            Última atualização: junho de 2026 · Just Runner Store · CNPJ 62.880.024/0001-30
           </p>
 
         </div>

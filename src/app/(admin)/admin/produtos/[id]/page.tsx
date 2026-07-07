@@ -76,7 +76,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
           {/* Public link */}
           <a
-            href={`https://justhavefun.com.br/produto/${product.slug}`}
+            href={`https://justrunner.com.br/produto/${product.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{

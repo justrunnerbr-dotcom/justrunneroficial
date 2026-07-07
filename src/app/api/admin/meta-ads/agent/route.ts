@@ -195,7 +195,7 @@ function buildSystemPrompt(notes: string): string {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
   const accounts = META_ACCOUNTS.filter(a => a.id).map(a => `${a.name} (id ${a.id})`).join(', ')
 
-  return `Você é um especialista sênior em performance de tráfego pago Meta Ads para um e-commerce brasileiro de moda/óculos premium (Just Have Fun). Você está conversando diretamente com o dono da operação, que vai te ensinando a estratégia dele ao longo do tempo.
+  return `Você é um especialista sênior em performance de tráfego pago Meta Ads para um e-commerce brasileiro de moda/óculos premium (Just Runner). Você está conversando diretamente com o dono da operação, que vai te ensinando a estratégia dele ao longo do tempo.
 
 Hoje é ${today} (fuso America/Sao_Paulo).
 

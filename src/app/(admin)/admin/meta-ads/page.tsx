@@ -19,7 +19,7 @@ const DIAG_STYLE: Record<string, { color: string; bg: string }> = {
 
 async function getFeedStats() {
   try {
-    const res   = await fetch('https://justhavefun.com.br/meta-feed.xml', { next: { revalidate: 300 } })
+    const res   = await fetch('https://justrunner.com.br/meta-feed.xml', { next: { revalidate: 300 } })
     if (!res.ok) return { ok: false, items: 0 }
     const text  = await res.text()
     return { ok: true, items: (text.match(/<item>/g) ?? []).length }
@@ -104,7 +104,7 @@ export default async function MetaAdsPage({
     configured ? getMetaLiveCampaigns(range.start, range.endExclusive) : Promise.resolve([]),
   ])
 
-  const feedUrl  = 'https://justhavefun.com.br/meta-feed.xml'
+  const feedUrl  = 'https://justrunner.com.br/meta-feed.xml'
   const pixelId  = META_PIXEL_ID
   const fmtBrl   = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
   const fmtInt   = (n: number) => n.toLocaleString('pt-BR')
@@ -484,7 +484,7 @@ export default async function MetaAdsPage({
           </div>
           <Row label="SKUs no feed"     value={`${feedStats.items} itens`}        ok={feedStats.ok} />
           <Row label="SKUs no Supabase" value={`${skuCount} variantes`}           ok={skuCount > 0} />
-          <Row label="Domínio"          value="justhavefun.com.br"                ok={true} />
+          <Row label="Domínio"          value="justrunner.com.br"                ok={true} />
           <Row label="g:id"             value="variant.sku (JHF-DART_GOLD_VR28)" ok={true} />
           <Row label="Cache"            value="1h (ISR Vercel)"                  ok={true} />
           <a href={feedUrl} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--admin-accent)', textDecoration: 'none', marginTop: '16px', fontWeight: 500 }}>

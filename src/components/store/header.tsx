@@ -167,7 +167,7 @@ export const Header = memo(function Header({
   const logoContent = (
     <Image
       src={logoSrc}
-      alt="Just Have Fun"
+      alt="Just Runner"
       height={40}
       width={130}
       priority
@@ -210,7 +210,7 @@ export const Header = memo(function Header({
           </div>
 
           {/* ── LOGO ── */}
-          <Link href="/" aria-label="Just Have Fun — página inicial" className="header-logo">
+          <Link href="/" aria-label="Just Runner — página inicial" className="header-logo">
             {logoContent}
           </Link>
 

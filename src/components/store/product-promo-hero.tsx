@@ -5,7 +5,7 @@ export function ProductPromoHero() {
         <source media="(max-width: 640px)" srcSet="/BANNERS%20297/banner_08_mobile_297.jpg" />
         <img
           src="/BANNERS%20297/banner_08_297.jpg"
-          alt="Compre 1 Leve 2 Just Have Fun"
+          alt="Compre 1 Leve 2 Just Runner"
           loading="eager"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />

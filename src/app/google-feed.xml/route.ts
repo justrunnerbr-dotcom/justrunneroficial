@@ -4,8 +4,8 @@ import type { Product } from '@/lib/types'
 
 export const revalidate = 3600
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://justhavefun.com.br'
-const BRAND = 'Just Have Fun'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://justrunner.com.br'
+const BRAND = 'Just Runner'
 const SUNGLASSES_CATEGORY = '178' // Google Product Category: Sunglasses
 const GENERIC_PRODUCT_TYPE = 'Óculos de Sol > Esportivo'
 
@@ -131,9 +131,9 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title><![CDATA[Just Have Fun Store]]></title>
+    <title><![CDATA[Just Runner Store]]></title>
     <link>${esc(SITE_URL)}</link>
-    <description><![CDATA[Catálogo de Óculos Just Have Fun — Proteção UV400, Design Esportivo]]></description>
+    <description><![CDATA[Catálogo de Óculos Just Runner — Proteção UV400, Design Esportivo]]></description>
 ${items.join('\n')}
   </channel>
 </rss>`

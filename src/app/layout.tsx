@@ -19,7 +19,7 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: 'Just Have Fun Store',
+  title: 'Just Runner Store',
   description: 'Óculos de alta performance e estilo.',
   icons: {
     icon: '/favicon.ico?v=2',

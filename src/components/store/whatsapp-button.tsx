@@ -7,7 +7,7 @@ export function WhatsAppButton() {
       href={WA_URL}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chamar a Just Have Fun no WhatsApp"
+      aria-label="Chamar a Just Runner no WhatsApp"
       style={{
         position: 'fixed',
         bottom: '24px',

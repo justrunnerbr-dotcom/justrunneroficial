@@ -47,7 +47,7 @@ export function buildOrderedCards(
 }
 
 // ── Seção 1: Compre 1 Leve 2 (grid, 10 produtos) ──────────────────────────────
-// Ordem definida pelo usuário. Item 20 da lista original ("Just Have Fun
+// Ordem definida pelo usuário. Item 20 da lista original ("Just Runner
 // Preto") não existe no catálogo do site novo — fica de fora.
 export const C1L2_ORDER: OrderEntry[] = [
   { collectionSlug: 'permian', productSlug: 'permian', variantId: '2c6d2497-3669-4e7f-a42f-acf09fcd1166' }, // Permian All Black
@@ -225,7 +225,7 @@ export default async function HomePage() {
   return (
     <>
       <Hero
-        title={settings['hero_title'] ?? 'Just Have Fun'}
+        title={settings['hero_title'] ?? 'Just Runner'}
         subtitle={settings['hero_subtitle'] ?? 'Óculos de alta performance e estilo.'}
         cta={settings['hero_cta'] ?? 'Ver Coleções'}
       />

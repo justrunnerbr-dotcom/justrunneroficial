@@ -36,10 +36,10 @@ export default async function SeoPage() {
         </h3>
         <div style={{ background: 'var(--admin-card)', borderRadius: '8px', padding: '16px', border: '1px solid var(--admin-border)' }}>
           <div style={{ fontSize: '18px', color: '#1a0dab', marginBottom: '4px', fontWeight: 500 }}>
-            {settings['og_title'] || settings['site_title'] || 'Just Have Fun Store'}
+            {settings['og_title'] || settings['site_title'] || 'Just Runner Store'}
           </div>
           <div style={{ fontSize: '13px', color: '#006621', marginBottom: '4px' }}>
-            justhavefun.com.br
+            justrunner.com.br
           </div>
           <div style={{ fontSize: '13px', color: '#545454', lineHeight: 1.5 }}>
             {settings['og_description'] || settings['site_description'] || 'Óculos de alta performance e estilo.'}

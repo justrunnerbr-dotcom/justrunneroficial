@@ -56,7 +56,7 @@ export function CampaignWizard({ pages = [], accounts = [] }: { pages?: Page[]; 
   const [accountId,    setAccountId]    = useState(() => accounts[0]?.id ?? '')
   const [pageId,       setPageId]       = useState(() => pages[0]?.id ?? '')
   const [adName,      setAdName]      = useState('')
-  const [link,        setLink]        = useState('https://justhavefun.com.br/')
+  const [link,        setLink]        = useState('https://justrunner.com.br/')
   const [message,     setMessage]     = useState('')
   const [headline,    setHeadline]    = useState('')
   const [description, setDescription] = useState('')
@@ -257,7 +257,7 @@ export function CampaignWizard({ pages = [], accounts = [] }: { pages?: Page[]; 
           </div>
           <div style={fieldGroup}>
             <label style={labelStyle}>URL de Destino</label>
-            <input style={fieldStyle} value={link} onChange={e => setLink(e.target.value)} placeholder="https://justhavefun.com.br/produto/..." />
+            <input style={fieldStyle} value={link} onChange={e => setLink(e.target.value)} placeholder="https://justrunner.com.br/produto/..." />
           </div>
           <div style={fieldGroup}>
             <label style={labelStyle}>Texto Principal (message)</label>

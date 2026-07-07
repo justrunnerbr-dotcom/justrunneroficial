@@ -100,7 +100,7 @@ export default async function CollectionsPage() {
               <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)', marginTop: '2px' }}>{v.desc}</div>
             </div>
             <a
-              href={`https://justhavefun.com.br/colecao/${v.slug}`}
+              href={`https://justrunner.com.br/colecao/${v.slug}`}
               target="_blank"
               style={{ fontSize: '12px', color: 'var(--admin-accent)', textDecoration: 'none' }}
             >

@@ -90,7 +90,7 @@ async function getAlerts(): Promise<Alert[]> {
     type: 'ok',
     title: 'Feed Meta XML configurado',
     desc: `${totalVariants ?? 0} SKUs exportados via /meta-feed.xml com cache de 1h.`,
-    href: 'https://justhavefun.com.br/meta-feed.xml',
+    href: 'https://justrunner.com.br/meta-feed.xml',
     action: 'Abrir feed',
   })
 

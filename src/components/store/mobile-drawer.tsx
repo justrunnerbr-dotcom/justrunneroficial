@@ -26,7 +26,7 @@ const BACK_LEVEL: Record<DrawerLevel, DrawerLevel> = {
 }
 
 const HEADER_TITLE: Record<DrawerLevel, string> = {
-  main: 'JUST HAVE FUN',
+  main: 'JUST RUNNER',
   collections: 'Coleções',
   'all-categories': 'Todas as categorias',
 }

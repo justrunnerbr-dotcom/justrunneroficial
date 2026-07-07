@@ -118,8 +118,8 @@ export function buildWinbackWhatsappUrl(customer: { name: string | null; phoneWh
   if (!customer.phoneWhatsappLink) return null
   const firstName = customer.name?.split(' ')[0] ?? ''
   const message =
-    `Oi ${firstName}! Faz ${customer.daysSinceOrder} dias que você não aparece por aqui na Just Have Fun 👀\n\n` +
-    'Sentimos sua falta! Dá uma olhada nas novidades:\nhttps://justhavefun.com.br\n\n' +
+    `Oi ${firstName}! Faz ${customer.daysSinceOrder} dias que você não aparece por aqui na Just Runner 👀\n\n` +
+    'Sentimos sua falta! Dá uma olhada nas novidades:\nhttps://justrunner.com.br\n\n' +
     'Qualquer coisa, é só chamar por aqui.'
   return `${customer.phoneWhatsappLink}&text=${encodeURIComponent(message)}`
 }

@@ -6,7 +6,7 @@ const faqs = [
   {
     question: 'Os produtos são originais?',
     answer:
-      'Sim, todos os produtos vendidos na Just Have Fun são 100% originais. Trabalhamos apenas com fornecedores autorizados e garantimos a autenticidade de cada item.',
+      'Sim, todos os produtos vendidos na Just Runner são 100% originais. Trabalhamos apenas com fornecedores autorizados e garantimos a autenticidade de cada item.',
   },
   {
     question: 'Qual o prazo de entrega?',

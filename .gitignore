@@ -46,6 +46,9 @@ next-env.d.ts
 # local staging folder for storage:sync pipeline (uploaded to Supabase Storage, não commitar)
 /products/
 
+# Supabase CLI local cache (project link state)
+/supabase/.temp/
+
 # local production videos (uploaded to Supabase Storage, não commitar)
 /public/videos/
 

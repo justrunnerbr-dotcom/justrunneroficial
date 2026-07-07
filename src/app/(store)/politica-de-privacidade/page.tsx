@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade | Just Have Fun',
-  description: 'Entenda como a Just Have Fun coleta, utiliza e protege os dados dos clientes.',
+  title: 'Política de Privacidade | Just Runner',
+  description: 'Entenda como a Just Runner coleta, utiliza e protege os dados dos clientes.',
 }
 
 const HEADING_STYLE = {
@@ -46,14 +46,14 @@ export default function PoliticaPrivacidadePage() {
           Política de Privacidade
         </h1>
         <p style={{ ...TEXT_STYLE, marginBottom: '40px', fontSize: '14px' }}>
-          Entenda como a Just Have Fun coleta, utiliza e protege suas informações.
+          Entenda como a Just Runner coleta, utiliza e protege suas informações.
         </p>
 
         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
 
           <h2 style={HEADING_STYLE}>1. Introdução</h2>
           <p style={TEXT_STYLE}>
-            A Just Have Fun respeita a privacidade de seus clientes e visitantes. Esta política explica de forma transparente como coletamos, utilizamos e protegemos suas informações pessoais ao utilizar nosso site e ao realizar compras em nossa loja. Os dados são utilizados exclusivamente para operar a loja, processar pedidos, melhorar sua experiência e cumprir obrigações legais aplicáveis.
+            A Just Runner respeita a privacidade de seus clientes e visitantes. Esta política explica de forma transparente como coletamos, utilizamos e protegemos suas informações pessoais ao utilizar nosso site e ao realizar compras em nossa loja. Os dados são utilizados exclusivamente para operar a loja, processar pedidos, melhorar sua experiência e cumprir obrigações legais aplicáveis.
           </p>
 
           <h2 style={HEADING_STYLE}>2. Dados que podemos coletar</h2>
@@ -85,7 +85,7 @@ export default function PoliticaPrivacidadePage() {
 
           <h2 style={HEADING_STYLE}>4. Compartilhamento de dados</h2>
           <p style={{ ...TEXT_STYLE, marginBottom: '8px' }}>
-            A Just Have Fun não vende nem comercializa seus dados pessoais. Podemos compartilhar informações somente quando necessário, com:
+            A Just Runner não vende nem comercializa seus dados pessoais. Podemos compartilhar informações somente quando necessário, com:
           </p>
           <ul style={LIST_STYLE}>
             <li>Plataformas de pagamento e gateways de checkout (para processar transações)</li>
@@ -148,7 +148,7 @@ export default function PoliticaPrivacidadePage() {
           </p>
 
           <p style={{ ...TEXT_STYLE, fontSize: '13px', marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
-            Última atualização: junho de 2026 · Just Have Fun Store · CNPJ 58.512.462/0001-78
+            Última atualização: junho de 2026 · Just Runner Store · CNPJ 62.880.024/0001-30
           </p>
 
         </div>

@@ -45,7 +45,7 @@ export function LoginForm() {
           <Lock size={22} color="#ffffff" />
         </div>
         <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Admin Panel</h1>
-        <p style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>Just Have Fun Store</p>
+        <p style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>Just Runner Store</p>
       </div>
 
       <form onSubmit={handleSubmit}>

@@ -44,7 +44,7 @@ function buildPrompt(signal: Signal): string {
     ].join('\n'),
   }
 
-  return `Você é Commerce Brain, o analista de inteligência de uma loja de óculos premium brasileira chamada Just Have Fun.
+  return `Você é Commerce Brain, o analista de inteligência de uma loja de óculos premium brasileira chamada Just Runner.
 
 ANOMALIA DETECTADA:
 ${signalDescriptions[signal.signal_type] ?? signal.signal_type.toUpperCase()}
