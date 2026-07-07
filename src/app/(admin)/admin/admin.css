@@ -1,0 +1,49 @@
+#admin-root {
+  /* LIGHT THEME */
+  --admin-bg: #F8FAFC;
+  --admin-card: #FFFFFF;
+  --admin-card-hover: #F1F5F9;
+  --admin-border: rgba(0,0,0,0.08);
+  --admin-text-main: #0F172A;
+  --admin-text-sec: #475569;
+  --admin-text-muted: #94A3B8;
+  --admin-accent: #38BDF8;
+  --admin-accent-rgb: 56, 189, 248;
+  --admin-red: #EF4444;
+  --admin-red-rgb: 239, 68, 68;
+  --admin-alert: #F59E0B;
+  --admin-info: #6366F1;
+}
+
+#admin-root[data-theme='dark'] {
+  /* DARK THEME */
+  --admin-bg: #0B0F0E;
+  --admin-card: #111716;
+  --admin-card-hover: #131A18;
+  --admin-border: rgba(255,255,255,0.06);
+  --admin-text-main: #F4F7F5;
+  --admin-text-sec: #8A9791;
+  --admin-text-muted: #5F6B66;
+  --admin-accent: #38BDF8;
+  --admin-accent-rgb: 56, 189, 248;
+  --admin-red: #EF4444;
+  --admin-red-rgb: 239, 68, 68;
+  --admin-alert: #F59E0B;
+  --admin-info: #6366F1;
+}
+
+/* Custom Scrollbar for admin */
+#admin-root ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+#admin-root ::-webkit-scrollbar-track {
+  background: var(--admin-bg);
+}
+#admin-root ::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 4px;
+}
+#admin-root ::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-text-muted);
+}
