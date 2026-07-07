@@ -56,9 +56,7 @@ export default async function CollectionPage({ params }: PageProps) {
 
     const allCollections = await getCollections()
     const productMap = await getProductsBatchByCollections(allCollections.map(c => c.id))
-    products = allCollections
-      .map(c => (productMap.get(c.id) ?? [])[0])
-      .filter((p): p is NonNullable<typeof p> => p !== undefined)
+    products = allCollections.flatMap(c => productMap.get(c.id) ?? [])
   }
 
   // Virtual collection for "Mais Vendidos"

@@ -46,21 +46,12 @@ export function buildOrderedCards(
     .filter((p): p is NonNullable<typeof p> => p !== undefined)
 }
 
-// ── Seção 1: Compre 1 Leve 2 (grid, 10 produtos) ──────────────────────────────
-// Ordem definida pelo usuário. Item 20 da lista original ("Just Runner
-// Preto") não existe no catálogo do site novo — fica de fora.
-export const C1L2_ORDER: OrderEntry[] = [
-  { collectionSlug: 'permian', productSlug: 'permian', variantId: '2c6d2497-3669-4e7f-a42f-acf09fcd1166' }, // Permian All Black
-  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-redux', variantId: '09a0b695-9896-4339-bcfc-291e46fdf595' }, // Eye Jacket Redux Dark Ruby
-  { collectionSlug: 'flak-20', productSlug: 'flak-20', variantId: 'acda8bba-3762-4880-a91f-f3f69c20a8a7' }, // Flak 2.0 Preta Preta
-  { collectionSlug: 'plantaris', productSlug: 'plantaris', variantId: '33348bc9-1f9e-4085-b7cc-a8207bd561f8' }, // Plantaris Premium
-  { collectionSlug: 'dartboard', productSlug: 'dartboard', variantId: 'bc7c831c-1a85-4a4c-a010-1ddfe4d85395' }, // Dartboard Degradê
-  { collectionSlug: 'juliet', productSlug: 'juliet', variantId: '5987ff71-274f-4a74-b3b9-51069c4d2774' }, // Juliet X-Metal Preta
-  { collectionSlug: 'radar', productSlug: 'radar', variantId: '23b8b854-0eaf-470e-8200-f223066ab274' }, // Radar Premium Preta Metalic (aprox. Espelhada)
-  { collectionSlug: 'splice', productSlug: 'splice', variantId: '4cc3c706-73ed-4617-b024-3ed2a62433b2' }, // Splice Preta Preto
-  { collectionSlug: 'penny', productSlug: 'penny', variantId: '0bed6b28-9c87-464c-8e08-7830162e3776' }, // Penny Preta Preto
-  { collectionSlug: 'hstn', productSlug: 'hstn', variantId: '4ae78b3b-549f-4ddc-a2d4-61c3c0985edd' }, // HSTN Preta Preto
-]
+// ── Seção 1: Compre 1 Leve 2 (grid, todos os produtos) ────────────────────────
+// Coleção virtual (não é uma linha em `collections`) — mostra todo o catálogo
+// ativo. Mesma lógica de /colecao/compre-1-leve-2. Não filtra por categoria.
+// Mantido vazio (em vez de removido) só porque oferta-progressiva-home.tsx
+// ainda importa este símbolo — feature JHF sem coleção correspondente aqui.
+export const C1L2_ORDER: OrderEntry[] = []
 
 // ── Seção 4: Mais Vendidos (grid, até 10 produtos) ────────────────────────────
 export const MAIS_VENDIDOS_ORDER: OrderEntry[] = [
@@ -218,7 +209,7 @@ export default async function HomePage() {
     products: productsByCollection.get(c.id) ?? [],
   }))
 
-  const c1l2Products = buildOrderedCards(C1L2_ORDER, collectionsWithProducts, 'c1l2')
+  const c1l2Products = collectionsWithProducts.flatMap((c) => c.products)
   const maisVendidosProducts = buildOrderedCards(MAIS_VENDIDOS_ORDER, collectionsWithProducts, 'bestseller')
   const edicaoLimitadaProducts = buildOrderedCards(EDICAO_LIMITADA_ORDER, collectionsWithProducts, 'edicao-limitada')
 
