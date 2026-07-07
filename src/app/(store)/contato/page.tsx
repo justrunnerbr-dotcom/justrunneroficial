@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Send, CheckCircle } from 'lucide-react'
 
 const WA_URL =
-  'https://wa.me/5511950514943?text=Ol%C3%A1%21%20Tenho%20uma%20d%C3%BAvida%20sobre%20os%20%C3%B3culos%20da%20Just%20Have%20Fun.'
+  'https://wa.me/5511988766461?text=Ol%C3%A1%21%20Tenho%20uma%20d%C3%BAvida%20sobre%20os%20%C3%B3culos%20da%20Just%20Runner.'
 
 export default function ContatoPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -76,7 +76,7 @@ export default function ContatoPage() {
               Resposta rápida pelo WhatsApp
             </div>
             <div style={{ fontFamily: 'var(--font-montserrat), sans-serif', fontSize: '13px', color: '#166534' }}>
-              (11) 95051-4943 · Seg–Sáb, 9h às 18h
+              (11) 98876-6461 · Seg–Sáb, 9h às 18h
             </div>
           </div>
         </a>

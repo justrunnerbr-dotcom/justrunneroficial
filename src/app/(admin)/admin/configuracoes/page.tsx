@@ -14,7 +14,7 @@ export default async function ConfigPage() {
     { key: 'announcement_bar',       label: 'Texto do announcement bar',  desc: 'Mensagens separadas por " · "' },
     { key: 'logo_url',               label: 'URL do logotipo (padrão)',    desc: 'Ex: /LOGO/logo.png' },
     { key: 'logo_transparent_url',   label: 'URL do logotipo (transparente)', desc: 'Usado no header transparente (homepage)' },
-    { key: 'whatsapp_number',        label: 'Número WhatsApp',            desc: 'Ex: 5511950514943' },
+    { key: 'whatsapp_number',        label: 'Número WhatsApp',            desc: 'Ex: 5511988766461' },
     { key: 'free_shipping_threshold',label: 'Frete grátis acima de (R$)', desc: 'Ex: 200' },
   ]
 

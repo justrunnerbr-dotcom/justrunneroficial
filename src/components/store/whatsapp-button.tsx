@@ -1,5 +1,5 @@
 const WA_URL =
-  'https://wa.me/5511950514943?text=Ol%C3%A1%21%20Tenho%20uma%20d%C3%BAvida%20sobre%20os%20%C3%B3culos%20da%20Just%20Have%20Fun.'
+  'https://wa.me/5511988766461?text=Ol%C3%A1%21%20Tenho%20uma%20d%C3%BAvida%20sobre%20os%20%C3%B3culos%20da%20Just%20Runner.'
 
 export function WhatsAppButton() {
   return (
