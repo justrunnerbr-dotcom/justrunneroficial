@@ -54,3 +54,6 @@ next-env.d.ts
 
 # temp de conversão de vídeos
 /.tmp/
+
+# fotos UGC de origem (já enviadas pro Supabase Storage em ugc/, não commitar)
+/public/FOTOS UGC CATEGORIA/
