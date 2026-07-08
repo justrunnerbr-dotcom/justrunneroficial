@@ -36,7 +36,7 @@ export default async function SeoPage() {
         </h3>
         <div style={{ background: 'var(--admin-card)', borderRadius: '8px', padding: '16px', border: '1px solid var(--admin-border)' }}>
           <div style={{ fontSize: '18px', color: '#1a0dab', marginBottom: '4px', fontWeight: 500 }}>
-            {settings['og_title'] || settings['site_title'] || 'Just Runner Store'}
+            {settings['og_title'] || settings['site_title'] || 'Just Runner'}
           </div>
           <div style={{ fontSize: '13px', color: '#006621', marginBottom: '4px' }}>
             justrunner.com.br

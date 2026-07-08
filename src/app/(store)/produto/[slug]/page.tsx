@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: `${product.name} — Just Runner`,
     description: product.description
       ? product.description.replace(/<[^>]+>/g, '').trim().slice(0, 160)
-      : `Compre ${product.name} na Just Runner Store.`,
+      : `Compre ${product.name} na Just Runner.`,
   }
 }
 

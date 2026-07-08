@@ -137,7 +137,7 @@ export default function TrocaseDevolucoes() {
           </p>
 
           <p style={{ ...TEXT_STYLE, fontSize: '13px', marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
-            Última atualização: junho de 2026 · Just Runner Store · CNPJ 62.880.024/0001-30
+            Última atualização: junho de 2026 · Just Runner · CNPJ 62.880.024/0001-30
           </p>
 
         </div>

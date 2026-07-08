@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Save, CheckCircle } from 'lucide-react'
 
 const FIELDS = [
-  { key: 'site_title',        label: 'Título do site',           placeholder: 'Just Runner Store', maxlen: 60, type: 'input' },
+  { key: 'site_title',        label: 'Título do site',           placeholder: 'Just Runner', maxlen: 60, type: 'input' },
   { key: 'site_description',  label: 'Meta description',         placeholder: 'Óculos de alta performance...', maxlen: 160, type: 'textarea' },
   { key: 'og_title',          label: 'OG Title (redes sociais)', placeholder: 'Just Runner — Óculos Premium', maxlen: 60, type: 'input' },
   { key: 'og_description',    label: 'OG Description',           placeholder: 'A melhor seleção de óculos...', maxlen: 200, type: 'textarea' },

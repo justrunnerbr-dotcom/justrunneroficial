@@ -8,7 +8,7 @@ export const revalidate = 0
 export async function generateMetadata() {
   return {
     title: `Todas as Coleções — Just Runner`,
-    description: `Explore todas as nossas coleções exclusivas na Just Runner Store.`,
+    description: `Explore todas as nossas coleções exclusivas na Just Runner.`,
   }
 }
 

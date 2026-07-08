@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps) {
   if (!collection) return {}
   return {
     title: `${collection.name} — Just Runner`,
-    description: collection.description ?? `Explore a coleção ${collection.name} na Just Runner Store.`,
+    description: collection.description ?? `Explore a coleção ${collection.name} na Just Runner.`,
   }
 }
 

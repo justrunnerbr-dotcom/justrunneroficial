@@ -227,7 +227,7 @@ export function ProductEditor({
           <div style={{ fontSize: '13px', color: '#545454', lineHeight: 1.4 }}>
             {form.description
               ? form.description.replace(/<[^>]+>/g, '').slice(0, 160)
-              : `Compre ${form.name} na Just Runner Store.`}
+              : `Compre ${form.name} na Just Runner.`}
           </div>
         </div>
       </div>
