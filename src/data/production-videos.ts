@@ -1,42 +1,27 @@
-// Slugs com vídeos no bucket "production-videos" do Supabase Storage.
-// Counts menores que 3 para produtos com menos vídeos disponíveis.
+// Vídeos de produção no bucket "production-videos" do Supabase Storage.
+// Chave = slug da CATEGORIA (collection), não do produto — o vídeo é do
+// modelo/linha, compartilhado por todas as variações de cor daquela categoria.
+// Counts menores que 3 para categorias com menos vídeos disponíveis.
 const VIDEO_COUNTS: Partial<Record<string, number>> = {
-  encoder:          2,
-  'half-jacket':    1,
-  'straight-jacket':1,
+  'half-jacket': 1,
+  'straight-jacket': 1,
 }
 
-const SLUGS_WITH_VIDEOS = new Set([
-  'dart',
-  'dartboard',
-  'double-x',
-  'encoder',
+const CATEGORY_SLUGS_WITH_VIDEOS = new Set([
+  'casual',
   'eye-jacket',
-  'eye-jacket-brain-dead',
-  'eye-jacket-flame',
-  'eye-jacket-guadalupe',
-  'eye-jacket-redux',
-  'flak-20',
+  'flak',
   'half-jacket',
   'hstn',
-  'juliet',
-  'm-frame',
-  'mag-four',
   'minute',
-  'penny',
-  'permian',
   'plantaris',
-  'plate',
   'radar',
-  'romeo-1',
-  'splice',
-  'spyke',
   'straight-jacket',
 ])
 
-export function getProductionVideos(slug: string): string[] | null {
-  if (!SLUGS_WITH_VIDEOS.has(slug)) return null
-  const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/production-videos/${slug}`
-  const count = VIDEO_COUNTS[slug] ?? 3
+export function getProductionVideos(categorySlug: string | undefined): string[] | null {
+  if (!categorySlug || !CATEGORY_SLUGS_WITH_VIDEOS.has(categorySlug)) return null
+  const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/production-videos/${categorySlug}`
+  const count = VIDEO_COUNTS[categorySlug] ?? 3
   return Array.from({ length: count }, (_, i) => `${base}/${i + 1}.mp4`)
 }

@@ -4,11 +4,11 @@ import { Play } from 'lucide-react'
 import { getProductionVideos } from '@/data/production-videos'
 
 interface Props {
-  slug: string
+  categorySlug: string | undefined
 }
 
-export function ProductionVideosSection({ slug }: Props) {
-  const urls = getProductionVideos(slug)
+export function ProductionVideosSection({ categorySlug }: Props) {
+  const urls = getProductionVideos(categorySlug)
   if (!urls) return null
   return <VideosInner urls={urls} />
 }
@@ -55,7 +55,7 @@ function VideosInner({ urls }: { urls: string[] }) {
         textTransform: 'uppercase', letterSpacing: '3px',
         color: '#a1a1aa', marginBottom: '4px',
       }}>
-        EXPERIÊNCIA JHF
+        EXPERIÊNCIA JUST RUNNER
       </p>
       <h3 style={{
         fontSize: '15px', fontWeight: 800, textAlign: 'center',

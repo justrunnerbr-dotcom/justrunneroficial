@@ -626,7 +626,7 @@ export function ProductClient({ product, initialVariantId }: Props) {
         </Link>
 
         {/* Linha de Produção */}
-        <ProductionVideosSection slug={product.slug} />
+        <ProductionVideosSection categorySlug={product.collection?.slug} />
 
         {/* Promo Box */}
         <div style={{ background: '#fafafa', border: '1px solid #f4f4f5', borderRadius: '4px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
