@@ -53,6 +53,18 @@ export function buildOrderedCards(
 // ainda importa este símbolo — feature JHF sem coleção correspondente aqui.
 export const C1L2_ORDER: OrderEntry[] = []
 
+// Primeiros 6 cards da grade "Leve 2 pelo preço de 1" — curadoria manual pedida
+// pelo usuário (2026-07-08). Variante/foto de capa escolhida por padronização
+// visual (ângulo ¾, já que Flak/Plantaris/Minute só têm foto nesse ângulo).
+const C1L2_FEATURED_FIRST: OrderEntry[] = [
+  { collectionSlug: 'radar', productSlug: 'radar-ev-preta', variantId: 'e72555e9-6f81-4034-b9ba-65c44ee5c428' }, // Lente Preta
+  { collectionSlug: 'flak', productSlug: 'flak-preta', variantId: 'd3d36a7c-2eb0-4286-ae73-c03757b1767f' }, // Lente Preta
+  { collectionSlug: 'plantaris', productSlug: 'plantaris-preta', variantId: '4b9813f4-20bf-498a-b2a6-8157329c5ab3' }, // Único
+  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-brain-dead', variantId: '30cbf368-2983-4cfa-8f66-1b46a86b61a1' }, // Lente Preta
+  { collectionSlug: 'minute', productSlug: 'minute-preta', variantId: '11079fce-96bf-4c79-b1b9-094c1cf45239' }, // Lente Ruby
+  { collectionSlug: 'half-jacket', productSlug: 'half-jacket', variantId: 'ae7916a9-6cdc-48e0-b04b-70a2e09ca2ee' }, // Cooper
+]
+
 // ── Seção 4: Mais Vendidos (grid, até 10 produtos) ────────────────────────────
 export const MAIS_VENDIDOS_ORDER: OrderEntry[] = [
   { collectionSlug: 'plantaris', productSlug: 'plantaris', variantId: '33348bc9-1f9e-4085-b7cc-a8207bd561f8' }, // Plantaris Premium
@@ -209,7 +221,10 @@ export default async function HomePage() {
     products: productsByCollection.get(c.id) ?? [],
   }))
 
-  const c1l2Products = collectionsWithProducts.flatMap((c) => c.products)
+  const featuredFirst = buildOrderedCards(C1L2_FEATURED_FIRST, collectionsWithProducts, 'c1l2-featured')
+  const featuredSlugs = new Set(C1L2_FEATURED_FIRST.map((e) => e.productSlug))
+  const remainingProducts = collectionsWithProducts.flatMap((c) => c.products).filter((p) => !featuredSlugs.has(p.slug))
+  const c1l2Products = [...featuredFirst, ...remainingProducts]
   const maisVendidosProducts = buildOrderedCards(MAIS_VENDIDOS_ORDER, collectionsWithProducts, 'bestseller')
   const edicaoLimitadaProducts = buildOrderedCards(EDICAO_LIMITADA_ORDER, collectionsWithProducts, 'edicao-limitada')
 

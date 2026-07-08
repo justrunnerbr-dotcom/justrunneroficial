@@ -56,7 +56,15 @@ export default async function CollectionPage({ params }: PageProps) {
 
     const allCollections = await getCollections()
     const productMap = await getProductsBatchByCollections(allCollections.map(c => c.id))
-    products = allCollections.flatMap(c => productMap.get(c.id) ?? [])
+    const allProducts = allCollections.flatMap(c => productMap.get(c.id) ?? [])
+
+    // Mesma curadoria dos 6 primeiros cards da Home (ver page.tsx raiz da store)
+    const featuredOrder = ['radar-ev-preta', 'flak-preta', 'plantaris-preta', 'eye-jacket-brain-dead', 'minute-preta', 'half-jacket']
+    const featured = featuredOrder
+      .map((slug) => allProducts.find((p) => p.slug === slug))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined)
+    const featuredSlugs = new Set(featuredOrder)
+    products = [...featured, ...allProducts.filter((p) => !featuredSlugs.has(p.slug))]
   }
 
   // Virtual collection for "Mais Vendidos"
