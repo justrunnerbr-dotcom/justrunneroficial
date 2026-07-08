@@ -62,7 +62,7 @@ const C1L2_FEATURED_FIRST: OrderEntry[] = [
   { collectionSlug: 'plantaris', productSlug: 'plantaris-preta', variantId: '4b9813f4-20bf-498a-b2a6-8157329c5ab3' }, // Único
   { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-brain-dead', variantId: '30cbf368-2983-4cfa-8f66-1b46a86b61a1' }, // Lente Preta
   { collectionSlug: 'minute', productSlug: 'minute-preta', variantId: '11079fce-96bf-4c79-b1b9-094c1cf45239' }, // Lente Ruby
-  { collectionSlug: 'half-jacket', productSlug: 'half-jacket', variantId: 'ae7916a9-6cdc-48e0-b04b-70a2e09ca2ee' }, // Cooper
+  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-redux', variantId: '1dc19f08-9672-48d8-a3e5-af6bc7c10861' }, // Lente Preta
 ]
 
 // ── Seção 4: Mais Vendidos (grid, até 10 produtos) ────────────────────────────
