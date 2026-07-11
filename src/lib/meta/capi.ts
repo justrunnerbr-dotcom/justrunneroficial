@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 
-const PIXEL_ID = '2088941725311934'
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex')

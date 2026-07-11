@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-export const META_PIXEL_ID = '2088941725311934'
+export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''
 
 const DEBUG = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_META_DEBUG === 'true'
 
