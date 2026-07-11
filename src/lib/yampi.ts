@@ -3,8 +3,21 @@ import type { CartItem } from './types'
 // store_token público da loja (visível nos redirects de /r/TOKEN)
 const STORE_TOKEN = 'BDMGAOde7Xbg3YDZxV5e7IJb5rkqTGKHZJ2SaUtU'
 
+// O domínio de checkout da Yampi não é "{alias}.yampi.com.br" (não resolve) —
+// é um domínio customizado no formato "seguro.{domínio da loja}", confirmado
+// batendo direto no domínio (retorna os cookies de carrinho da Yampi e
+// redireciona pro /checkout). Deriva de NEXT_PUBLIC_SITE_URL.
 function getCheckoutDomain(alias: string): string {
-  return alias.includes('.') ? alias : `${alias}.yampi.com.br`
+  if (alias.includes('.')) return alias
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (siteUrl) {
+    try {
+      return `seguro.${new URL(siteUrl).hostname}`
+    } catch {
+      // falls through to the yampi.com.br fallback below
+    }
+  }
+  return `${alias}.yampi.com.br`
 }
 
 export function buildSingleCheckoutUrl(
