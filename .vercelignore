@@ -1,0 +1,9 @@
+# Ativos locais servidos via Supabase Storage em produção — não precisam (e não devem)
+# ir no deploy da Vercel. O .gitignore já cobre variações de nome/case, mas o parser
+# de ignore da CLI da Vercel não está respeitando o case-insensitive do Windows aqui,
+# então listamos os nomes exatos das pastas.
+/public/VIdeos/
+/public/VIDEOS CATEGORIAS UGC/
+/public/FOTOS UGC CATEGORIA/
+/public/products/
+/products/

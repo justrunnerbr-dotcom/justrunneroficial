@@ -103,7 +103,7 @@ export function Sidebar() {
             boxShadow: '0 0 12px rgba(var(--admin-accent-rgb), 0.4)'
           }}>J</div>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--admin-text-main)', letterSpacing: '0.2px' }}>Just Commerce</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--admin-text-main)', letterSpacing: '0.2px' }}>Just Runner</div>
             <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>Performance Admin</div>
           </div>
         </div>

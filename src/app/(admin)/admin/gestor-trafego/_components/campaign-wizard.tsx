@@ -142,7 +142,7 @@ export function CampaignWizard({ pages = [], accounts = [] }: { pages?: Page[]; 
           )}
           <div style={fieldGroup}>
             <label style={labelStyle}>Nome da Campanha</label>
-            <input style={fieldStyle} value={campName} onChange={e => setCampName(e.target.value)} placeholder="Ex: JHF — Juliet — Vendas — Jun/26" />
+            <input style={fieldStyle} value={campName} onChange={e => setCampName(e.target.value)} placeholder="Ex: Just Runner — Radar EV — Vendas — Jul/26" />
           </div>
           <div style={fieldGroup}>
             <label style={labelStyle}>Objetivo</label>
@@ -253,7 +253,7 @@ export function CampaignWizard({ pages = [], accounts = [] }: { pages?: Page[]; 
           <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: 'var(--admin-text-main)' }}>4. Copy do Anúncio</h2>
           <div style={fieldGroup}>
             <label style={labelStyle}>Nome do Anúncio (interno)</label>
-            <input style={fieldStyle} value={adName} onChange={e => setAdName(e.target.value)} placeholder="Ex: JHF — Juliet — Img01 — Copy A" />
+            <input style={fieldStyle} value={adName} onChange={e => setAdName(e.target.value)} placeholder="Ex: Just Runner — Radar EV — Img01 — Copy A" />
           </div>
           <div style={fieldGroup}>
             <label style={labelStyle}>URL de Destino</label>
@@ -266,7 +266,7 @@ export function CampaignWizard({ pages = [], accounts = [] }: { pages?: Page[]; 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
               <label style={labelStyle}>Título (headline)</label>
-              <input style={fieldStyle} value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Ex: Oakley Juliet Original" />
+              <input style={fieldStyle} value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Ex: Radar EV Original" />
             </div>
             <div>
               <label style={labelStyle}>Descrição</label>

@@ -51,9 +51,18 @@ next-env.d.ts
 
 # local production videos (uploaded to Supabase Storage, não commitar)
 /public/videos/
+/public/VIdeos/
+/public/VIDEOS CATEGORIAS UGC/
 
 # temp de conversão de vídeos
 /.tmp/
 
 # fotos UGC de origem (já enviadas pro Supabase Storage em ugc/, não commitar)
 /public/FOTOS UGC CATEGORIA/
+
+# criativos locais do gestor de tráfego (lidos por src/app/api/admin/criativos,
+# enviados direto pro Meta na criação do anúncio — não commitar)
+/gestor-trafego/criativos/imagens/*
+/gestor-trafego/criativos/videos/*
+!/gestor-trafego/criativos/imagens/.gitkeep
+!/gestor-trafego/criativos/videos/.gitkeep

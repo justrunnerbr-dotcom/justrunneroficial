@@ -9,8 +9,8 @@ export default async function NovaCampanha() {
 
   const accounts = [
     process.env.META_AD_ACCOUNT_ID_1 ? { id: process.env.META_AD_ACCOUNT_ID_1, label: 'Conta 1' } : null,
-    process.env.META_AD_ACCOUNT_ID_2 ? { id: process.env.META_AD_ACCOUNT_ID_2, label: 'Conta 3' } : null,
-    process.env.META_AD_ACCOUNT_ID_3 ? { id: process.env.META_AD_ACCOUNT_ID_3, label: 'Conta 4' } : null,
+    process.env.META_AD_ACCOUNT_ID_2 ? { id: process.env.META_AD_ACCOUNT_ID_2, label: 'Conta 2' } : null,
+    process.env.META_AD_ACCOUNT_ID_3 ? { id: process.env.META_AD_ACCOUNT_ID_3, label: 'Conta 3' } : null,
   ].filter(Boolean) as { id: string; label: string }[]
 
   const pages = [
