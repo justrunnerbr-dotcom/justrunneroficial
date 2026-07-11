@@ -88,7 +88,7 @@ export function CartDrawer() {
   let remainingFree = Math.floor(glassesCount / 2)
   const itemsWithDiscount = items.map(item => {
     let freeQty = 0
-    if (item.price >= 90 && !item.sku?.startsWith('JHFOP-')) {
+    if (item.price >= 90 && !item.sku?.startsWith('JROP-')) {
       freeQty = Math.min(remainingFree, item.quantity)
       remainingFree -= freeQty
     }
@@ -96,12 +96,12 @@ export function CartDrawer() {
   })
 
   // Progresso 1: Óculos — a mensagem depende de qual oferta está ativa no
-  // carrinho. Compre 1 Leve 2 (glassesCount, já exclui JHFOP-) e Oferta
+  // carrinho. Compre 1 Leve 2 (glassesCount, já exclui JROP-) e Oferta
   // Progressiva (opQty) têm mecânicas diferentes (2º grátis vs. 2 por R$297),
   // então cada uma tem sua própria frase — mostrar "grátis" pra Oferta
   // Progressiva seria enganoso, já que ali é desconto, não brinde.
   const opQty = items
-    .filter((i) => i.sku?.startsWith('JHFOP-'))
+    .filter((i) => i.sku?.startsWith('JROP-'))
     .reduce((sum, i) => sum + i.quantity, 0)
   const hasFreeGlasses = glassesCount >= 2
   const showProgressiveMessage = opQty > 0 && glassesCount === 0

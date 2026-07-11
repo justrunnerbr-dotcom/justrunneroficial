@@ -2,13 +2,11 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem } from './types'
 
-// Faixa 2 da JHF Oferta Progressiva (produtos JHFOP-, R$175 cada): espelha
-// exatamente a regra criada na Yampi (discount id 27014) — "Compre 1, Leve +1
-// com R$53 off", cart_usage_limit:1 (só aplica 1x por carrinho, não por par).
-// Faixas 3/4 ainda não existem na Yampi (em standby) — ao criá-las, essa
-// função precisa ganhar os tiers de 3/4 unidades pra continuar batendo com o
-// checkout real.
-const PROGRESSIVE_OFFER_SKU_PREFIX = 'JHFOP-'
+// Oferta Progressiva (produtos JROP-, catálogo duplicado a R$175 cada): 1
+// óculos = R$175, 2 óculos = R$297 (desconto fixo de R$53 no 2º). Faixas de
+// 3/4 unidades ainda não existem — se forem criadas, essa função precisa
+// ganhar os tiers correspondentes.
+const PROGRESSIVE_OFFER_SKU_PREFIX = 'JROP-'
 const PROGRESSIVE_OFFER_TIER2_DISCOUNT = 53
 const PROGRESSIVE_OFFER_TIER2_MIN_QTY = 2
 
@@ -79,7 +77,7 @@ export const useCartStore = create<CartState>()(
 
       discount: () => {
         const eligiblePrices = get().items
-          .filter(i => i.price >= 90 && !i.sku?.startsWith('JHFOP-'))
+          .filter(i => i.price >= 90 && !i.sku?.startsWith(PROGRESSIVE_OFFER_SKU_PREFIX))
           .flatMap(i => Array(i.quantity).fill(i.price))
           .sort((a, b) => b - a)
           
@@ -103,7 +101,7 @@ export const useCartStore = create<CartState>()(
         get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       eligibleGlassesCount: () =>
-        get().items.reduce((sum, i) => (i.price >= 90 && !i.sku?.startsWith('JHFOP-')) ? sum + i.quantity : sum, 0),
+        get().items.reduce((sum, i) => (i.price >= 90 && !i.sku?.startsWith(PROGRESSIVE_OFFER_SKU_PREFIX)) ? sum + i.quantity : sum, 0),
     }),
     {
       name: 'jhf-cart',

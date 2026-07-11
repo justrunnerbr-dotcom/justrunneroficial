@@ -1,123 +1,127 @@
+import fs from 'fs'
+import path from 'path'
 import { getProductsByCollection } from '@/lib/queries'
-import { resolveOfertaProgressivaOrder } from '@/lib/oferta-progressiva'
-import {
-  buildOrderedCards,
-  C1L2_ORDER,
-  MAIS_VENDIDOS_ORDER,
-  EDICAO_LIMITADA_ORDER,
-  SINGLE_CATEGORY_SECTIONS,
-  type CollectionWithProducts,
-} from '@/app/(store)/page'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { CATEGORY_SECTIONS_ORDER } from '@/app/(store)/page'
 import { Hero } from './hero'
 import { BenefitsBar } from './benefits-bar'
 import { ProductCarousel } from './product-carousel'
 import { CategoryBanner } from './category-banner'
+import { SocialProof } from './social-proof'
 import { WhatsAppButton } from './whatsapp-button'
 
-// Espelha a Home principal (mesma ordem de seções, mesmos banners), só
-// trocando a fonte dos produtos pro catálogo da JHF Oferta Progressiva
-// (R$175, SKUs JHFOP-). Ver [[project_jhf]]/oferta-progressiva.
+// Mesmos 6 produtos em destaque da Home principal (ver C1L2_FEATURED_FIRST em
+// src/app/(store)/page.tsx), só que aqui sem curadoria de variante/foto — a
+// Oferta Progressiva usa o primeiro variante/foto de cada produto mesmo.
+const FEATURED_FIRST_SLUGS = [
+  'radar-ev-preta',
+  'flak-preta',
+  'plantaris-preta',
+  'eye-jacket-brain-dead',
+  'minute-preta',
+  'eye-jacket-redux',
+]
 
+// Espelha a estrutura da Home principal (grade "Leve 2" + 1 seção por
+// categoria, mesmos banners/layouts), só trocando a fonte dos produtos pro
+// catálogo duplicado da Oferta Progressiva (produtos JROP-, R$175 cada — o
+// desconto que forma "2 óculos por R$297" é calculado no carrinho, ver
+// src/lib/cart-store.ts). Categoria de cada produto é derivada pelo slug
+// original (sem o sufixo "-op"), já que todos os produtos OP vivem numa
+// única coleção no Supabase.
 export async function OfertaProgressivaHome({ collectionId }: { collectionId: string }) {
-  const opProducts = await getProductsByCollection(collectionId)
-  const collectionsWithProducts: CollectionWithProducts[] = [
-    { id: collectionId, slug: 'oferta-progressiva', name: 'Oferta Progressiva', products: opProducts },
-  ]
-
-  const [c1l2Order, maisVendidosOrder, edicaoLimitadaOrder, singleCategoryOrders] = await Promise.all([
-    resolveOfertaProgressivaOrder(C1L2_ORDER),
-    resolveOfertaProgressivaOrder(MAIS_VENDIDOS_ORDER),
-    resolveOfertaProgressivaOrder(EDICAO_LIMITADA_ORDER),
-    Promise.all(SINGLE_CATEGORY_SECTIONS.map((s) => resolveOfertaProgressivaOrder(s.order))),
+  const [opProducts, categorySlugByOriginalSlug] = await Promise.all([
+    getProductsByCollection(collectionId),
+    getOriginalCategoryMap(),
   ])
 
-  const c1l2Products = buildOrderedCards(c1l2Order, collectionsWithProducts, 'op-c1l2')
-  const maisVendidosProducts = buildOrderedCards(maisVendidosOrder, collectionsWithProducts, 'op-bestseller')
-  const edicaoLimitadaProducts = buildOrderedCards(edicaoLimitadaOrder, collectionsWithProducts, 'op-edicao-limitada')
-  const singleSections = SINGLE_CATEGORY_SECTIONS.map((section, i) => ({
-    ...section,
-    products: buildOrderedCards(singleCategoryOrders[i], collectionsWithProducts, `op-${section.title.toLowerCase()}`),
-  }))
+  const categoryOf = (opProductSlug: string) =>
+    categorySlugByOriginalSlug.get(opProductSlug.replace(/-op$/, ''))
+
+  const featuredFirst = opProducts.filter((p) => FEATURED_FIRST_SLUGS.includes(p.slug.replace(/-op$/, '')))
+  const featuredSlugs = new Set(featuredFirst.map((p) => p.slug))
+  const remaining = opProducts.filter((p) => !featuredSlugs.has(p.slug))
+  const gridProducts = [...featuredFirst, ...remaining]
+
+  const publicDir = path.join(process.cwd(), 'public')
+  const categorySections = CATEGORY_SECTIONS_ORDER.map((section) => {
+    const products = opProducts.filter((p) => categoryOf(p.slug) === section.slug)
+    const finalProducts = section.layout === 'fixedGrid' ? products.slice(0, 6) : products
+
+    const desktopPath = `banners-categorias/BANNER CATEGORIA/banner_categoria_${section.fileNameSlug}.jpg`
+    const mobilePath = `banners-categorias/BANNER CATEGORIA/banner_categoria_${section.fileNameSlug}_mobile.jpg`
+    const hasBanner = fs.existsSync(path.join(publicDir, desktopPath)) && fs.existsSync(path.join(publicDir, mobilePath))
+
+    return {
+      ...section,
+      products: finalProducts,
+      banner: hasBanner
+        ? {
+            desktop: `/banners-categorias/BANNER%20CATEGORIA/banner_categoria_${section.fileNameSlug}.jpg`,
+            mobile: `/banners-categorias/BANNER%20CATEGORIA/banner_categoria_${section.fileNameSlug}_mobile.jpg`,
+          }
+        : undefined,
+    }
+  })
 
   return (
     <>
       <Hero
-        title="JHF Oferta Progressiva"
-        subtitle="Quanto mais óculos você leva, menor o preço — e ainda ganha brindes."
-        cta="Ver Ofertas"
-        desktopBanner="/banners-categorias/BANNER%20CATEGORIA/banner_09.jpg"
-        mobileBanner="/banners-categorias/BANNER%20CATEGORIA/banner_09_mobile.jpg"
-        alt="JHF Oferta Progressiva"
+        desktopBanner="/BANNER%20175/banner_03.jpg"
+        mobileBanner="/BANNER%20175/banner_03_mobile.jpg"
+        alt="Oferta Progressiva — 1 óculos por R$175, 2 por R$297"
         href="/colecao/oferta-progressiva"
       />
 
       <BenefitsBar />
 
-      {c1l2Products.length > 0 && (
+      {gridProducts.length > 0 && (
         <ProductCarousel
-          title="COMPRE 1 ÓCULOS"
-          products={c1l2Products}
+          title="Oferta Progressiva"
+          products={gridProducts}
+          href="/colecao/oferta-progressiva"
           unroll={false}
           fixedGrid
         />
       )}
 
-      {singleSections.slice(0, 2).map((section) =>
-        section.products.length === 0 ? null : (
-          <div key={section.title}>
+      {categorySections.map((section) => {
+        if (section.products.length === 0) return null
+        return (
+          <div key={section.slug}>
             {section.banner && (
               <CategoryBanner desktopSrc={section.banner.desktop} mobileSrc={section.banner.mobile} alt={`Banner ${section.title}`} />
             )}
-            <ProductCarousel title={section.title} products={section.products} unroll={false} mobileScroll />
+            <ProductCarousel
+              title={section.title}
+              products={section.products}
+              unroll={false}
+              mobileScroll={section.layout === 'carousel'}
+              fullGrid={section.layout === 'grid'}
+              fixedGrid={section.layout === 'fixedGrid'}
+            />
           </div>
         )
-      )}
+      })}
 
-      {maisVendidosProducts.length > 0 && (
-        <>
-          <CategoryBanner
-            desktopSrc="/BANNERS%20297/mais%20vendidos_pc.jpg"
-            mobileSrc="/BANNERS%20297/maisvendidos_mobile.jpg"
-            alt="Mais Vendidos"
-          />
-          <ProductCarousel title="Mais Vendidos" products={maisVendidosProducts} unroll={false} fixedGrid />
-        </>
-      )}
-
-      {singleSections.slice(2, 4).map((section) =>
-        section.products.length === 0 ? null : (
-          <div key={section.title}>
-            {section.banner && (
-              <CategoryBanner desktopSrc={section.banner.desktop} mobileSrc={section.banner.mobile} alt={`Banner ${section.title}`} />
-            )}
-            <ProductCarousel title={section.title} products={section.products} unroll={false} mobileScroll />
-          </div>
-        )
-      )}
-
-      {edicaoLimitadaProducts.length > 0 && (
-        <>
-          <CategoryBanner
-            desktopSrc="/BANNERS%20297/categoria_pc.jpg"
-            mobileSrc="/BANNERS%20297/categoria_mobile.jpg"
-            alt="Edição Limitada"
-          />
-          <ProductCarousel title="Edição Limitada" products={edicaoLimitadaProducts} unroll={false} fixedGrid />
-        </>
-      )}
-
-      {singleSections.slice(4).map((section) =>
-        section.products.length === 0 ? null : (
-          <div key={section.title}>
-            {section.banner && (
-              <CategoryBanner desktopSrc={section.banner.desktop} mobileSrc={section.banner.mobile} alt={`Banner ${section.title}`} />
-            )}
-            <ProductCarousel title={section.title} products={section.products} unroll={false} mobileScroll />
-          </div>
-        )
-      )}
+      <SocialProof />
 
       <WhatsAppButton />
     </>
   )
+}
+
+async function getOriginalCategoryMap(): Promise<Map<string, string>> {
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase
+    .from('products')
+    .select('slug, collection:collections(slug)')
+    .eq('status', 'active')
+
+  const map = new Map<string, string>()
+  for (const row of (data ?? []) as { slug: string; collection: { slug: string } | { slug: string }[] | null }[]) {
+    const collection = Array.isArray(row.collection) ? row.collection[0] : row.collection
+    if (collection?.slug) map.set(row.slug, collection.slug)
+  }
+  return map
 }
