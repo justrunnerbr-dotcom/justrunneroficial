@@ -474,6 +474,14 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Grade vertical de categoria única (Home) — sem limite de itens, cresce em
+   linhas de 2 (mobile) / 4 (desktop) em vez de cortar em 6 ou virar carrossel. */
+@media (max-width: 749px) {
+  .product-carousel-uncapped .carousel-item:nth-child(n+7) {
+    display: block;
+  }
+}
+
 /* Trust badges (ProductFAQ) — grid on desktop, auto-scrolling marquee on mobile */
 .trust-badges-grid {
   display: grid;

@@ -16,9 +16,11 @@ interface ProductCarouselProps {
   mobileScroll?: boolean
   /** Vitrine fixa: mantém grid (não vira scroll horizontal) também no desktop, pra mostrar todos os produtos de uma vez */
   fixedGrid?: boolean
+  /** Grade vertical de categoria única: grid 2 colunas (mobile) / 4 colunas (desktop) crescendo em linhas, sem cortar em 6 e sem carrossel */
+  fullGrid?: boolean
 }
 
-export function ProductCarousel({ title, products, href = '/colecao', unroll = true, mobileScroll = false, fixedGrid = false }: ProductCarouselProps) {
+export function ProductCarousel({ title, products, href = '/colecao', unroll = true, mobileScroll = false, fixedGrid = false, fullGrid = false }: ProductCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null)
 
   const unrolledProducts = unroll ? unrollProductVariants(products) : products
@@ -26,8 +28,8 @@ export function ProductCarousel({ title, products, href = '/colecao', unroll = t
   if (unrolledProducts.length === 0) return null
 
   // Show navigation arrows only when more products than fit in one viewport
-  // (não faz sentido em vitrine fixa: não tem scroll horizontal pra navegar)
-  const showArrows = !fixedGrid && unrolledProducts.length > 4
+  // (não faz sentido em vitrine fixa/grade: não tem scroll horizontal pra navegar)
+  const showArrows = !fixedGrid && !fullGrid && unrolledProducts.length > 4
 
   function scroll(dir: 'left' | 'right') {
     if (!trackRef.current) return
@@ -98,7 +100,7 @@ export function ProductCarousel({ title, products, href = '/colecao', unroll = t
         </div>
 
         {/* ── Carousel track ── */}
-        <div ref={trackRef} className={`product-carousel-grid${mobileScroll ? ' product-carousel-scroll' : ''}${fixedGrid ? ' product-carousel-fixed' : ''}`}>
+        <div ref={trackRef} className={`product-carousel-grid${mobileScroll ? ' product-carousel-scroll' : ''}${fixedGrid || fullGrid ? ' product-carousel-fixed' : ''}${fullGrid ? ' product-carousel-uncapped' : ''}`}>
           {unrolledProducts.map((product) => (
             <div key={product.id} className="carousel-item">
               <ProductCard product={product} />

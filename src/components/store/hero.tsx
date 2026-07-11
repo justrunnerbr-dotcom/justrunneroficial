@@ -1,9 +1,6 @@
 import Link from 'next/link'
 
 interface HeroProps {
-  title: string
-  subtitle: string
-  cta: string
   desktopBanner?: string
   mobileBanner?: string
   alt?: string
@@ -11,9 +8,9 @@ interface HeroProps {
 }
 
 export function Hero({
-  desktopBanner = '/BANNERS%20297/banner_03_home_297.jpg',
-  mobileBanner = '/BANNERS%20297/banner_03_mobile_home_297.jpg',
-  alt = 'Promoção 2 Óculos por R$297',
+  desktopBanner = '/BANNERS%20297/banner_01.jpg',
+  mobileBanner = '/BANNERS%20297/banner_01_mobile.jpg',
+  alt = 'Just Runner',
   href = '/colecao',
 }: HeroProps) {
   return (

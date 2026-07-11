@@ -29,9 +29,9 @@ export default async function AllCollectionsPage() {
       {/* Banner */}
       <div style={{ width: '100%' }}>
         <picture>
-          <source media="(max-width: 767px)" srcSet="/BANNERS%20297/categoria_mobile.jpg" />
+          <source media="(max-width: 767px)" srcSet="/BANNERS%20297/banner_02_mobile.jpg" />
           <img
-            src="/BANNERS%20297/categoria_pc.jpg"
+            src="/BANNERS%20297/banner_02.jpg"
             alt="Todas as Coleções"
             style={{ width: '100%', height: 'auto', display: 'block' }}
           />

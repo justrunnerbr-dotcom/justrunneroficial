@@ -3,7 +3,7 @@
 // modelo/linha, compartilhado por todas as variações de cor daquela categoria.
 // Counts menores que 3 para categorias com menos vídeos disponíveis.
 const VIDEO_COUNTS: Partial<Record<string, number>> = {
-  'half-jacket': 1,
+  'half-jacket': 2,
   'straight-jacket': 1,
 }
 

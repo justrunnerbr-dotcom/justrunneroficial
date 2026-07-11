@@ -54,7 +54,9 @@ export default async function CollectionPage({ params }: PageProps) {
       updated_at: new Date().toISOString(),
     } as any
 
-    const allCollections = await getCollections()
+    // Oferta Progressiva é um catálogo duplicado à parte (produtos JROP-,
+    // R$175) — não deve aparecer aqui, só na própria página dela.
+    const allCollections = (await getCollections()).filter(c => c.slug !== 'oferta-progressiva')
     const productMap = await getProductsBatchByCollections(allCollections.map(c => c.id))
     const allProducts = allCollections.flatMap(c => productMap.get(c.id) ?? [])
 
