@@ -451,6 +451,9 @@ h1, h2, h3, h4, h5, h6 {
     overflow-x: visible;
     gap: 24px;
   }
+  .product-carousel-fixed .carousel-item:nth-child(n+11) {
+    display: none;
+  }
 }
 
 /* Opt-in modifier ("Talvez você goste" on the product page): swipeable
