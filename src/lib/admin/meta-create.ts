@@ -67,16 +67,26 @@ export async function createCampaign(cfg: MetaCreateConfig, params: {
   name: string
   objective: CampaignObjective
   accountId: string
+  /** CBO/Advantage campaign budget: orçamento fica na campanha, compartilhado entre
+   * os conjuntos, em vez de fixo por conjunto (ABO). Quando setado, os conjuntos
+   * criados dentro dessa campanha NÃO devem receber dailyBudgetBrl próprio. */
+  cboDailyBudgetBrl?: number
 }) {
   return metaPost(`act_${params.accountId}/campaigns`, {
     name: params.name,
     objective: params.objective,
     status: 'PAUSED',
     special_ad_categories: [],
-    // Orçamento fica no conjunto de anúncios (não na campanha), então CBO/Advantage
-    // budget sharing fica desligado — exigido pela Meta desde que passaram a pedir
-    // esse campo explicitamente.
+    // is_adset_budget_sharing_enabled não é CBO — é um recurso à parte (conjuntos
+    // "emprestando" até 20% de orçamento entre si dentro de ABO). Pra CBO de
+    // verdade (orçamento na campanha) essa flag tem que ficar false.
     is_adset_budget_sharing_enabled: false,
+    ...(params.cboDailyBudgetBrl ? {
+      daily_budget: Math.round(params.cboDailyBudgetBrl * 100),
+      // Em CBO o bid_strategy mora na campanha, não no conjunto (senão a Meta pede
+      // bid_amount explícito, que não queremos pra "menor custo automático").
+      bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+    } : {}),
   }, cfg.token)
 }
 
@@ -85,21 +95,25 @@ export async function createAdSet(cfg: MetaCreateConfig, params: {
   name: string
   campaignId: string
   accountId: string
-  dailyBudgetBrl: number
+  /** Omitir quando a campanha é CBO (cboDailyBudgetBrl em createCampaign) — o
+   * orçamento já vive na campanha, não pode ser setado nos dois níveis ao mesmo tempo. */
+  dailyBudgetBrl?: number
   ageMin: number
   ageMax: number
   gender: Gender
   /** Necessário quando o anúncio do conjunto vai usar asset_feed_spec (createVideoAdCreative) */
   isDynamicCreative?: boolean
+  /** true quando a campanha-mãe é CBO — bid_strategy fica só na campanha, não aqui */
+  isCbo?: boolean
 }) {
   const genders = params.gender === 'all' ? undefined : params.gender === 'male' ? [1] : [2]
   return metaPost(`act_${params.accountId}/adsets`, {
     name: params.name,
     campaign_id: params.campaignId,
-    daily_budget: Math.round(params.dailyBudgetBrl * 100),
+    ...(params.dailyBudgetBrl ? { daily_budget: Math.round(params.dailyBudgetBrl * 100) } : {}),
     billing_event: 'IMPRESSIONS',
     optimization_goal: 'OFFSITE_CONVERSIONS',
-    bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+    ...(params.isCbo ? {} : { bid_strategy: 'LOWEST_COST_WITHOUT_CAP' }),
     ...(params.isDynamicCreative ? { is_dynamic_creative: true } : {}),
     ...(cfg.pixelId ? {
       promoted_object: { pixel_id: cfg.pixelId, custom_event_type: 'PURCHASE' },
@@ -146,11 +160,14 @@ export async function createAdCreative(cfg: MetaCreateConfig, params: {
   cta: CallToAction
   pageId: string
   accountId: string
+  urlTags?: string
+  igUserId?: string
 }) {
   return metaPost(`act_${params.accountId}/adcreatives`, {
     name: params.name,
     object_story_spec: {
       page_id: params.pageId,
+      ...(params.igUserId ? { instagram_user_id: params.igUserId } : {}),
       link_data: {
         image_hash:  params.imageHash,
         link:        params.link,
@@ -163,6 +180,7 @@ export async function createAdCreative(cfg: MetaCreateConfig, params: {
         },
       },
     },
+    ...(params.urlTags ? { url_tags: params.urlTags } : {}),
   }, cfg.token)
 }
 
@@ -264,6 +282,43 @@ export async function createVideoAdCreative(cfg: MetaCreateConfig, params: {
       link_urls:    [{ website_url: params.link }],
       ad_formats:   ['SINGLE_VIDEO'],
       call_to_action_types: [params.cta],
+    },
+    ...(params.urlTags ? { url_tags: params.urlTags } : {}),
+  }, cfg.token)
+}
+
+// 4c. Criativo de vídeo estático (video_data fixo, não asset_feed_spec) — pra
+// reaproveitar um video_id já existente com texto/título fixos (sem variação
+// dinâmica), igual o formato original dos anúncios vencedores sendo clonados.
+// Não precisa de is_dynamic_creative no conjunto.
+export async function createStaticVideoAdCreative(cfg: MetaCreateConfig, params: {
+  name: string
+  videoId: string
+  thumbnailUrl: string
+  link: string
+  message: string
+  title?: string
+  cta: CallToAction
+  pageId: string
+  accountId: string
+  urlTags?: string
+  igUserId?: string
+}) {
+  return metaPost(`act_${params.accountId}/adcreatives`, {
+    name: params.name,
+    object_story_spec: {
+      page_id: params.pageId,
+      ...(params.igUserId ? { instagram_user_id: params.igUserId } : {}),
+      video_data: {
+        video_id:  params.videoId,
+        image_url: params.thumbnailUrl,
+        message:   params.message,
+        ...(params.title ? { title: params.title } : {}),
+        call_to_action: {
+          type:  params.cta,
+          value: { link: params.link },
+        },
+      },
     },
     ...(params.urlTags ? { url_tags: params.urlTags } : {}),
   }, cfg.token)
