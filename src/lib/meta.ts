@@ -12,6 +12,10 @@ declare global {
 }
 
 export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''
+// Pixel da conta secundária (CA - JUST RUNNER) — teste de silo separado da conta
+// primária, rodando em paralelo no mesmo site (fbq('track', ...) já dispara pra
+// todos os pixels inicializados, sem precisar duplicar cada chamada de evento).
+export const META_PIXEL_ID_2 = process.env.NEXT_PUBLIC_META_PIXEL_ID_2 ?? ''
 
 const DEBUG = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_META_DEBUG === 'true'
 

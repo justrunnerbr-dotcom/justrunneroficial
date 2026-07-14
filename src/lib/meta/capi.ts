@@ -1,6 +1,9 @@
 import { createHash } from 'crypto'
 
-const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''
+const PIXEL_IDS = [
+  process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '',
+  process.env.NEXT_PUBLIC_META_PIXEL_ID_2 ?? '',
+].filter(Boolean)
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex')
@@ -58,29 +61,34 @@ export async function sendCapiEvent(params: {
   const token = process.env.META_ACCESS_TOKEN
   if (!token) return
 
-  try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${PIXEL_ID}/events`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: [{
-          event_name:       params.eventName,
-          event_time:       params.eventTime,
-          event_id:         params.eventId,
-          action_source:    'website',
-          event_source_url: params.eventSourceUrl,
-          user_data:        params.userData,
-          custom_data:      params.customData,
-        }],
-        access_token: token,
-      }),
-    })
-    if (!res.ok) {
-      console.error(`[meta-capi] falha ao enviar ${params.eventName}:`, await res.text())
+  // Espelha pra cada pixel configurado (silo da conta primária + silo da secundária,
+  // se NEXT_PUBLIC_META_PIXEL_ID_2 estiver setado) — cada um recebe o evento
+  // independente, pra manter a atribuição/audiência de cada conta separada.
+  await Promise.all(PIXEL_IDS.map(async (pixelId) => {
+    try {
+      const res = await fetch(`https://graph.facebook.com/v21.0/${pixelId}/events`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: [{
+            event_name:       params.eventName,
+            event_time:       params.eventTime,
+            event_id:         params.eventId,
+            action_source:    'website',
+            event_source_url: params.eventSourceUrl,
+            user_data:        params.userData,
+            custom_data:      params.customData,
+          }],
+          access_token: token,
+        }),
+      })
+      if (!res.ok) {
+        console.error(`[meta-capi] falha ao enviar ${params.eventName} pro pixel ${pixelId}:`, await res.text())
+      }
+    } catch (err) {
+      console.error(`[meta-capi] erro ao enviar ${params.eventName} pro pixel ${pixelId}:`, err instanceof Error ? err.message : err)
     }
-  } catch (err) {
-    console.error(`[meta-capi] erro ao enviar ${params.eventName}:`, err instanceof Error ? err.message : err)
-  }
+  }))
 }
 
 export async function sendCapiPurchase(params: {

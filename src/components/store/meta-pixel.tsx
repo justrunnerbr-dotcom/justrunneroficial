@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Script from 'next/script'
-import { META_PIXEL_ID, metaPageView } from '@/lib/meta'
+import { META_PIXEL_ID, META_PIXEL_ID_2, metaPageView } from '@/lib/meta'
 
 export function MetaPixel() {
   const pathname = usePathname()
@@ -34,6 +34,7 @@ export function MetaPixel() {
               s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
               (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
               fbq('init','${META_PIXEL_ID}');
+              ${META_PIXEL_ID_2 ? `fbq('init','${META_PIXEL_ID_2}');` : ''}
               fbq('track','PageView');
             }
           `,
@@ -49,6 +50,18 @@ export function MetaPixel() {
           alt=""
         />
       </noscript>
+      {META_PIXEL_ID_2 && (
+        <noscript>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID_2}&ev=PageView&noscript=1`}
+            alt=""
+          />
+        </noscript>
+      )}
     </>
   )
 }
