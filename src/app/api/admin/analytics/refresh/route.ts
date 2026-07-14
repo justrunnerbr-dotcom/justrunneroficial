@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
+const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ = 'America/Sao_Paulo'
 
 async function checkAuth() {

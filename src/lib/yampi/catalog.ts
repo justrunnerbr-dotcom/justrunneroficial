@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
+const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 export interface YampiCredentials {
   alias: string

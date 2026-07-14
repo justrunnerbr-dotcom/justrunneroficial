@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { LiveRefresh } from './_components/live-refresh'
 import { LiveMap }     from './_components/live-map'
 
-const JHF = 'a0000000-0000-0000-0000-000000000001'
+const JHF = 'b0000000-0000-0000-0000-000000000001'
 const TZ   = 'America/Sao_Paulo'
 
 function getDb() {

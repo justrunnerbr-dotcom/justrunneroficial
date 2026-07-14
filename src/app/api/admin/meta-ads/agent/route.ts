@@ -12,7 +12,7 @@ import {
   getMetaLiveCampaigns,
 } from '@/lib/admin/meta-ads'
 
-const JHF_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
+const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const MODEL        = 'claude-sonnet-5'
 const MAX_HISTORY  = 20
 const MAX_TOOL_LOOPS = 10

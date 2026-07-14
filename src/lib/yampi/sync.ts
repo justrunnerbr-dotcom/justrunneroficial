@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { isSiteOficialOrder } from './so-products'
 import { sendCapiPurchase, sendCapiEvent, hashEmail, hashPhone, hashExternalId } from '@/lib/meta/capi'
 
-export const JHF_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
+export const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 export const PAID_STATUSES = new Set([
   'paid',

@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { DateRange } from './date-range'
 
-const JHF_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
+const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 const PAID_STATUSES = [
   'paid', 'invoiced', 'on_carriage', 'payment_confirmed',

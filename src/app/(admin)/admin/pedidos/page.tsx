@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { ShoppingBag, ExternalLink, Package, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { getDateRangeFromSearchParams, type DateRange } from '@/lib/admin/date-range'
 
-const JHF_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
+const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 function getDb() {
   return createClient(
