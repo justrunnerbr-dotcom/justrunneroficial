@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const rawBody = await request.text()
 
-    const secret = process.env.YAMPI_SECRET_KEY
+    const secret = process.env.YAMPI_WEBHOOK_SECRET
     if (secret) {
       const sig      = request.headers.get('x-yampi-hmac-sha256') ?? ''
       const expected = createHmac('sha256', secret).update(rawBody).digest('hex')

@@ -74,7 +74,7 @@ export default async function PedidosPage({
   const range = getDateRangeFromSearchParams(sp)
 
   const yampiOk = !!(
-    process.env.YAMPI_ALIAS &&
+    process.env.NEXT_PUBLIC_YAMPI_ALIAS &&
     process.env.YAMPI_API_TOKEN &&
     process.env.YAMPI_SECRET_KEY
   )
@@ -128,7 +128,7 @@ export default async function PedidosPage({
             <p style={{ fontSize: '13px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>Integração Yampi incompleta</p>
             <p style={{ fontSize: '12px', color: '#b45309' }}>
               Faltam env vars: {[
-                !process.env.YAMPI_ALIAS && 'YAMPI_ALIAS',
+                !process.env.NEXT_PUBLIC_YAMPI_ALIAS && 'NEXT_PUBLIC_YAMPI_ALIAS',
                 !process.env.YAMPI_API_TOKEN && 'YAMPI_API_TOKEN',
                 !process.env.YAMPI_SECRET_KEY && 'YAMPI_SECRET_KEY',
               ].filter(Boolean).join(', ')}

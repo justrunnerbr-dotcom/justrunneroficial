@@ -40,11 +40,11 @@ async function fetchYampiPage(
 export async function POST(request: Request) {
   if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
 
-  const alias     = process.env.YAMPI_ALIAS
+  const alias     = process.env.NEXT_PUBLIC_YAMPI_ALIAS
   const token     = process.env.YAMPI_API_TOKEN
   const secretKey = process.env.YAMPI_SECRET_KEY
   if (!alias || !token || !secretKey) {
-    return NextResponse.json({ ok: false, error: 'YAMPI_ALIAS, YAMPI_API_TOKEN or YAMPI_SECRET_KEY not configured' }, { status: 500 })
+    return NextResponse.json({ ok: false, error: 'NEXT_PUBLIC_YAMPI_ALIAS, YAMPI_API_TOKEN or YAMPI_SECRET_KEY not configured' }, { status: 500 })
   }
 
   const body = await request.json().catch(() => ({}))

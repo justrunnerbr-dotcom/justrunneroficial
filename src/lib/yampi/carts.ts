@@ -75,7 +75,7 @@ function mapCart(row: YampiCartRow, createdAtISO: string): AbandonedCart {
  * necessário: para de buscar assim que encontra um carrinho mais antigo que `since`.
  */
 export async function getAbandonedCarts(since: string, until: string): Promise<AbandonedCart[]> {
-  const alias     = process.env.YAMPI_ALIAS
+  const alias     = process.env.NEXT_PUBLIC_YAMPI_ALIAS
   const token     = process.env.YAMPI_API_TOKEN
   const secretKey = process.env.YAMPI_SECRET_KEY
   if (!alias || !token || !secretKey) return []
@@ -131,7 +131,7 @@ export async function getAbandonedCarts(since: string, until: string): Promise<A
  * comprando um produto legado nunca apareceria na nossa tabela local).
  */
 export async function getRecentPaidCustomerEmails(since: string): Promise<Set<string>> {
-  const alias     = process.env.YAMPI_ALIAS
+  const alias     = process.env.NEXT_PUBLIC_YAMPI_ALIAS
   const token     = process.env.YAMPI_API_TOKEN
   const secretKey = process.env.YAMPI_SECRET_KEY
   const emails    = new Set<string>()
@@ -199,7 +199,7 @@ export interface RecoveredOrder {
  * abandonados (vira pedido), então cruzar contra a lista atual perde a maioria dos casos.
  */
 export async function getRecoveredOrders(since: string, until: string): Promise<RecoveredOrder[]> {
-  const alias     = process.env.YAMPI_ALIAS
+  const alias     = process.env.NEXT_PUBLIC_YAMPI_ALIAS
   const token     = process.env.YAMPI_API_TOKEN
   const secretKey = process.env.YAMPI_SECRET_KEY
   const results: RecoveredOrder[] = []

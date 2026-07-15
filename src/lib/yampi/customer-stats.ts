@@ -30,7 +30,7 @@ interface CustomerAgg {
  * comprou da marca vale reconquistar. Demora dezenas de segundos (só via botão manual).
  */
 export async function syncCustomerPurchaseStats(db: SupabaseClient): Promise<{ synced: number; errors: number; ordersScanned: number }> {
-  const alias     = process.env.YAMPI_ALIAS
+  const alias     = process.env.NEXT_PUBLIC_YAMPI_ALIAS
   const token     = process.env.YAMPI_API_TOKEN
   const secretKey = process.env.YAMPI_SECRET_KEY
   if (!alias || !token || !secretKey) return { synced: 0, errors: 0, ordersScanned: 0 }
