@@ -362,9 +362,9 @@ async function fetchInsightsFromMeta(
   since: string,
   until: string,
   level: 'campaign' | 'adset' | 'ad' = 'campaign',
+  accountId: string,
 ): Promise<MetaInsightRow[]> {
-  const token     = process.env.META_ACCESS_TOKEN
-  const accountId = process.env.META_AD_ACCOUNT_ID
+  const token = process.env.META_ACCESS_TOKEN
   if (!token || !accountId) return []
 
   const fields = [
@@ -453,9 +453,9 @@ async function saveInsightsToDB(
   db: SupabaseClient,
   rows: MetaInsightRow[],
   level: string,
+  accountId: string,
 ): Promise<number> {
   if (!rows.length) return 0
-  const accountId = process.env.META_AD_ACCOUNT_ID ?? ''
 
   const records = rows.map(r => ({
     store_id:            JHF_STORE_ID,
@@ -509,10 +509,14 @@ export async function syncMetaInsights(
   }
 
   const startedAt = new Date().toISOString()
+  const accountIds = META_ACCOUNTS.map((a) => a.id).filter(Boolean)
 
   try {
-    const rows  = await fetchInsightsFromMeta(since, until, 'campaign')
-    const count = await saveInsightsToDB(db, rows, 'campaign')
+    let count = 0
+    for (const accountId of accountIds) {
+      const rows = await fetchInsightsFromMeta(since, until, 'campaign', accountId)
+      count += await saveInsightsToDB(db, rows, 'campaign', accountId)
+    }
 
     try {
       await db.from('meta_sync_logs').insert({
