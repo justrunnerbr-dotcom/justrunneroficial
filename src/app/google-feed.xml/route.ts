@@ -78,6 +78,7 @@ export async function GET() {
 
   for (const product of products) {
     if (isHidden(product.slug, product.name)) continue
+    if (product.collection?.slug === 'oferta-progressiva') continue
 
     const sortedVariants = [...product.variants].sort((a, b) => a.position - b.position)
     const sortedImages = [...product.images].sort((a, b) => a.position - b.position)
