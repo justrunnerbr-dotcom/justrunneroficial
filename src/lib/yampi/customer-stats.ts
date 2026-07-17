@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { parseYampiDate, PAID_STATUSES, JHF_STORE_ID } from './sync'
+import { parseYampiDate, PAID_STATUSES, STORE_ID } from './sync'
 
 interface YampiOrderRow {
   status?: { data?: { alias?: string } }
@@ -90,7 +90,7 @@ export async function syncCustomerPurchaseStats(db: SupabaseClient): Promise<{ s
   }
 
   const rows = Array.from(byEmail.values()).map(c => ({
-    store_id:            JHF_STORE_ID,
+    store_id:            STORE_ID,
     email:               c.email,
     name:                c.name,
     phone_whatsapp_link: c.phoneWhatsappLink,

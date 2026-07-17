@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 async function checkAuth() {
   const cookieStore = await cookies()
@@ -27,7 +27,7 @@ export async function GET() {
   const { data, error } = await db
     .from('brain_recommendations')
     .select(`*, signal:brain_signals(signal_type, severity, metric_name, current_value, baseline_value, delta_pct, detected_at)`)
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
     .in('status', ['open', 'acknowledged'])
     .order('created_at', { ascending: false })
     .limit(10)

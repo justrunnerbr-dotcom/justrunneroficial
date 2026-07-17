@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 export interface YampiCredentials {
   alias: string
@@ -210,7 +210,7 @@ export async function logYampiCatalogSync(
 ): Promise<void> {
   try {
     await db.from('yampi_catalog_sync_logs').insert({
-      store_id:         JHF_STORE_ID,
+      store_id:         STORE_ID,
       variant_id:       entry.variantId ?? null,
       product_id:       entry.productId ?? null,
       yampi_sku_id:     entry.yampiSkuId ?? null,

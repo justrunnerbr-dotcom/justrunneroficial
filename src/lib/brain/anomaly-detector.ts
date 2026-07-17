@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ = 'America/Sao_Paulo'
 
 function brlDate(daysAgo = 0): string {
@@ -38,14 +38,14 @@ async function detectConversionDrop(db: SupabaseClient): Promise<Signal | null> 
   const [recentRows, baselineRows] = await Promise.all([
     db.from('daily_analytics')
       .select('date, conversion_rate, sessions, orders')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', brlDate(3))
       .lte('date', brlDate(0))
       .gt('sessions', 0),
 
     db.from('daily_analytics')
       .select('date, conversion_rate, sessions, orders')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', brlDate(10))
       .lt('date',  brlDate(3))
       .gt('sessions', 0),
@@ -120,13 +120,13 @@ async function detectRevenueDrop(db: SupabaseClient): Promise<Signal | null> {
   const [recentRows, baselineRows] = await Promise.all([
     db.from('daily_analytics')
       .select('date, revenue, orders')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', brlDate(3))
       .lte('date', brlDate(0)),
 
     db.from('daily_analytics')
       .select('date, revenue, orders')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', brlDate(10))
       .lt('date',  brlDate(3)),
   ])
@@ -169,13 +169,13 @@ async function detectTrafficDrop(db: SupabaseClient): Promise<Signal | null> {
   const [recentRows, baselineRows] = await Promise.all([
     db.from('daily_analytics')
       .select('date, sessions')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', brlDate(3))
       .lte('date', brlDate(0)),
 
     db.from('daily_analytics')
       .select('date, sessions')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', brlDate(10))
       .lt('date',  brlDate(3)),
   ])
@@ -232,7 +232,7 @@ export async function detectAnomalies(db: SupabaseClient): Promise<Signal[]> {
 
 export async function saveSignal(db: SupabaseClient, signal: Signal): Promise<string> {
   const { data, error } = await db.from('brain_signals').insert({
-    store_id:       JHF_STORE_ID,
+    store_id:       STORE_ID,
     signal_type:    signal.signal_type,
     severity:       signal.severity,
     metric_name:    signal.metric_name,

@@ -1,7 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { DateRange } from './date-range'
+import { fetchAllRows } from './supabase-pagination'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 const PAID_STATUSES = [
   'paid', 'invoiced', 'on_carriage', 'payment_confirmed',
@@ -162,29 +163,34 @@ function journeyStatus(types: string[]): string {
 
 export async function getCommerceBrainData(db: SupabaseClient, range: DateRange): Promise<CommerceBrainData> {
 
-  // Batch 1: funnel counts (HEAD requests)
+  // Batch 1: funnel counts (HEAD requests, imunes ao teto de 1000 linhas)
   const [
-    sessionsRes, viewsRes, atcRes, checkoutRes, cartOpenRes, ordersRes,
-    sourceSessionsRes, sourceOrdersRes, recentSessionsRes,
+    sessionsRes, viewsRes, atcRes, checkoutRes, cartOpenRes, orders,
+    sourceSessions, sourceOrders, recentSessionsRes,
   ] = await Promise.all([
     db.from('sessions').select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO),
+      .eq('store_id', STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO),
     db.from('events').select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO),
+      .eq('store_id', STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO),
     db.from('events').select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'add_to_cart').gte('created_at', range.startISO).lt('created_at', range.endISO),
+      .eq('store_id', STORE_ID).eq('event_type', 'add_to_cart').gte('created_at', range.startISO).lt('created_at', range.endISO),
     db.from('events').select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'initiate_checkout').gte('created_at', range.startISO).lt('created_at', range.endISO),
+      .eq('store_id', STORE_ID).eq('event_type', 'initiate_checkout').gte('created_at', range.startISO).lt('created_at', range.endISO),
     db.from('events').select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'cart_open').gte('created_at', range.startISO).lt('created_at', range.endISO),
-    db.from('orders').select('total, utm_source')
-      .eq('store_id', JHF_STORE_ID).in('status', PAID_STATUSES).gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
-    db.from('sessions').select('utm_source')
-      .eq('store_id', JHF_STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO).limit(5000),
-    db.from('orders').select('total, utm_source')
-      .eq('store_id', JHF_STORE_ID).in('status', PAID_STATUSES).gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
+      .eq('store_id', STORE_ID).eq('event_type', 'cart_open').gte('created_at', range.startISO).lt('created_at', range.endISO),
+    fetchAllRows<{ total: number | string | null; utm_source: string | null }>((from, to) =>
+      db.from('orders').select('total, utm_source')
+        .eq('store_id', STORE_ID).in('status', PAID_STATUSES)
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ utm_source: string | null }>((from, to) =>
+      db.from('sessions').select('utm_source')
+        .eq('store_id', STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO).range(from, to)),
+    fetchAllRows<{ total: number | string | null; utm_source: string | null }>((from, to) =>
+      db.from('orders').select('total, utm_source')
+        .eq('store_id', STORE_ID).in('status', PAID_STATUSES)
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
     db.from('sessions').select('id, started_at, device, utm_source')
-      .eq('store_id', JHF_STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO)
+      .eq('store_id', STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO)
       .order('started_at', { ascending: false }).limit(25),
   ])
 
@@ -192,38 +198,52 @@ export async function getCommerceBrainData(db: SupabaseClient, range: DateRange)
   const totalViews    = viewsRes.count     ?? 0
   const totalAtc      = atcRes.count       ?? 0
   const totalCheckout = checkoutRes.count  ?? 0
-  const orders        = ordersRes.data     ?? []
   const totalPaid     = orders.length
   const totalRevenue  = orders.reduce((s, o) => s + parseFloat(String(o.total ?? 0)), 0)
 
   // Sessões únicas por etapa (não contagem bruta de evento) — uma sessão pode gerar
   // dezenas de view_content (navegador comparando produtos, ou bot/crawler), o que
   // achatava artificialmente a taxa de Add to Cart quando dividida por evento cru.
-  const [viewSessionsRes, atcSessionsRes, checkoutSessionsRes] = await Promise.all([
-    db.from('events').select('session_id')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(20000),
-    db.from('events').select('session_id')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'add_to_cart').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(20000),
-    db.from('events').select('session_id')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'initiate_checkout').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(20000),
+  const [viewSessionRows, atcSessionRows, checkoutSessionRows] = await Promise.all([
+    fetchAllRows<{ session_id: string | null }>((from, to) =>
+      db.from('events').select('session_id')
+        .eq('store_id', STORE_ID).eq('event_type', 'view_content')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ session_id: string | null }>((from, to) =>
+      db.from('events').select('session_id')
+        .eq('store_id', STORE_ID).eq('event_type', 'add_to_cart')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ session_id: string | null }>((from, to) =>
+      db.from('events').select('session_id')
+        .eq('store_id', STORE_ID).eq('event_type', 'initiate_checkout')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
   ])
 
-  const viewSessions     = new Set((viewSessionsRes.data ?? []).map(r => r.session_id)).size
-  const atcSessions      = new Set((atcSessionsRes.data ?? []).map(r => r.session_id)).size
-  const checkoutSessions = new Set((checkoutSessionsRes.data ?? []).map(r => r.session_id)).size
+  const viewSessions     = new Set(viewSessionRows.map(r => r.session_id)).size
+  const atcSessions      = new Set(atcSessionRows.map(r => r.session_id)).size
+  const checkoutSessions = new Set(checkoutSessionRows.map(r => r.session_id)).size
 
   // Batch 2: detail data for products + devices
-  const [prodViewsRes, prodAtcRes, devSessionsRes, devViewsRes, devAtcRes] = await Promise.all([
-    db.from('events').select('product_slug')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
-    db.from('events').select('product_slug')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'add_to_cart').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
-    db.from('sessions').select('device')
-      .eq('store_id', JHF_STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO).limit(5000),
-    db.from('events').select('device')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
-    db.from('events').select('device')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'add_to_cart').gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
+  const [prodViews, prodAtc, devSessions, devViews, devAtc] = await Promise.all([
+    fetchAllRows<{ product_slug: string | null }>((from, to) =>
+      db.from('events').select('product_slug')
+        .eq('store_id', STORE_ID).eq('event_type', 'view_content')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ product_slug: string | null }>((from, to) =>
+      db.from('events').select('product_slug')
+        .eq('store_id', STORE_ID).eq('event_type', 'add_to_cart')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ device: string | null }>((from, to) =>
+      db.from('sessions').select('device')
+        .eq('store_id', STORE_ID).gte('started_at', range.startISO).lt('started_at', range.endISO).range(from, to)),
+    fetchAllRows<{ device: string | null }>((from, to) =>
+      db.from('events').select('device')
+        .eq('store_id', STORE_ID).eq('event_type', 'view_content')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ device: string | null }>((from, to) =>
+      db.from('events').select('device')
+        .eq('store_id', STORE_ID).eq('event_type', 'add_to_cart')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
   ])
 
   // ── Funnel ─────────────────────────────────────────────────────────────────
@@ -252,11 +272,11 @@ export async function getCommerceBrainData(db: SupabaseClient, range: DateRange)
   // ── Products ───────────────────────────────────────────────────────────────
 
   const viewsBySlug: Record<string, number> = {}
-  for (const e of prodViewsRes.data ?? []) {
+  for (const e of prodViews) {
     if (e.product_slug) viewsBySlug[e.product_slug] = (viewsBySlug[e.product_slug] ?? 0) + 1
   }
   const atcBySlug: Record<string, number> = {}
-  for (const e of prodAtcRes.data ?? []) {
+  for (const e of prodAtc) {
     if (e.product_slug) atcBySlug[e.product_slug] = (atcBySlug[e.product_slug] ?? 0) + 1
   }
 
@@ -275,12 +295,12 @@ export async function getCommerceBrainData(db: SupabaseClient, range: DateRange)
   // ── Traffic ────────────────────────────────────────────────────────────────
 
   const sessionsBySource: Record<string, number> = {}
-  for (const s of sourceSessionsRes.data ?? []) {
+  for (const s of sourceSessions) {
     const src = s.utm_source || 'Direto/Orgânico'
     sessionsBySource[src] = (sessionsBySource[src] ?? 0) + 1
   }
   const ordersBySource: Record<string, { count: number; revenue: number }> = {}
-  for (const o of sourceOrdersRes.data ?? []) {
+  for (const o of sourceOrders) {
     const src = o.utm_source || 'Direto/Orgânico'
     if (!ordersBySource[src]) ordersBySource[src] = { count: 0, revenue: 0 }
     ordersBySource[src].count++
@@ -308,16 +328,16 @@ export async function getCommerceBrainData(db: SupabaseClient, range: DateRange)
   // ── Devices ────────────────────────────────────────────────────────────────
 
   const devSess: Record<string, number> = {}
-  for (const s of devSessionsRes.data ?? []) { const d = s.device || 'desconhecido'; devSess[d] = (devSess[d] ?? 0) + 1 }
-  const devViews: Record<string, number> = {}
-  for (const e of devViewsRes.data ?? []) { const d = e.device || 'desconhecido'; devViews[d] = (devViews[d] ?? 0) + 1 }
-  const devAtc: Record<string, number> = {}
-  for (const e of devAtcRes.data ?? []) { const d = e.device || 'desconhecido'; devAtc[d] = (devAtc[d] ?? 0) + 1 }
+  for (const s of devSessions) { const d = s.device || 'desconhecido'; devSess[d] = (devSess[d] ?? 0) + 1 }
+  const devViewsBy: Record<string, number> = {}
+  for (const e of devViews) { const d = e.device || 'desconhecido'; devViewsBy[d] = (devViewsBy[d] ?? 0) + 1 }
+  const devAtcBy: Record<string, number> = {}
+  for (const e of devAtc) { const d = e.device || 'desconhecido'; devAtcBy[d] = (devAtcBy[d] ?? 0) + 1 }
 
   const devices: DeviceDiagnostic[] = Object.entries(devSess)
     .map(([device, sessions]) => {
-      const views = devViews[device] ?? 0
-      const atc   = devAtc[device]   ?? 0
+      const views = devViewsBy[device] ?? 0
+      const atc   = devAtcBy[device]   ?? 0
       return { device, sessions, views, atc, atcRate: ratio(atc, views) }
     })
     .sort((a, b) => b.sessions - a.sessions)
@@ -331,7 +351,7 @@ export async function getCommerceBrainData(db: SupabaseClient, range: DateRange)
     const ids = recentSessions.map((s) => s.id)
     const evRes = await db.from('events')
       .select('session_id, event_type, page, product_slug, created_at')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .in('session_id', ids)
       .order('created_at', { ascending: true })
       .limit(500)
@@ -400,27 +420,30 @@ export interface BrainQuickStats {
 }
 
 export async function getBrainQuickStats(db: SupabaseClient, range: DateRange): Promise<BrainQuickStats> {
-  const [cartOpenRes, atcRes, checkoutRes, paidRes] = await Promise.all([
-    db.from('events').select('session_id')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'cart_open')
-      .gte('created_at', range.startISO).lt('created_at', range.endISO).limit(20000),
-    db.from('events').select('session_id')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'add_to_cart')
-      .gte('created_at', range.startISO).lt('created_at', range.endISO).limit(20000),
-    db.from('events').select('session_id')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'initiate_checkout')
-      .gte('created_at', range.startISO).lt('created_at', range.endISO).limit(20000),
+  const [cartOpenRows, atcRows, checkoutRows, paidRes] = await Promise.all([
+    fetchAllRows<{ session_id: string | null }>((from, to) =>
+      db.from('events').select('session_id')
+        .eq('store_id', STORE_ID).eq('event_type', 'cart_open')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ session_id: string | null }>((from, to) =>
+      db.from('events').select('session_id')
+        .eq('store_id', STORE_ID).eq('event_type', 'add_to_cart')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ session_id: string | null }>((from, to) =>
+      db.from('events').select('session_id')
+        .eq('store_id', STORE_ID).eq('event_type', 'initiate_checkout')
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
     db.from('orders').select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID).in('status', PAID_STATUSES)
+      .eq('store_id', STORE_ID).in('status', PAID_STATUSES)
       .gte('created_at', range.startISO).lt('created_at', range.endISO),
   ])
 
   // Sessões únicas, não evento cru — o "Compre 1 Leve 2" faz um cliente gerar ~2
   // add_to_cart (um por produto escolhido) numa única sessão/carrinho, o que
   // achatava essa taxa artificialmente quando dividida por evento.
-  const cartOpen = new Set((cartOpenRes.data ?? []).map(r => r.session_id)).size
-  const atc      = new Set((atcRes.data ?? []).map(r => r.session_id)).size
-  const checkout = new Set((checkoutRes.data ?? []).map(r => r.session_id)).size
+  const cartOpen = new Set(cartOpenRows.map(r => r.session_id)).size
+  const atc      = new Set(atcRows.map(r => r.session_id)).size
+  const checkout = new Set(checkoutRows.map(r => r.session_id)).size
   const paid     = paidRes.count ?? 0
 
   const atcToCheckoutRate  = ratio(checkout, atc)
@@ -456,23 +479,25 @@ export interface ProductBrainBadge {
 }
 
 export async function getProductBrainBadges(db: SupabaseClient, range: DateRange): Promise<Record<string, ProductBrainBadge>> {
-  const [viewsRes, atcRes] = await Promise.all([
-    db.from('events').select('product_slug')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'view_content')
-      .not('product_slug', 'is', null)
-      .gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
-    db.from('events').select('product_slug')
-      .eq('store_id', JHF_STORE_ID).eq('event_type', 'add_to_cart')
-      .not('product_slug', 'is', null)
-      .gte('created_at', range.startISO).lt('created_at', range.endISO).limit(5000),
+  const [views_, atcs_] = await Promise.all([
+    fetchAllRows<{ product_slug: string | null }>((from, to) =>
+      db.from('events').select('product_slug')
+        .eq('store_id', STORE_ID).eq('event_type', 'view_content')
+        .not('product_slug', 'is', null)
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
+    fetchAllRows<{ product_slug: string | null }>((from, to) =>
+      db.from('events').select('product_slug')
+        .eq('store_id', STORE_ID).eq('event_type', 'add_to_cart')
+        .not('product_slug', 'is', null)
+        .gte('created_at', range.startISO).lt('created_at', range.endISO).range(from, to)),
   ])
 
   const views: Record<string, number> = {}
-  for (const e of viewsRes.data ?? []) {
+  for (const e of views_) {
     if (e.product_slug) views[e.product_slug] = (views[e.product_slug] ?? 0) + 1
   }
   const atcs: Record<string, number> = {}
-  for (const e of atcRes.data ?? []) {
+  for (const e of atcs_) {
     if (e.product_slug) atcs[e.product_slug] = (atcs[e.product_slug] ?? 0) + 1
   }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getAdminSupabase } from '@/lib/admin-client'
-import { JHF_STORE_ID } from '@/lib/yampi/sync'
+import { STORE_ID } from '@/lib/yampi/sync'
 
 async function checkAuth() {
   const cookieStore = await cookies()
@@ -17,7 +17,7 @@ export async function GET() {
   const { data } = await db
     .from('customer_contact_log')
     .select('email, bucket, contacted_at')
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
 
   return NextResponse.json({ contacts: data ?? [] })
 }
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
   const db = getAdminSupabase()
   const { error } = await db.from('customer_contact_log').upsert(
-    { store_id: JHF_STORE_ID, email: email.toLowerCase(), bucket, contacted_at: new Date().toISOString() },
+    { store_id: STORE_ID, email: email.toLowerCase(), bucket, contacted_at: new Date().toISOString() },
     { onConflict: 'store_id,email' },
   )
 

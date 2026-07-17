@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 function getDb() {
   return createClient(
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     await Promise.allSettled([
       db.from('events').insert({
-        store_id: JHF_STORE_ID,
+        store_id: STORE_ID,
         session_id,
         visitor_id: visitor_id || null,
         event_type,
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       db.from('sessions').upsert(
         {
           id:           session_id,
-          store_id:     JHF_STORE_ID,
+          store_id:     STORE_ID,
           visitor_id:   visitor_id || null,
           device:       device     || null,
           referrer:     referrer   || null,
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       db.from('live_visitors').upsert(
         {
           session_id,
-          store_id:     JHF_STORE_ID,
+          store_id:     STORE_ID,
           page:         page         || null,
           product_slug: product_slug || null,
           device:       device       || null,

@@ -2,7 +2,7 @@ import { ShoppingCart, DollarSign, CheckCircle2, Flame } from 'lucide-react'
 import { getDateRangeFromSearchParams, rangeToUrlParams, type DateRange } from '@/lib/admin/date-range'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getAbandonedCarts, getRecoveredOrders, buildWhatsappUrl, type AbandonedCart } from '@/lib/yampi/carts'
-import { JHF_STORE_ID } from '@/lib/yampi/sync'
+import { STORE_ID } from '@/lib/yampi/sync'
 import { RecoveryList } from './_components/recovery-list'
 import { RefreshButton } from './_components/refresh-button'
 
@@ -82,7 +82,7 @@ export default async function RecuperarVendasPage({
   const carts = await getAbandonedCarts(range.start, untilInclusive)
 
   const [{ data: actionsData }, imagesByYampiId, recoveredOrders] = await Promise.all([
-    db.from('recovery_actions').select('yampi_cart_id, status, contacted_at').eq('store_id', JHF_STORE_ID),
+    db.from('recovery_actions').select('yampi_cart_id, status, contacted_at').eq('store_id', STORE_ID),
     getImagesByYampiProductId(db, carts),
     getRecoveredOrders(range.start, untilInclusive),
   ])

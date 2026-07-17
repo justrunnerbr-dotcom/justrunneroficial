@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWhatsappSignature } from '@/lib/whatsapp/api'
-import { JHF_STORE_ID } from '@/lib/yampi/sync'
+import { STORE_ID } from '@/lib/yampi/sync'
 
 function getDb() {
   return createClient(
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
           const { data: existing } = await db
             .from('whatsapp_conversations')
             .select('id, unread_count')
-            .eq('store_id', JHF_STORE_ID)
+            .eq('store_id', STORE_ID)
             .eq('wa_phone_number_id', phoneNumberId)
             .eq('customer_phone', customerPhone)
             .maybeSingle()
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
             }).eq('id', conversationId)
           } else {
             const { data: created } = await db.from('whatsapp_conversations').insert({
-              store_id:              JHF_STORE_ID,
+              store_id:              STORE_ID,
               wa_phone_number_id:    phoneNumberId,
               customer_phone:        customerPhone,
               customer_name:         customerName,

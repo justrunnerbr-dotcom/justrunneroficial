@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { calculateHealthScore, saveHealthScore } from '@/lib/brain/health-score'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 async function checkAuth() {
   const cookieStore = await cookies()
@@ -27,7 +27,7 @@ export async function GET() {
   const { data } = await db
     .from('health_scores')
     .select('*')
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
     .order('calculated_at', { ascending: false })
     .limit(1)
     .maybeSingle()

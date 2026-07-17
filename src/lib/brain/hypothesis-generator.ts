@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Signal } from './anomaly-detector'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
@@ -180,7 +180,7 @@ export async function saveRecommendation(
   rec:       RecommendationResult,
 ): Promise<string> {
   const { data, error } = await db.from('brain_recommendations').insert({
-    store_id:    JHF_STORE_ID,
+    store_id:    STORE_ID,
     signal_id:   signalId,
     title:       rec.title,
     hypothesis:  rec.hypothesis,

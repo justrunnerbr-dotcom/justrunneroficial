@@ -16,7 +16,7 @@ import { getDateRangeFromSearchParams, getPreviousPeriodRange, type DateRange } 
 import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
 import { getMetaDashboardStats, getMetaLiveSpend } from '@/lib/admin/meta-ads'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ = 'America/Sao_Paulo'
 
 const COLORS = {
@@ -60,15 +60,15 @@ async function getDashboardData(range: DateRange) {
   const prev = getPreviousPeriodRange(range)
 
   const [curRows, prevRows, recentOrders, liveCount, topProducts, healthRow, brainRecs, pendingCount, paidCount] = await Promise.all([
-    db.from('daily_analytics').select('*').eq('store_id', JHF_STORE_ID).gte('date', range.start).lt('date', range.endExclusive),
-    db.from('daily_analytics').select('*').eq('store_id', JHF_STORE_ID).gte('date', prev.start).lt('date', prev.endExclusive),
-    db.from('orders').select('external_id, total, status, payment_method, created_at, customer_snapshot').eq('store_id', JHF_STORE_ID).gte('created_at', range.startISO).lt('created_at', range.endISO).order('created_at', { ascending: false }).limit(6),
-    db.from('live_visitors').select('session_id', { count: 'exact', head: true }).eq('store_id', JHF_STORE_ID).gte('last_seen', new Date(Date.now() - 10 * 60 * 1000).toISOString()),
-    db.from('events').select('product_slug').eq('store_id', JHF_STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO),
-    db.from('health_scores').select('*').eq('store_id', JHF_STORE_ID).order('calculated_at', { ascending: false }).limit(1).maybeSingle(),
-    db.from('brain_recommendations').select(`*, signal:brain_signals(signal_type, severity, metric_name, current_value, baseline_value, delta_pct, detected_at)`).eq('store_id', JHF_STORE_ID).in('status', ['open', 'acknowledged']).order('created_at', { ascending: false }).limit(5),
-    db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', JHF_STORE_ID).eq('status', 'pending').gte('created_at', range.startISO).lt('created_at', range.endISO),
-    db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', JHF_STORE_ID).eq('status', 'paid').gte('created_at', range.startISO).lt('created_at', range.endISO),
+    db.from('daily_analytics').select('*').eq('store_id', STORE_ID).gte('date', range.start).lt('date', range.endExclusive),
+    db.from('daily_analytics').select('*').eq('store_id', STORE_ID).gte('date', prev.start).lt('date', prev.endExclusive),
+    db.from('orders').select('external_id, total, status, payment_method, created_at, customer_snapshot').eq('store_id', STORE_ID).gte('created_at', range.startISO).lt('created_at', range.endISO).order('created_at', { ascending: false }).limit(6),
+    db.from('live_visitors').select('session_id', { count: 'exact', head: true }).eq('store_id', STORE_ID).gte('last_seen', new Date(Date.now() - 10 * 60 * 1000).toISOString()),
+    db.from('events').select('product_slug').eq('store_id', STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO),
+    db.from('health_scores').select('*').eq('store_id', STORE_ID).order('calculated_at', { ascending: false }).limit(1).maybeSingle(),
+    db.from('brain_recommendations').select(`*, signal:brain_signals(signal_type, severity, metric_name, current_value, baseline_value, delta_pct, detected_at)`).eq('store_id', STORE_ID).in('status', ['open', 'acknowledged']).order('created_at', { ascending: false }).limit(5),
+    db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID).eq('status', 'pending').gte('created_at', range.startISO).lt('created_at', range.endISO),
+    db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID).eq('status', 'paid').gte('created_at', range.startISO).lt('created_at', range.endISO),
   ])
 
   const curData  = (curRows.data  ?? []) as Record<string, number>[]

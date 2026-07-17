@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { DateRange } from '@/lib/admin/date-range'
 
-const JHF_STORE_ID   = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID   = 'b0000000-0000-0000-0000-000000000001'
 const META_API_VER   = 'v21.0'
 const PAID_STATUSES  = ['paid', 'invoiced', 'on_carriage', 'payment_confirmed', 'preparing_shipping', 'in_separation', 'in_transit', 'delivered']
 
@@ -134,9 +134,9 @@ export async function getFunnelData(db: SupabaseClient, since: string, until: st
     const untilISO = `${until}T23:59:59-03:00`
 
     const [sessR, evtR, ordR] = await Promise.allSettled([
-      db.from('sessions').select('id').eq('store_id', JHF_STORE_ID).or(META_UTM_FILTER).gte('started_at', sinceISO).lt('started_at', untilISO),
-      db.from('events').select('event_type').eq('store_id', JHF_STORE_ID).in('event_type', ['add_to_cart', 'initiate_checkout']).or(META_UTM_FILTER).gte('created_at', sinceISO).lt('created_at', untilISO),
-      db.from('orders').select('total').eq('store_id', JHF_STORE_ID).or(META_UTM_FILTER).in('status', PAID_STATUSES).gte('created_at', sinceISO).lt('created_at', untilISO),
+      db.from('sessions').select('id').eq('store_id', STORE_ID).or(META_UTM_FILTER).gte('started_at', sinceISO).lt('started_at', untilISO),
+      db.from('events').select('event_type').eq('store_id', STORE_ID).in('event_type', ['add_to_cart', 'initiate_checkout']).or(META_UTM_FILTER).gte('created_at', sinceISO).lt('created_at', untilISO),
+      db.from('orders').select('total').eq('store_id', STORE_ID).or(META_UTM_FILTER).in('status', PAID_STATUSES).gte('created_at', sinceISO).lt('created_at', untilISO),
     ])
 
     const sessions = sessR.status === 'fulfilled' ? (sessR.value.data ?? []) : []
@@ -458,7 +458,7 @@ async function saveInsightsToDB(
   if (!rows.length) return 0
 
   const records = rows.map(r => ({
-    store_id:            JHF_STORE_ID,
+    store_id:            STORE_ID,
     account_id:          accountId,
     date_start:          r.date_start,
     level,
@@ -520,7 +520,7 @@ export async function syncMetaInsights(
 
     try {
       await db.from('meta_sync_logs').insert({
-        store_id:       JHF_STORE_ID,
+        store_id:       STORE_ID,
         status:         count > 0 ? 'success' : 'partial',
         started_at:     startedAt,
         finished_at:    new Date().toISOString(),
@@ -533,7 +533,7 @@ export async function syncMetaInsights(
     const msg = err instanceof Error ? err.message : 'Erro desconhecido'
     try {
       await db.from('meta_sync_logs').insert({
-        store_id:       JHF_STORE_ID,
+        store_id:       STORE_ID,
         status:         'error',
         started_at:     startedAt,
         finished_at:    new Date().toISOString(),
@@ -552,7 +552,7 @@ export async function getLastSync(db: SupabaseClient): Promise<string | null> {
     const { data } = await db
       .from('meta_sync_logs')
       .select('finished_at')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .in('status', ['success', 'partial'])
       .order('finished_at', { ascending: false })
       .limit(1)
@@ -572,20 +572,20 @@ async function getMetaCrossData(db: SupabaseClient, range: DateRange) {
   const [sessR, evtR, ordR] = await Promise.allSettled([
     db.from('sessions')
       .select('utm_campaign')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .or(META_SOURCE_FILTER)
       .gte('started_at', range.startISO)
       .lt('started_at',  range.endISO),
     db.from('events')
       .select('event_type, utm_campaign')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .in('event_type', ['add_to_cart', 'initiate_checkout'])
       .or(META_SOURCE_FILTER)
       .gte('created_at', range.startISO)
       .lt('created_at',  range.endISO),
     db.from('orders')
       .select('total, utm_campaign')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .or(META_SOURCE_FILTER)
       .in('status', PAID_STATUSES)
       .gte('created_at', range.startISO)
@@ -673,7 +673,7 @@ export async function getMetaPageData(db: SupabaseClient, range: DateRange): Pro
     const [insightsRes, crossData, lastSync] = await Promise.all([
       db.from('meta_ad_insights')
         .select('campaign_id, campaign_name, spend, impressions, reach, clicks, inline_link_clicks, ctr, cpc, cpm, meta_purchases, meta_purchase_value')
-        .eq('store_id', JHF_STORE_ID)
+        .eq('store_id', STORE_ID)
         .eq('level', 'campaign')
         .gte('date_start', range.start)
         .lt('date_start', range.endExclusive),
@@ -780,7 +780,7 @@ export async function getMetaDashboardStats(db: SupabaseClient, range: DateRange
     const [insR, lastSync] = await Promise.all([
       db.from('meta_ad_insights')
         .select('campaign_name, spend, meta_purchase_value')
-        .eq('store_id', JHF_STORE_ID)
+        .eq('store_id', STORE_ID)
         .eq('level', 'campaign')
         .gte('date_start', range.start)
         .lt('date_start', range.endExclusive),

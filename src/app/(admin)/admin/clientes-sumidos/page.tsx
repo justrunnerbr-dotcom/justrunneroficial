@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Users, DollarSign } from 'lucide-react'
 import { getAdminSupabase } from '@/lib/admin-client'
-import { JHF_STORE_ID } from '@/lib/yampi/sync'
+import { STORE_ID } from '@/lib/yampi/sync'
 import { buildWinbackWhatsappUrl } from '@/lib/yampi/customer-stats'
 import { DormantList } from './_components/dormant-list'
 import { SyncCustomersButton } from './_components/sync-customers-button'
@@ -135,11 +135,11 @@ export default async function ClientesSumidosPage({
   const [{ data }, { data: contactLog }] = await Promise.all([
     db.from('customer_purchase_stats')
       .select('email, name, phone_whatsapp_link, total_spent, orders_count, last_order_at, synced_at')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .not('last_order_at', 'is', null),
     db.from('customer_contact_log')
       .select('email, bucket')
-      .eq('store_id', JHF_STORE_ID),
+      .eq('store_id', STORE_ID),
   ])
 
   const rows = data ?? []

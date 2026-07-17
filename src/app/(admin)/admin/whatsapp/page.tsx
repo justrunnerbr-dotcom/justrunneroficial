@@ -1,5 +1,5 @@
 import { getAdminSupabase } from '@/lib/admin-client'
-import { JHF_STORE_ID } from '@/lib/yampi/sync'
+import { STORE_ID } from '@/lib/yampi/sync'
 import { ConversationView } from './_components/conversation-view'
 
 export const metadata = { title: 'Conversas · JHF Admin' }
@@ -19,7 +19,7 @@ export default async function WhatsappPage() {
   const { data } = await db
     .from('whatsapp_conversations')
     .select('id, customer_phone, customer_name, last_message_at, last_message_preview, unread_count')
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
     .order('last_message_at', { ascending: false })
 
   return (

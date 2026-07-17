@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getAdminSupabase } from '@/lib/admin-client'
-import { JHF_STORE_ID } from '@/lib/yampi/sync'
+import { STORE_ID } from '@/lib/yampi/sync'
 
 async function checkAuth() {
   const cookieStore = await cookies()
@@ -17,7 +17,7 @@ export async function GET() {
   const { data } = await db
     .from('recovery_actions')
     .select('yampi_cart_id, status, contacted_at')
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
 
   return NextResponse.json({ actions: data ?? [] })
 }
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const db = getAdminSupabase()
   const { error } = await db.from('recovery_actions').upsert(
     {
-      store_id:      JHF_STORE_ID,
+      store_id:      STORE_ID,
       yampi_cart_id: yampiCartId,
       status,
       contacted_at:  status === 'contacted' ? new Date().toISOString() : undefined,
@@ -60,7 +60,7 @@ export async function DELETE(req: Request) {
   const { error } = await db
     .from('recovery_actions')
     .delete()
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
     .eq('yampi_cart_id', yampiCartId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -12,7 +12,7 @@ import {
   getMetaLiveCampaigns,
 } from '@/lib/admin/meta-ads'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const MODEL        = 'claude-sonnet-5'
 const MAX_HISTORY  = 20
 const MAX_TOOL_LOOPS = 10
@@ -179,7 +179,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     case 'update_strategy_notes': {
       const notes = String(input.notes ?? '')
       await db.from('meta_ads_agent_memory').upsert(
-        { store_id: JHF_STORE_ID, notes, updated_at: new Date().toISOString() },
+        { store_id: STORE_ID, notes, updated_at: new Date().toISOString() },
         { onConflict: 'store_id' },
       )
       return { ok: true }
@@ -223,12 +223,12 @@ export async function GET() {
   const [{ data: messages }, { data: memory }] = await Promise.all([
     db.from('meta_ads_agent_messages')
       .select('role, content, created_at')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .order('created_at', { ascending: true })
       .limit(200),
     db.from('meta_ads_agent_memory')
       .select('notes')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .maybeSingle(),
   ])
 
@@ -258,12 +258,12 @@ export async function POST(req: Request) {
     const [{ data: history }, { data: memory }] = await Promise.all([
       db.from('meta_ads_agent_messages')
         .select('role, content')
-        .eq('store_id', JHF_STORE_ID)
+        .eq('store_id', STORE_ID)
         .order('created_at', { ascending: false })
         .limit(MAX_HISTORY),
       db.from('meta_ads_agent_memory')
         .select('notes')
-        .eq('store_id', JHF_STORE_ID)
+        .eq('store_id', STORE_ID)
         .maybeSingle(),
     ])
 
@@ -337,8 +337,8 @@ export async function POST(req: Request) {
     if (!finalText) finalText = 'Não consegui gerar uma resposta — tente reformular a pergunta.'
 
     await db.from('meta_ads_agent_messages').insert([
-      { store_id: JHF_STORE_ID, role: 'user',      content: message },
-      { store_id: JHF_STORE_ID, role: 'assistant', content: finalText },
+      { store_id: STORE_ID, role: 'user',      content: message },
+      { store_id: STORE_ID, role: 'assistant', content: finalText },
     ])
 
     return NextResponse.json({ reply: finalText, viewedImages, generatedAt: new Date().toISOString() })

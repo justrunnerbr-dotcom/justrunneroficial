@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { ShoppingBag, ExternalLink, Package, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { getDateRangeFromSearchParams, type DateRange } from '@/lib/admin/date-range'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 function getDb() {
   return createClient(
@@ -41,7 +41,7 @@ async function getOrders(range: DateRange) {
   const { data: orders } = await db
     .from('orders')
     .select('id, external_id, status, total, subtotal, discount_amount, shipping_amount, created_at, utm_source, customer_id, customer_snapshot')
-    .eq('store_id', JHF_STORE_ID)
+    .eq('store_id', STORE_ID)
     .gte('created_at', range.startISO)
     .lt('created_at', range.endISO)
     .order('created_at', { ascending: false })

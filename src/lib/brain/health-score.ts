@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ = 'America/Sao_Paulo'
 
 function brlDate(daysAgo = 0): string {
@@ -167,21 +167,21 @@ export async function calculateHealthScore(db: SupabaseClient): Promise<HealthSc
     // This week: last 7 days
     db.from('daily_analytics')
       .select('revenue, sessions, orders, conversion_rate')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', day8)
       .lte('date', today),
 
     // Prev week: days 8-14
     db.from('daily_analytics')
       .select('revenue, sessions, orders, conversion_rate')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', day15)
       .lt('date', day8),
 
     // All analytics for data_days count (last 30)
     db.from('daily_analytics')
       .select('date', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', day30)
       .lte('date', today),
 
@@ -201,18 +201,18 @@ export async function calculateHealthScore(db: SupabaseClient): Promise<HealthSc
     // Customers for retention
     db.from('customers')
       .select('id, orders_count')
-      .eq('store_id', JHF_STORE_ID),
+      .eq('store_id', STORE_ID),
 
     // Events last 24h (technical)
     db.from('events')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
 
     // Orders synced last 7 days (technical)
     db.from('orders')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('updated_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
   ])
 
@@ -299,7 +299,7 @@ export async function saveHealthScore(
   result: HealthScoreResult,
 ): Promise<void> {
   await db.from('health_scores').insert({
-    store_id:          JHF_STORE_ID,
+    store_id:          STORE_ID,
     score:             result.score,
     revenue_score:     result.revenue_score,
     conversion_score:  result.conversion_score,

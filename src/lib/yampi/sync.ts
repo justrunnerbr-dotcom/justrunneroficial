@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { isSiteOficialOrder } from './so-products'
 import { sendCapiPurchase, sendCapiEvent, hashEmail, hashPhone, hashExternalId } from '@/lib/meta/capi'
 
-export const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+export const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
 export const PAID_STATUSES = new Set([
   'paid',
@@ -121,7 +121,7 @@ export async function upsertYampiOrder(
     const { data: existingOrder } = await db
       .from('orders')
       .select('status')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .eq('external_id', externalId)
       .maybeSingle()
     previousStatus = existingOrder?.status ?? null
@@ -135,7 +135,7 @@ export async function upsertYampiOrder(
     const { data: existing } = await db
       .from('customers')
       .select('id')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .eq('email', customerEmail)
       .single()
 
@@ -143,7 +143,7 @@ export async function upsertYampiOrder(
       customerId = existing.id
     } else {
       const { data: newCustomer } = await db.from('customers').insert({
-        store_id:    JHF_STORE_ID,
+        store_id:    STORE_ID,
         external_id: String(customerData?.id ?? ''),
         email:       customerEmail,
         name:        customerName,
@@ -157,7 +157,7 @@ export async function upsertYampiOrder(
 
   const { data: order, error: orderError } = await db.from('orders').upsert(
     {
-      store_id:         JHF_STORE_ID,
+      store_id:         STORE_ID,
       external_id:      externalId,
       customer_id:      customerId,
       customer_snapshot: customerData ?? {},
@@ -188,7 +188,7 @@ export async function upsertYampiOrder(
         const price    = parseFloat(String(item.price ?? 0))
         const quantity = item.quantity ?? 1
         return {
-          store_id:      JHF_STORE_ID,
+          store_id:      STORE_ID,
           order_id:      order.id,
           product_title: item.sku?.data?.title ?? item.item_sku ?? 'Produto',
           variant_title: item.sku?.data?.title ?? null,

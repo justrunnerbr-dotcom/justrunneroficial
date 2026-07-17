@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { getDateRangeFromSearchParams, type DateRange } from '@/lib/admin/date-range'
 
-const JHF_STORE_ID = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ = 'America/Sao_Paulo'
 
 function getDb() {
@@ -38,7 +38,7 @@ async function getAnalyticsData(range: DateRange) {
     // Gráfico de receita diária — mantém daily_analytics
     db.from('daily_analytics')
       .select('*')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('date', range.start)
       .lt('date', range.endExclusive)
       .order('date', { ascending: true }),
@@ -46,7 +46,7 @@ async function getAnalyticsData(range: DateRange) {
     // Rankings: count:exact retorna o total real independente do limit
     db.from('events')
       .select('page', { count: 'exact' })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'page_view')
       .gte('created_at', range.startISO)
       .lt('created_at', range.endISO)
@@ -54,7 +54,7 @@ async function getAnalyticsData(range: DateRange) {
 
     db.from('events')
       .select('product_slug', { count: 'exact' })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'view_content')
       .gte('created_at', range.startISO)
       .lt('created_at', range.endISO)
@@ -62,7 +62,7 @@ async function getAnalyticsData(range: DateRange) {
 
     db.from('events')
       .select('device')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('created_at', range.startISO)
       .lt('created_at', range.endISO)
       .limit(5000),
@@ -70,7 +70,7 @@ async function getAnalyticsData(range: DateRange) {
     // Sessions: count:exact para total de sessões + dados UTM para ranking
     db.from('sessions')
       .select('utm_source', { count: 'exact' })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .gte('started_at', range.startISO)
       .lt('started_at', range.endISO)
       .limit(5000),
@@ -78,7 +78,7 @@ async function getAnalyticsData(range: DateRange) {
     // Add to cart — apenas contagem
     db.from('events')
       .select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'add_to_cart')
       .gte('created_at', range.startISO)
       .lt('created_at', range.endISO),
@@ -86,7 +86,7 @@ async function getAnalyticsData(range: DateRange) {
     // Checkout iniciado — apenas contagem
     db.from('events')
       .select('*', { count: 'exact', head: true })
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'initiate_checkout')
       .gte('created_at', range.startISO)
       .lt('created_at', range.endISO),
@@ -94,7 +94,7 @@ async function getAnalyticsData(range: DateRange) {
     // Pedidos pagos — precisa de total para calcular receita
     db.from('orders')
       .select('total')
-      .eq('store_id', JHF_STORE_ID)
+      .eq('store_id', STORE_ID)
       .in('status', PAID_STATUSES)
       .gte('created_at', range.startISO)
       .lt('created_at', range.endISO)
