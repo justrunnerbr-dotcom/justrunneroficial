@@ -128,6 +128,31 @@ export const META_ACCOUNTS = [
   { id: process.env.META_AD_ACCOUNT_ID_3 ?? '', name: 'Conta 4' },
 ]
 
+// Pausa/ativa campanha, conjunto ou anúncio direto na Meta (usado pelo Gerenciador).
+export async function setMetaEntityStatus(
+  id: string,
+  status: 'ACTIVE' | 'PAUSED',
+): Promise<{ ok: boolean; error?: string }> {
+  const token = process.env.META_ACCESS_TOKEN
+  if (!token) return { ok: false, error: 'META_ACCESS_TOKEN não configurado' }
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/${META_API_VER}/${id}`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    new URLSearchParams({ status, access_token: token }),
+    })
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      const errMsg  = (errBody as { error?: { message?: string } })?.error?.message ?? `HTTP ${res.status}`
+      return { ok: false, error: errMsg }
+    }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Erro desconhecido' }
+  }
+}
+
 // ── Funil real (JHF Store — Supabase) cruzado com tráfego Meta ────────────────
 
 export interface MetaFunnelData {
@@ -634,6 +659,73 @@ async function getMetaCrossData(db: SupabaseClient, range: DateRange) {
   }
 }
 
+// ── Tráfego Meta cruzado com Supabase, genérico por campo UTM ─────────────────
+// Mesma ideia do getMetaCrossData acima, mas parametrizado: utm_campaign serve
+// pra aba Campanhas do Gerenciador, utm_term (= {{adset.name}}) pra Conjuntos,
+// utm_content (= {{ad.name}}) pra Anúncios — ver buildUtmTags() em meta-create.ts.
+
+export type MetaCrossField = 'utm_campaign' | 'utm_term' | 'utm_content'
+
+export interface MetaCrossRow { sessions: number; orders: number; revenue: number }
+
+export interface MetaCrossResult {
+  byKey:         Record<string, MetaCrossRow>
+  totalSessions: number
+  totalOrders:   number
+  totalRevenue:  number
+}
+
+export async function getMetaCrossDataByField(
+  db: SupabaseClient,
+  range: DateRange,
+  field: MetaCrossField,
+): Promise<MetaCrossResult> {
+  const [sessR, ordR] = await Promise.allSettled([
+    db.from('sessions')
+      .select(field)
+      .eq('store_id', STORE_ID)
+      .or(META_SOURCE_FILTER)
+      .gte('started_at', range.startISO)
+      .lt('started_at',  range.endISO),
+    db.from('orders')
+      .select(`total, ${field}`)
+      .eq('store_id', STORE_ID)
+      .or(META_SOURCE_FILTER)
+      .in('status', PAID_STATUSES)
+      .gte('created_at', range.startISO)
+      .lt('created_at',  range.endISO),
+  ])
+
+  const sessions = (sessR.status === 'fulfilled' ? (sessR.value.data ?? []) : []) as Record<string, unknown>[]
+  const orders   = (ordR.status  === 'fulfilled' ? (ordR.value.data  ?? []) : []) as Record<string, unknown>[]
+
+  const byKey: Record<string, MetaCrossRow> = {}
+  const ensure = (k: string) => { if (!byKey[k]) byKey[k] = { sessions: 0, orders: 0, revenue: 0 } }
+
+  for (const s of sessions) {
+    const k = String(s[field] ?? '').toLowerCase()
+    ensure(k)
+    byKey[k].sessions++
+  }
+
+  let totalRevenue = 0
+  for (const o of orders) {
+    const k = String(o[field] ?? '').toLowerCase()
+    ensure(k)
+    const revenue = parseFloat(String(o.total ?? 0))
+    byKey[k].orders++
+    byKey[k].revenue += revenue
+    totalRevenue += revenue
+  }
+
+  return {
+    byKey,
+    totalSessions: sessions.length,
+    totalOrders:   orders.length,
+    totalRevenue,
+  }
+}
+
 function diagnoseCampaign(
   spend: number,
   ctr: number,
@@ -963,6 +1055,7 @@ export interface MetaCampaignDetail {
   name:             string
   status:           string
   objective:        string
+  dailyBudget:      number | null
   // Spend
   spend:            number
   // Reach & impressions
@@ -1002,19 +1095,22 @@ export async function getMetaAccountCampaigns(
   const token = process.env.META_ACCESS_TOKEN
   if (!token) return []
 
+  // video_play_actions e video_thruplay_watched_actions já vêm dentro de
+  // FUNNEL_FIELDS — listá-los de novo aqui faz a Graph API rejeitar o request
+  // inteiro ("specified more than once"), zerando silenciosamente gasto/
+  // impressões/etc (só ins = {} pra tudo, sem erro visível na UI).
   const INSIGHT_FIELDS = [
     'campaign_id', 'campaign_name',
     'spend', 'impressions', 'clicks', 'inline_link_clicks', 'unique_clicks',
     'reach', 'ctr', 'unique_ctr', 'cpc', 'cpm', 'frequency',
     'actions', 'cost_per_action_type',
-    'video_play_actions', 'video_thruplay_watched_actions',
     FUNNEL_FIELDS,
   ].join(',')
 
   try {
     const [campaignsRes, insightsRes] = await Promise.all([
       fetch(
-        `https://graph.facebook.com/${META_API_VER}/act_${accountId}/campaigns?${new URLSearchParams({ fields: 'id,name,status,objective', limit: '50' })}`,
+        `https://graph.facebook.com/${META_API_VER}/act_${accountId}/campaigns?${new URLSearchParams({ fields: 'id,name,status,objective,daily_budget,lifetime_budget', limit: '50' })}`,
         { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
       ),
       fetch(
@@ -1028,7 +1124,7 @@ export async function getMetaAccountCampaigns(
       ),
     ])
 
-    type CampaignRow = { id: string; name: string; status: string; objective: string }
+    type CampaignRow = { id: string; name: string; status: string; objective: string; daily_budget?: string; lifetime_budget?: string }
     type InsightRow  = Record<string, unknown>
 
     const campaigns = ((await campaignsRes.json()) as { data?: CampaignRow[] }).data ?? []
@@ -1054,11 +1150,13 @@ export async function getMetaAccountCampaigns(
       const engagements   = findAction(actions,       'post_engagement')
       const costThruPlay  = findAction(costPerAction, 'video_thruplay')
 
+      const rawBudget = c.daily_budget ?? c.lifetime_budget
       return {
         id:               c.id,
         name:             c.name,
         status:           c.status,
         objective:        c.objective ?? '',
+        dailyBudget:      rawBudget ? parseFloat(rawBudget) / 100 : null, // Meta retorna em centavos
         spend,
         impressions:      i(ins.impressions),
         reach:            i(ins.reach),
@@ -1161,6 +1259,81 @@ export async function getMetaCampaignAdsets(
         name:          a.name,
         status:        a.status,
         dailyBudget:   parseFloat(a.daily_budget ?? '0') / 100 || 0, // Meta returns in cents
+        bidStrategy:   a.bid_strategy ?? '',
+        spend:         parseFloat(String(ins.spend      ?? '0')) || 0,
+        impressions,
+        clicks:        parseInt(String(ins.clicks       ?? '0')) || 0,
+        reach:         parseInt(String(ins.reach        ?? '0')) || 0,
+        ctr:           parseFloat(String(ins.ctr        ?? '0')) || 0,
+        cpm:           parseFloat(String(ins.cpm        ?? '0')) || 0,
+        cpc:           parseFloat(String(ins.cpc        ?? '0')) || 0,
+        frequency:     parseFloat(String(ins.frequency  ?? '0')) || 0,
+        results:       findAction(actions, PURCHASE),
+        costPerResult: findAction(costPerAction, PURCHASE),
+        funnel:        extractFunnelMetrics(actions, costPerAction),
+        video:         extractVideoMetrics(ins, impressions),
+        diagnostics:   extractDiagnostics(ins),
+      }
+    })
+
+    return results.sort((a, b) => b.spend - a.spend)
+  } catch {
+    return []
+  }
+}
+
+// Todos os conjuntos da conta (sem filtrar por campanha) — usado pelo
+// Gerenciador. Mesmo shape de getMetaCampaignAdsets + campaignName pra
+// permitir o filtro em cascata campanha → conjunto → anúncio.
+export async function getMetaAccountAdsets(
+  accountId: string,
+  since: string,
+  until: string,
+): Promise<(MetaAdsetDetail & { campaignName: string })[]> {
+  const token = process.env.META_ACCESS_TOKEN
+  if (!token) return []
+
+  try {
+    const [adsetsRes, insightsRes] = await Promise.all([
+      fetch(
+        `https://graph.facebook.com/${META_API_VER}/act_${accountId}/adsets?${new URLSearchParams({
+          fields: 'id,name,status,daily_budget,bid_strategy,campaign{name}',
+          limit:  '200',
+        })}`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
+      ),
+      fetch(
+        `https://graph.facebook.com/${META_API_VER}/act_${accountId}/insights?${new URLSearchParams({
+          fields: `adset_id,adset_name,spend,impressions,clicks,reach,ctr,cpc,cpm,frequency,actions,cost_per_action_type,${FUNNEL_FIELDS}`,
+          level: 'adset',
+          time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
+          limit: '200',
+        })}`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
+      ),
+    ])
+
+    type AdsetRow  = { id: string; name: string; status: string; daily_budget?: string; bid_strategy?: string; campaign?: { name?: string } }
+    type InsightRow = Record<string, unknown>
+
+    const adsets   = ((await adsetsRes.json()) as { data?: AdsetRow[] }).data ?? []
+    const insights = ((await insightsRes.json()) as { data?: InsightRow[] }).data ?? []
+
+    const insightMap: Record<string, InsightRow> = {}
+    for (const row of insights) insightMap[String(row.adset_id ?? '')] = row
+
+    const results = adsets.map(a => {
+      const ins           = insightMap[a.id] ?? {}
+      const actions       = ins.actions       as ActionItem[] | undefined
+      const costPerAction = ins.cost_per_action_type as ActionItem[] | undefined
+      const impressions   = parseInt(String(ins.impressions ?? '0')) || 0
+      const PURCHASE      = 'offsite_conversion.fb_pixel_purchase'
+      return {
+        id:            a.id,
+        name:          a.name,
+        status:        a.status,
+        campaignName:  a.campaign?.name ?? '',
+        dailyBudget:   parseFloat(a.daily_budget ?? '0') / 100 || 0,
         bidStrategy:   a.bid_strategy ?? '',
         spend:         parseFloat(String(ins.spend      ?? '0')) || 0,
         impressions,
@@ -1313,6 +1486,106 @@ export async function getMetaAdsetAds(
     })
 
     // Fallback: fetch thumbnails via video_id for ads without thumbnail
+    const noThumb = results.filter(a => !a.thumbnailUrl && a.videoId)
+    if (noThumb.length > 0) {
+      const fetched = await Promise.all(noThumb.map(a => fetchVideoThumbnail(a.videoId!, token)))
+      noThumb.forEach((a, idx) => { a.thumbnailUrl = fetched[idx] })
+    }
+
+    return results.sort((a, b) => b.spend - a.spend)
+  } catch {
+    return []
+  }
+}
+
+// Todos os anúncios da conta (sem filtrar por conjunto) — usado pelo
+// Gerenciador. Mesmo shape de getMetaAdsetAds + campaignName/adsetName.
+export async function getMetaAccountAds(
+  accountId: string,
+  since: string,
+  until: string,
+): Promise<(MetaAdDetail & { campaignName: string; adsetName: string })[]> {
+  const token = process.env.META_ACCESS_TOKEN
+  if (!token) return []
+
+  try {
+    const [adsRes, insightsRes] = await Promise.all([
+      fetch(
+        `https://graph.facebook.com/${META_API_VER}/act_${accountId}/ads?${new URLSearchParams({
+          fields: 'id,name,status,campaign{name},adset{name},effective_object_story_spec,creative{id,name,thumbnail_url,body,title}',
+          limit:  '200',
+        })}`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
+      ),
+      fetch(
+        `https://graph.facebook.com/${META_API_VER}/act_${accountId}/insights?${new URLSearchParams({
+          fields: `ad_id,ad_name,spend,impressions,clicks,reach,ctr,cpc,cpm,frequency,actions,cost_per_action_type,${FUNNEL_FIELDS}`,
+          level: 'ad',
+          time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
+          limit: '200',
+        })}`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
+      ),
+    ])
+
+    type StorySpec = {
+      video_data?: { video_id?: string; image_url?: string; title?: string; message?: string; call_to_action?: { type?: string } }
+      link_data?:  { name?: string; message?: string; call_to_action?: { type?: string } }
+    }
+    type Creative = {
+      id?: string; name?: string; thumbnail_url?: string; body?: string; title?: string
+    }
+    type AdRow      = { id: string; name: string; status: string; campaign?: { name?: string }; adset?: { name?: string }; creative?: Creative; effective_object_story_spec?: StorySpec }
+    type InsightRow = Record<string, unknown>
+
+    const ads      = ((await adsRes.json()) as { data?: AdRow[] }).data ?? []
+    const insights = ((await insightsRes.json()) as { data?: InsightRow[] }).data ?? []
+
+    const insightMap: Record<string, InsightRow> = {}
+    for (const row of insights) insightMap[String(row.ad_id ?? '')] = row
+
+    const results = ads.map(a => {
+      const ins           = insightMap[a.id] ?? {}
+      const actions       = ins.actions       as ActionItem[] | undefined
+      const costPerAction = ins.cost_per_action_type as ActionItem[] | undefined
+      const impressions   = parseInt(String(ins.impressions ?? '0')) || 0
+      const PURCHASE      = 'offsite_conversion.fb_pixel_purchase'
+      const cr            = a.creative
+      const spec          = a.effective_object_story_spec
+
+      const thumbnailUrl  = cr?.thumbnail_url ?? null
+      const videoId       = spec?.video_data?.video_id ?? null
+      const adTitle       = cr?.title ?? spec?.video_data?.title ?? spec?.link_data?.name ?? null
+      const adBody        = cr?.body  ?? spec?.video_data?.message ?? spec?.link_data?.message ?? null
+      const ctaType       = spec?.video_data?.call_to_action?.type ?? spec?.link_data?.call_to_action?.type ?? null
+
+      return {
+        id:            a.id,
+        name:          a.name,
+        status:        a.status,
+        campaignName:  a.campaign?.name ?? '',
+        adsetName:     a.adset?.name ?? '',
+        spend:         parseFloat(String(ins.spend      ?? '0')) || 0,
+        impressions,
+        clicks:        parseInt(String(ins.clicks       ?? '0')) || 0,
+        reach:         parseInt(String(ins.reach        ?? '0')) || 0,
+        ctr:           parseFloat(String(ins.ctr        ?? '0')) || 0,
+        cpm:           parseFloat(String(ins.cpm        ?? '0')) || 0,
+        cpc:           parseFloat(String(ins.cpc        ?? '0')) || 0,
+        frequency:     parseFloat(String(ins.frequency  ?? '0')) || 0,
+        results:       findAction(actions, PURCHASE),
+        costPerResult: findAction(costPerAction, PURCHASE),
+        thumbnailUrl,
+        videoId,
+        adTitle,
+        adBody,
+        ctaType,
+        funnel:        extractFunnelMetrics(actions, costPerAction),
+        video:         extractVideoMetrics(ins, impressions),
+        diagnostics:   extractDiagnostics(ins),
+      }
+    })
+
     const noThumb = results.filter(a => !a.thumbnailUrl && a.videoId)
     if (noThumb.length > 0) {
       const fetched = await Promise.all(noThumb.map(a => fetchVideoThumbnail(a.videoId!, token)))
