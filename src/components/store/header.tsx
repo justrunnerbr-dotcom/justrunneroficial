@@ -20,12 +20,12 @@ interface HeaderProps {
   logoTransparentUrl?: string | null
 }
 
-const NAV_LINKS: { label: string; href: string; mega?: true; highlight?: true }[] = [
+const NAV_LINKS: { label: string; href: string; mega?: true }[] = [
   { label: 'Inicio', href: '/' },
   { label: 'Compre 1 Leve 2', href: '/colecao/compre-1-leve-2' },
   { label: 'Categorias', href: '/colecao', mega: true },
   { label: 'Mais vendidos', href: '/colecao/mais-vendidos' },
-  { label: '🎁 Oferta Progressiva', href: '/colecao/oferta-progressiva', highlight: true },
+  { label: '🎁 Oferta Progressiva', href: '/colecao/oferta-progressiva' },
 ]
 
 export const Header = memo(function Header({
@@ -149,14 +149,14 @@ export const Header = memo(function Header({
     transition: 'color 0.3s ease, opacity 0.2s ease',
   }
 
-  const navLink = (href: string, highlight?: true): React.CSSProperties => ({
+  const navLink = (href: string): React.CSSProperties => ({
     padding: '0 13px',
     height: 'var(--header-height)',
     display: 'flex',
     alignItems: 'center',
     fontSize: '13px',
-    fontWeight: highlight ? 700 : 500,
-    color: highlight ? '#e00000' : fgColor,
+    fontWeight: 500,
+    color: fgColor,
     fontFamily: 'var(--font-montserrat), sans-serif',
     whiteSpace: 'nowrap',
     transition: 'color 0.3s ease',
@@ -256,7 +256,7 @@ export const Header = memo(function Header({
                 )
               }
               return (
-                <Link key={link.href} href={link.href} style={navLink(link.href, link.highlight)}>
+                <Link key={link.href} href={link.href} style={navLink(link.href)}>
                   {link.label}
                 </Link>
               )

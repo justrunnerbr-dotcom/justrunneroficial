@@ -66,9 +66,9 @@ export function MobileDrawer({ collections, isOpen, onClose }: MobileDrawerProps
 
   if (!isOpen) return null
 
-  const mainLinks: { label: string; href: string; highlight?: true }[] = [
+  const mainLinks = [
     { label: 'Início', href: '/' },
-    { label: '🎁 Oferta Progressiva', href: '/colecao/oferta-progressiva', highlight: true },
+    { label: '🎁 Oferta Progressiva', href: '/colecao/oferta-progressiva' },
     { label: 'Sobre', href: '/sobre' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Contato', href: '/contato' },
@@ -181,8 +181,8 @@ export function MobileDrawer({ collections, isOpen, onClose }: MobileDrawerProps
                   justifyContent: 'space-between',
                   padding: '16px 24px',
                   fontSize: '15px',
-                  fontWeight: link.highlight ? 700 : 500,
-                  color: link.highlight ? '#e00000' : 'var(--color-foreground)',
+                  fontWeight: 500,
+                  color: 'var(--color-foreground)',
                   fontFamily: 'var(--font-montserrat), sans-serif',
                   borderTop: '1px solid var(--color-border)',
                 }}
