@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       session_id, visitor_id, event_type, page,
       product_slug, product_id, variant_id,
       value, properties, device, referrer,
-      utm_source, utm_medium, utm_campaign,
+      utm_source, utm_medium, utm_campaign, utm_content, utm_term,
     } = body
 
     if (!session_id || !event_type) {
@@ -27,6 +27,17 @@ export async function POST(request: Request) {
 
     const db = getDb()
     const now = new Date().toISOString()
+
+    // Geolocalização por IP: headers injetados automaticamente pelo edge da
+    // Vercel (só existem em produção — em dev local vêm vazios).
+    const geoCountry = request.headers.get('x-vercel-ip-country') || null
+    const geoState   = request.headers.get('x-vercel-ip-country-region') || null
+    const geoCityRaw = request.headers.get('x-vercel-ip-city')
+    const geoCity    = geoCityRaw ? decodeURIComponent(geoCityRaw) : null
+    const geoLatRaw  = request.headers.get('x-vercel-ip-latitude')
+    const geoLonRaw  = request.headers.get('x-vercel-ip-longitude')
+    const geoLat     = geoLatRaw ? parseFloat(geoLatRaw) : null
+    const geoLon     = geoLonRaw ? parseFloat(geoLonRaw) : null
 
     await Promise.allSettled([
       db.from('events').insert({
@@ -57,8 +68,13 @@ export async function POST(request: Request) {
           utm_source:   utm_source   || null,
           utm_medium:   utm_medium   || null,
           utm_campaign: utm_campaign || null,
+          utm_content:  utm_content  || null,
+          utm_term:     utm_term     || null,
           landing_page: event_type === 'page_view' ? page : undefined,
           started_at:   now,
+          geo_country:  geoCountry,
+          geo_state:    geoState,
+          geo_city:     geoCity,
         },
         { onConflict: 'id', ignoreDuplicates: true },
       ),
@@ -71,6 +87,11 @@ export async function POST(request: Request) {
           product_slug: product_slug || null,
           device:       device       || null,
           last_seen:    now,
+          geo_country:  geoCountry,
+          geo_state:    geoState,
+          geo_city:     geoCity,
+          geo_lat:      geoLat,
+          geo_lon:      geoLon,
         },
         { onConflict: 'session_id' },
       ),

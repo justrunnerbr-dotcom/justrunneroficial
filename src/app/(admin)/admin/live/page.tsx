@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { LiveRefresh } from './_components/live-refresh'
-import { LiveMap }     from './_components/live-map'
+import { LiveTileMapLoader } from './_components/live-tile-map-loader'
+import type { LiveMapPoint } from './_components/live-tile-map'
 
-const JHF = 'b0000000-0000-0000-0000-000000000001'
+const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ   = 'America/Sao_Paulo'
 
 function getDb() {
@@ -55,51 +56,51 @@ async function getLiveData() {
 
   const [liveR, ordersR, sessR, cartR, checkR, cartOpenR, newCustR, recentR] = await Promise.all([
     db.from('live_visitors')
-      .select('page, product_slug, device')
-      .eq('store_id', JHF)
+      .select('page, product_slug, device, geo_state, geo_city, geo_lat, geo_lon')
+      .eq('store_id', STORE_ID)
       .gte('last_seen', tenMinAgo)
       .order('last_seen', { ascending: false }),
 
     db.from('orders')
       .select('external_id, total, status, payment_method, created_at, customer_snapshot')
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .gte('created_at', startISO)
       .lt('created_at', endISO)
       .order('created_at', { ascending: false }),
 
     db.from('sessions')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .gte('started_at', startISO)
       .lt('started_at', endISO),
 
     db.from('events')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'add_to_cart')
       .gte('created_at', thirtyMinAgo),
 
     db.from('events')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'initiate_checkout')
       .gte('created_at', thirtyMinAgo),
 
     db.from('events')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .eq('event_type', 'cart_open')
       .gte('created_at', thirtyMinAgo),
 
     db.from('customers')
       .select('id', { count: 'exact', head: true })
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .gte('created_at', startISO)
       .lt('created_at', endISO),
 
     db.from('orders')
       .select('external_id, total, status, payment_method, created_at, customer_snapshot')
-      .eq('store_id', JHF)
+      .eq('store_id', STORE_ID)
       .order('created_at', { ascending: false })
       .limit(8),
   ])
@@ -122,9 +123,24 @@ async function getLiveData() {
   }
   const topPages = Object.entries(pageMap).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
+  // Agrupa por coordenada exata (não por estado) — visitantes na mesma
+  // cidade tendem a cair no mesmo lat/lon de geolocalização por IP, então
+  // agrupar aqui já produz "1 marcador por cidade com contagem" na prática.
+  const pointGroups: Record<string, LiveMapPoint> = {}
+  for (const v of live) {
+    const lat = v.geo_lat != null ? Number(v.geo_lat) : null
+    const lon = v.geo_lon != null ? Number(v.geo_lon) : null
+    if (lat == null || lon == null || Number.isNaN(lat) || Number.isNaN(lon)) continue
+    const key = `${lat},${lon}`
+    if (!pointGroups[key]) pointGroups[key] = { lat, lon, city: v.geo_city, state: v.geo_state, count: 0 }
+    pointGroups[key].count++
+  }
+  const liveMapPoints: LiveMapPoint[] = Object.values(pointGroups)
+
   return {
     updatedAt:    now.toLocaleTimeString('pt-BR', { timeZone: TZ }),
     liveCount:    live.length,
+    liveMapPoints,
     topPages,
     devMap,
     ordersToday:  orders.length,
@@ -254,18 +270,22 @@ export default async function LivePage() {
                 border: '1px solid var(--admin-border)',
                 textTransform: 'uppercase', letterSpacing: '0.4px',
               }}>
-                Geo · Fase 2
+                Geo · ao vivo
               </span>
             </div>
           </div>
 
           {/* Map fills the rest */}
           <div style={{ height: '440px' }}>
-            <LiveMap
-              points={[]}
-              visitorCount={d.liveCount}
-              orderCount={d.ordersToday}
-            />
+            {d.liveMapPoints.length === 0 ? (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ textAlign: 'center', color: 'var(--admin-text-muted)', fontSize: '13px', maxWidth: '260px', lineHeight: 1.6 }}>
+                  Nenhum visitante com localização identificada nos últimos 10 min
+                </div>
+              </div>
+            ) : (
+              <LiveTileMapLoader points={d.liveMapPoints} />
+            )}
           </div>
         </div>
 

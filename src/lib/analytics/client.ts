@@ -1,6 +1,6 @@
 'use client'
 
-const ATTRIBUTION_KEY = 'jhf_attribution'
+const ATTRIBUTION_KEY = 'jr_attribution'
 const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 // All params captured from the entry URL and persisted to localStorage
@@ -9,15 +9,15 @@ const CAPTURE_PARAMS = [
   'fbclid',
   'meta_campaign_id', 'meta_adset_id', 'meta_ad_id',
   'meta_campaign_name', 'meta_adset_name', 'meta_ad_name',
-  'meta_placement', 'jhf_channel', 'jhf_funnel',
+  'meta_placement', 'jr_channel', 'jr_funnel',
 ]
 
 // Extra fields forwarded into properties.attribution (no schema migration needed)
 const EXTENDED_KEYS = [
-  'utm_content', 'utm_term', 'fbclid',
+  'fbclid',
   'meta_campaign_id', 'meta_adset_id', 'meta_ad_id',
   'meta_campaign_name', 'meta_adset_name', 'meta_ad_name',
-  'meta_placement', 'jhf_channel', 'jhf_funnel',
+  'meta_placement', 'jr_channel', 'jr_funnel',
   'landing_page', 'captured_at',
 ]
 
@@ -139,6 +139,8 @@ export function track(payload: TrackPayload): void {
   const utm_source   = params.get('utm_source')   || attr?.['utm_source']   || undefined
   const utm_medium   = params.get('utm_medium')   || attr?.['utm_medium']   || undefined
   const utm_campaign = params.get('utm_campaign') || attr?.['utm_campaign'] || undefined
+  const utm_content  = params.get('utm_content')  || attr?.['utm_content']  || undefined
+  const utm_term     = params.get('utm_term')     || attr?.['utm_term']     || undefined
 
   // Extended attribution snapshot → properties.attribution (no schema migration needed)
   const attribution: Record<string, string> = {}
@@ -167,6 +169,8 @@ export function track(payload: TrackPayload): void {
     utm_source,
     utm_medium,
     utm_campaign,
+    utm_content,
+    utm_term,
   })
 
   if (navigator.sendBeacon) {
