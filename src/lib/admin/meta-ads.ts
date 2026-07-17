@@ -5,6 +5,18 @@ const STORE_ID   = 'b0000000-0000-0000-0000-000000000001'
 const META_API_VER   = 'v21.0'
 const PAID_STATUSES  = ['paid', 'invoiced', 'on_carriage', 'payment_confirmed', 'preparing_shipping', 'in_separation', 'in_transit', 'delivered']
 
+// Todo `until` que chega neste arquivo segue a convenção interna de DateRange
+// (endExclusive — dia seguinte, exclusivo), mas o `time_range.until` da Meta
+// Graph API é INCLUSIVE. Sem essa conversão, selecionar um único dia (ex:
+// dia 15) monta start=15/endExclusive=16 e a Meta soma o gasto de 15 E 16
+// juntos — bug real, dobra o gasto reportado silenciosamente. Subtrai 1 dia
+// antes de montar qualquer `time_range` pra Meta.
+function toMetaUntil(untilExclusive: string): string {
+  const d = new Date(`${untilExclusive}T00:00:00-03:00`)
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface MetaInsightRow {
@@ -210,7 +222,7 @@ async function fetchAccountInsights(
   try {
     const params = new URLSearchParams({
       fields:     'spend,impressions,clicks,reach',
-      time_range: JSON.stringify({ since, until }),
+      time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
       level:      'account',
     })
     const res  = await fetch(
@@ -324,7 +336,7 @@ export async function getMetaLiveCampaigns(since: string, until: string): Promis
       try {
         const params = new URLSearchParams({
           fields,
-          time_range: JSON.stringify({ since, until }),
+          time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
           level:      'campaign',
           limit:      '100',
         })
@@ -378,7 +390,7 @@ async function fetchInsightsFromMeta(
 
   const params = new URLSearchParams({
     fields,
-    time_range:     JSON.stringify({ since, until }),
+    time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
     level,
     time_increment: '1',
     limit:          '200',
@@ -1009,7 +1021,7 @@ export async function getMetaAccountCampaigns(
         `https://graph.facebook.com/${META_API_VER}/act_${accountId}/insights?${new URLSearchParams({
           fields:     INSIGHT_FIELDS,
           level:      'campaign',
-          time_range: JSON.stringify({ since, until }),
+          time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
           limit:      '100',
         })}`,
         { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
@@ -1122,7 +1134,7 @@ export async function getMetaCampaignAdsets(
           fields: `adset_id,adset_name,spend,impressions,clicks,reach,ctr,cpc,cpm,frequency,actions,cost_per_action_type,${FUNNEL_FIELDS}`,
           level: 'adset',
           filtering: filteringStr,
-          time_range: JSON.stringify({ since, until }),
+          time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
           limit: '100',
         })}`,
         { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
@@ -1237,7 +1249,7 @@ export async function getMetaAdsetAds(
           fields: `ad_id,ad_name,spend,impressions,clicks,reach,ctr,cpc,cpm,frequency,actions,cost_per_action_type,${FUNNEL_FIELDS}`,
           level: 'ad',
           filtering: filteringStr,
-          time_range: JSON.stringify({ since, until }),
+          time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
           limit: '100',
         })}`,
         { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
