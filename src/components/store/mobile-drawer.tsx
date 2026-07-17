@@ -68,7 +68,7 @@ export function MobileDrawer({ collections, isOpen, onClose }: MobileDrawerProps
 
   const mainLinks = [
     { label: 'Início', href: '/' },
-    { label: '🎁 Oferta Progressiva', href: '/colecao/oferta-progressiva' },
+    { label: 'Oferta Progressiva', href: '/colecao/oferta-progressiva' },
     { label: 'Sobre', href: '/sobre' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Contato', href: '/contato' },

@@ -25,7 +25,7 @@ const NAV_LINKS: { label: string; href: string; mega?: true }[] = [
   { label: 'Compre 1 Leve 2', href: '/colecao/compre-1-leve-2' },
   { label: 'Categorias', href: '/colecao', mega: true },
   { label: 'Mais vendidos', href: '/colecao/mais-vendidos' },
-  { label: '🎁 Oferta Progressiva', href: '/colecao/oferta-progressiva' },
+  { label: 'Oferta Progressiva', href: '/colecao/oferta-progressiva' },
 ]
 
 export const Header = memo(function Header({
