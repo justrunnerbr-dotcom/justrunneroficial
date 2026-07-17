@@ -3,18 +3,23 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { CeoRefreshButton } from './_components/ceo-refresh-button'
 import { CeoSyncButton } from './_components/ceo-sync-button'
-import { HealthScoreWidget } from './_components/health-score-widget'
-import { HealthScoreCalculateButton } from './_components/health-score-calculate-button'
 import { BrainPanel } from './_components/brain-panel'
 import { DashboardEditableLayout, type DashboardWidget } from './_components/dashboard-editable-layout'
 import { ReorderableRow } from './_components/reorderable-row'
-import { MetaTaxProvider, MetaTaxToggle, MetaSpendAmount } from './_components/meta-tax-toggle'
+import { MetaTaxProvider, MetaTaxToggle, MarketingSpendAmount } from './_components/meta-tax-toggle'
 import type { RecommendationCardData } from './_components/brain-card'
-import { DollarSign, ShoppingBag, Users, Percent, Target, CheckCircle2, AlertCircle, Tag, BrainCircuit, TrendingUp, Megaphone } from 'lucide-react'
+import { DollarSign, ShoppingBag, Users, Percent, Target, CheckCircle2, AlertCircle, Tag, BrainCircuit, TrendingUp, Megaphone, CreditCard, MousePointerClick } from 'lucide-react'
 import Link from 'next/link'
 import { getDateRangeFromSearchParams, getPreviousPeriodRange, type DateRange } from '@/lib/admin/date-range'
 import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
 import { getMetaDashboardStats, getMetaLiveSpend } from '@/lib/admin/meta-ads'
+import { getSalesBreakdown } from '@/lib/admin/sales-breakdown'
+import { ConversionFunnelVisual } from './_components/conversion-funnel-visual'
+import { HourlySalesChart } from './_components/hourly-sales-chart'
+import { PaymentMethodDonut } from './_components/payment-method-donut'
+import { ApprovalRateRings } from './_components/approval-rate-rings'
+import { RegionalAnalysis } from './_components/regional-analysis'
+import { InvestmentBarChart } from './_components/investment-bar-chart'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ = 'America/Sao_Paulo'
@@ -59,7 +64,7 @@ async function getDashboardData(range: DateRange) {
   const db   = getDb()
   const prev = getPreviousPeriodRange(range)
 
-  const [curRows, prevRows, recentOrders, liveCount, topProducts, healthRow, brainRecs, pendingCount, paidCount] = await Promise.all([
+  const [curRows, prevRows, recentOrders, liveCount, topProducts, healthRow, brainRecs, pendingCount, paidCount, manualPaidCount] = await Promise.all([
     db.from('daily_analytics').select('*').eq('store_id', STORE_ID).gte('date', range.start).lt('date', range.endExclusive),
     db.from('daily_analytics').select('*').eq('store_id', STORE_ID).gte('date', prev.start).lt('date', prev.endExclusive),
     db.from('orders').select('external_id, total, status, payment_method, created_at, customer_snapshot').eq('store_id', STORE_ID).gte('created_at', range.startISO).lt('created_at', range.endISO).order('created_at', { ascending: false }).limit(6),
@@ -69,6 +74,7 @@ async function getDashboardData(range: DateRange) {
     db.from('brain_recommendations').select(`*, signal:brain_signals(signal_type, severity, metric_name, current_value, baseline_value, delta_pct, detected_at)`).eq('store_id', STORE_ID).in('status', ['open', 'acknowledged']).order('created_at', { ascending: false }).limit(5),
     db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID).eq('status', 'pending').gte('created_at', range.startISO).lt('created_at', range.endISO),
     db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID).eq('status', 'paid').gte('created_at', range.startISO).lt('created_at', range.endISO),
+    db.from('manual_orders').select('id', { count: 'exact', head: true }).gte('created_at', range.startISO).lt('created_at', range.endISO),
   ])
 
   const curData  = (curRows.data  ?? []) as Record<string, number>[]
@@ -104,7 +110,9 @@ async function getDashboardData(range: DateRange) {
     healthScore:  healthRow.data as Record<string, unknown> | null,
     brainRecs:    (brainRecs.data ?? []) as RecommendationCardData[],
     pendingCount: pendingCount.count ?? 0,
-    paidCount:    paidCount.count ?? 0,
+    // Pedidos manuais (venda por link direto, fora do catálogo/Yampi) contam
+    // como pagos também — mesma lógica do refreshDailyAnalytics.
+    paidCount:    (paidCount.count ?? 0) + (manualPaidCount.count ?? 0),
     hasData:      curData.length > 0,
     hasOrders:    (recentOrders.data?.length ?? 0) > 0,
   }
@@ -190,12 +198,15 @@ export default async function AdminPage({
   const sp    = await searchParams
   const range = getDateRangeFromSearchParams(sp)
   const db    = getDb()
-  const [d, brainQ, metaStats, liveSpend] = await Promise.all([
+  const [d, brainQ, metaStats, liveSpend, salesBreakdown] = await Promise.all([
     getDashboardData(range),
     getBrainQuickStats(db, range),
     getMetaDashboardStats(db, range),
     getMetaLiveSpend(range.start, range.endExclusive),
+    getSalesBreakdown(range),
   ])
+
+  const totalAdClicks = liveSpend?.total.clicks ?? 0
 
   const revCur  = d.cur.revenue
   const revPrev = d.prev.revenue
@@ -255,7 +266,7 @@ export default async function AdminPage({
                     <MetaTaxToggle />
                   </div>
                   <div style={{ fontSize: '36px', fontWeight: 800, color: COLORS.textMain, fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {liveSpend ? <MetaSpendAmount raw={liveSpend.total.spend} /> : '—'}
+                    {liveSpend ? <MarketingSpendAmount metaRaw={liveSpend.total.spend} googleRaw={0} /> : '—'}
                   </div>
                   {liveSpend && (
                     <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
@@ -264,18 +275,10 @@ export default async function AdminPage({
                   )}
                 </div>
 
-                {/* Por conta */}
                 {liveSpend && (
-                  <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {liveSpend.accounts.map(acc => (
-                      <div key={acc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', color: COLORS.textSec }}>{acc.name}</span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: COLORS.textMain, fontFamily: 'monospace' }}>
-                          <MetaSpendAmount raw={acc.period.spend} />
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <InvestmentBarChart
+                    sources={liveSpend.accounts.map(acc => ({ name: acc.name, spend: acc.period.spend, isMeta: true }))}
+                  />
                 )}
               </div>
             ),
@@ -286,12 +289,13 @@ export default async function AdminPage({
               <ReorderableRow
                 storageKey="overview-metrics"
                 gridTemplateColumns="repeat(3, 1fr)"
+                mobileColumns={2}
                 items={[
                   { id: 'pedidos', node: <MetricCard title="Pedidos" value={d.cur.orders} sub={`Ant: ${d.prev.orders}`} icon={ShoppingBag} {...delta(d.cur.orders, d.prev.orders)} /> },
                   { id: 'ticket-medio', node: <MetricCard title="Ticket Médio" value={fmt(ticketMedioCur)} sub={`Ant: ${fmt(ticketMedioPrev)}`} icon={DollarSign} {...delta(ticketMedioCur, ticketMedioPrev)} /> },
                   { id: 'conversao', node: <MetricCard title="Conversão" value={`${(d.cur.conversion_rate * 100).toFixed(2)}%`} sub={`Sessões: ${d.cur.sessions}`} icon={Percent} {...delta(d.cur.conversion_rate, 0)} /> },
                   { id: 'sessoes', node: <MetricCard title="Sessões" value={d.cur.sessions} sub={`Ant: ${d.prev.sessions}`} icon={Users} {...delta(d.cur.sessions, d.prev.sessions)} /> },
-                  { id: 'cpa', node: <MetricCard title="CPA" value={liveSpend && d.paidCount > 0 ? <MetaSpendAmount raw={liveSpend.total.spend} divideBy={d.paidCount} /> : '—'} sub="Custo por Aquisição" icon={Target} up={true} pct={0} /> },
+                  { id: 'cpa', node: <MetricCard title="CPA" value={liveSpend && d.paidCount > 0 ? <MarketingSpendAmount metaRaw={liveSpend.total.spend} googleRaw={0} divideBy={d.paidCount} /> : '—'} sub="Custo por Aquisição" icon={Target} up={true} pct={0} /> },
                   { id: 'pagos', node: <MetricCard title="Pagos" value={d.paidCount} sub="Confirmados" icon={CheckCircle2} up={true} pct={0} /> },
                 ]}
               />
@@ -303,44 +307,75 @@ export default async function AdminPage({
       ),
     },
     {
-      id: 'funnel-status',
-      label: 'Funil, Top Produtos e Status de Pedidos',
+      id: 'funnel',
+      label: 'Funil de Conversão',
+      node: (
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px' }}>
+          <SectionHeader title="Funil de Conversão" />
+          <ConversionFunnelVisual
+            steps={[
+              { label: 'Cliques',    value: totalAdClicks,         icon: MousePointerClick },
+              { label: 'Visitantes', value: d.cur.page_views,      icon: Users },
+              { label: 'Carrinho',   value: d.cur.add_to_carts,    icon: ShoppingBag },
+              { label: 'Checkout',   value: d.cur.checkout_starts, icon: CreditCard },
+              { label: 'Pedido',     value: d.cur.orders,          icon: CheckCircle2 },
+            ]}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'vendas-detalhe',
+      label: 'Vendas por Horário, Pagamento e Aprovação',
       node: (
       <ReorderableRow
-        storageKey="funnel-status"
-        gridTemplateColumns="1fr 1fr 1fr"
+        storageKey="vendas-detalhe"
+        gridTemplateColumns="2fr 1fr 1fr"
         items={[
           {
-            id: 'funil',
+            id: 'vendas-horario',
             node: (
               <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Funil de Conversão" />
-                {[
-                  { label: 'Visitantes',    value: d.cur.page_views },
-                  { label: 'Produto',       value: d.cur.product_views },
-                  { label: 'Carrinho',      value: d.cur.add_to_carts },
-                  { label: 'Checkout',      value: d.cur.checkout_starts },
-                  { label: 'Pedido',        value: d.cur.orders },
-                ].map((step, i, arr) => {
-                  const maxVal = arr[0].value || 1
-                  const pct = Math.round((step.value / maxVal) * 100)
-                  return (
-                    <div key={step.label} style={{ marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '13px', color: COLORS.textSec }}>{step.label}</span>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textMain, fontFamily: 'monospace' }}>
-                          {step.value.toLocaleString('pt-BR')} <span style={{ color: COLORS.textMuted, fontSize: '11px', fontWeight: 400 }}>({pct}%)</span>
-                        </span>
-                      </div>
-                      <div style={{ height: '6px', background: 'var(--admin-border)', borderRadius: '99px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: COLORS.green, borderRadius: '99px', boxShadow: `0 0 8px ${COLORS.green}` }} />
-                      </div>
-                    </div>
-                  )
-                })}
+                <SectionHeader title="Vendas por Horário" />
+                <HourlySalesChart data={salesBreakdown.hourly} />
               </div>
             ),
           },
+          {
+            id: 'vendas-pagamento',
+            node: (
+              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
+                <SectionHeader title="Vendas por Pagamento" />
+                <PaymentMethodDonut data={salesBreakdown.byPayment} />
+              </div>
+            ),
+          },
+          {
+            id: 'taxa-aprovacao',
+            node: (
+              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
+                <SectionHeader title="Taxa de Aprovação" />
+                <ApprovalRateRings data={salesBreakdown.approvalByPayment} />
+              </div>
+            ),
+          },
+        ]}
+      />
+      ),
+    },
+    {
+      id: 'regional-analysis',
+      label: 'Análise Regional',
+      node: <RegionalAnalysis data={salesBreakdown.byState} />,
+    },
+    {
+      id: 'top-status',
+      label: 'Top Produtos e Status de Pedidos',
+      node: (
+      <ReorderableRow
+        storageKey="top-status"
+        gridTemplateColumns="1fr 1fr"
+        items={[
           {
             id: 'top-produtos',
             node: (
@@ -592,10 +627,10 @@ export default async function AdminPage({
   ]
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '1600px', margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', background: COLORS.bg, minHeight: '100vh' }}>
+    <div className="px-4 py-6 md:px-10 md:py-8" style={{ maxWidth: '1600px', margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', background: COLORS.bg, minHeight: '100vh' }}>
 
       {/* Top Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '32px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: COLORS.textMain }}>Dashboard</h1>
           <p style={{ margin: '4px 0 0', fontSize: '14px', color: COLORS.textSec }}>
@@ -603,7 +638,7 @@ export default async function AdminPage({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <CeoRefreshButton />
           <CeoSyncButton />
         </div>

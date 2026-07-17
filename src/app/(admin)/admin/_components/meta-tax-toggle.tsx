@@ -14,7 +14,7 @@ interface MetaTaxContextValue {
   applyTax: (raw: number) => number
 }
 
-const MetaTaxContext = createContext<MetaTaxContextValue>({
+export const MetaTaxContext = createContext<MetaTaxContextValue>({
   enabled: false,
   toggle: () => {},
   applyTax: (raw) => raw,
@@ -72,12 +72,13 @@ export function MetaTaxToggle() {
   )
 }
 
-// Renderiza um valor monetário já formatado, aplicando (ou não) o imposto
-// conforme o toggle atual. `divideBy` serve pra métricas derivadas do gasto,
-// como o CPA (gasto ajustado ÷ pedidos pagos).
-export function MetaSpendAmount({ raw, divideBy }: { raw: number; divideBy?: number }) {
+// Investimento Marketing = Meta (com imposto, se o toggle estiver ligado) + Google Ads
+// (a API do Google já devolve o valor real cobrado, sem imposto embutido pra ajustar).
+// `divideBy` serve pro CPA (gasto combinado ÷ pedidos pagos) — precisa ser o
+// mesmo total do card Investimento Marketing, senão os dois não batem.
+export function MarketingSpendAmount({ metaRaw, googleRaw, divideBy }: { metaRaw: number; googleRaw: number; divideBy?: number }) {
   const { applyTax } = useContext(MetaTaxContext)
-  const adjusted = applyTax(raw)
-  const value = divideBy && divideBy > 0 ? adjusted / divideBy : adjusted
+  const total = applyTax(metaRaw) + googleRaw
+  const value = divideBy && divideBy > 0 ? total / divideBy : total
   return <>{fmtBRL(value)}</>
 }

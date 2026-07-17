@@ -14,10 +14,15 @@ export function ReorderableRow({
   storageKey,
   items,
   gridTemplateColumns,
+  mobileColumns = 1,
 }: {
   storageKey: string
   items: RowItem[]
   gridTemplateColumns: string
+  /** Quantas colunas no mobile — 1 (padrão) pra blocos de conteúdo grandes
+   *  (tabelas, gráficos), 2+ pra fileiras de cards pequenos (KPIs), onde 1
+   *  coluna deixaria cada card esticado e vazio ocupando a tela inteira. */
+  mobileColumns?: number
 }) {
   const editMode = useContext(EditModeContext)
   const defaultOrder = items.map((i) => i.id)
@@ -25,6 +30,18 @@ export function ReorderableRow({
   const dragId = useRef<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const fullKey = `jhf-admin-row-${storageKey}`
+
+  // No mobile ignora o gridTemplateColumns recebido (pensado pra desktop) e
+  // força 1 coluna — sem isso, os cards ficam espremidos lado a lado e
+  // ilegíveis em telas pequenas.
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     try {
@@ -64,7 +81,7 @@ export function ReorderableRow({
     .filter((i): i is RowItem => !!i)
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns, gap: '20px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? `repeat(${mobileColumns}, 1fr)` : gridTemplateColumns, gap: isMobile ? '10px' : '20px' }}>
       {ordered.map((item) => (
         <div
           key={item.id}
