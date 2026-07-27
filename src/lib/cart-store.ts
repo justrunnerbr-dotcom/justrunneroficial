@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem } from './types'
+import { PROGRESSIVE_OFFER_SKU_PREFIX, isFreeGlassesEligible } from './sku'
 
 // Oferta Progressiva (produtos JROP-, catálogo duplicado a R$175 cada): 1
 // óculos = R$175, 2 óculos = R$297 (desconto fixo de R$53 no 2º). Faixas de
 // 3/4 unidades ainda não existem — se forem criadas, essa função precisa
 // ganhar os tiers correspondentes.
-const PROGRESSIVE_OFFER_SKU_PREFIX = 'JROP-'
 const PROGRESSIVE_OFFER_TIER2_DISCOUNT = 53
 const PROGRESSIVE_OFFER_TIER2_MIN_QTY = 2
 
@@ -77,7 +77,7 @@ export const useCartStore = create<CartState>()(
 
       discount: () => {
         const eligiblePrices = get().items
-          .filter(i => i.price >= 90 && !i.sku?.startsWith(PROGRESSIVE_OFFER_SKU_PREFIX))
+          .filter(isFreeGlassesEligible)
           .flatMap(i => Array(i.quantity).fill(i.price))
           .sort((a, b) => b - a)
           
@@ -101,7 +101,7 @@ export const useCartStore = create<CartState>()(
         get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       eligibleGlassesCount: () =>
-        get().items.reduce((sum, i) => (i.price >= 90 && !i.sku?.startsWith(PROGRESSIVE_OFFER_SKU_PREFIX)) ? sum + i.quantity : sum, 0),
+        get().items.reduce((sum, i) => isFreeGlassesEligible(i) ? sum + i.quantity : sum, 0),
     }),
     {
       name: 'jhf-cart',

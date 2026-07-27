@@ -5,6 +5,7 @@ import { ProductCarousel } from '@/components/store/product-carousel'
 import { ProductFAQ } from '@/components/store/product-faq'
 import { SocialProof } from '@/components/store/social-proof'
 import { ProductBanner } from '@/components/store/product-banner'
+import { isCombo as isComboSku } from '@/lib/sku'
 
 export const revalidate = 60
 
@@ -39,6 +40,12 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
   // Buscar produtos relacionados de categorias diferentes (garantido no lib/queries)
   const relatedProducts = await getRelatedProducts(product.collection_id, product.id, 8)
 
+  // O banner promocional vende a mecânica "2 óculos por R$297" (a arte tem um
+  // carrinho de exemplo com o desconto aplicado). Combos não participam dessa
+  // promoção, então na página deles isso seria propaganda de um desconto que o
+  // checkout não vai dar.
+  const isCombo = product.variants.some(isComboSku)
+
   return (
     <div style={{ paddingBottom: '32px' }}>
       {/* ── Main 2-col layout ── */}
@@ -53,7 +60,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       <SocialProof />
 
       {/* ── Banners Promocionais ── */}
-      <ProductBanner />
+      {!isCombo && <ProductBanner />}
 
       {/* ── Guia Rápido (FAQ) ── */}
       <div style={{ marginTop: '0' }}>

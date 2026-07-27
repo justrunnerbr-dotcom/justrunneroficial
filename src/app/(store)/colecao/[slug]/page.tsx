@@ -55,8 +55,11 @@ export default async function CollectionPage({ params }: PageProps) {
     } as any
 
     // Oferta Progressiva é um catálogo duplicado à parte (produtos JROP-,
-    // R$175) — não deve aparecer aqui, só na própria página dela.
-    const allCollections = (await getCollections()).filter(c => c.slug !== 'oferta-progressiva')
+    // R$175) — não deve aparecer aqui, só na própria página dela. Combos
+    // (JRC-) são kits fechados de 3 óculos e não participam desta promoção.
+    const allCollections = (await getCollections()).filter(
+      c => c.slug !== 'oferta-progressiva' && c.slug !== 'combos'
+    )
     const productMap = await getProductsBatchByCollections(allCollections.map(c => c.id))
     const allProducts = allCollections.flatMap(c => productMap.get(c.id) ?? [])
 
@@ -118,28 +121,34 @@ export default async function CollectionPage({ params }: PageProps) {
   const hasDesktop = fs.existsSync(path.join(publicDir, desktopPath))
   const hasMobile = fs.existsSync(path.join(publicDir, mobilePath))
 
-  const finalPcBanner = hasDesktop ? desktopUrl : (collection.image_url || '/BANNERS%20297/categoria_pc.jpg')
-  const finalMobileBanner = hasMobile ? mobileUrl : ((collection as any).mobile_image_url || '/BANNERS%20297/categoria_mobile.jpg')
+  // Sem fallback hardcoded: `/BANNERS 297/categoria_pc.jpg` e `_mobile` nunca
+  // existiram em public/, então categoria sem banner próprio renderizava um
+  // <img> quebrado. Categoria nova (ex: Combos) entra sem banner até subirem a
+  // arte — melhor não mostrar nada do que mostrar imagem quebrada.
+  const finalPcBanner = hasDesktop ? desktopUrl : (collection.image_url || null)
+  const finalMobileBanner = hasMobile ? mobileUrl : ((collection as any).mobile_image_url || null)
 
   return (
     <>
 
       {/* Banner */}
-      <div style={{ width: '100%' }}>
-        <picture>
-          {finalMobileBanner && (
-            <source 
-              media="(max-width: 767px)" 
-              srcSet={finalMobileBanner} 
+      {finalPcBanner && (
+        <div style={{ width: '100%' }}>
+          <picture>
+            {finalMobileBanner && (
+              <source
+                media="(max-width: 767px)"
+                srcSet={finalMobileBanner}
+              />
+            )}
+            <img
+              src={finalPcBanner}
+              alt={collection.name}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
             />
-          )}
-          <img
-            src={finalPcBanner}
-            alt={collection.name}
-            style={{ width: '100%', height: 'auto', display: 'block' }}
-          />
-        </picture>
-      </div>
+          </picture>
+        </div>
+      )}
 
       {/* Products */}
       <div style={{ padding: '48px 0 80px' }}>

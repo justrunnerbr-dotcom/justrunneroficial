@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import { Minus, Plus, Sun, Glasses, Smile, Gem, Truck, ShieldCheck, RefreshCcw, Lock } from 'lucide-react'
 import { useCartStore } from '@/lib/cart-store'
+import { isCombo as isComboSku } from '@/lib/sku'
 import { buildSingleCheckoutUrl } from '@/lib/yampi'
 import { formatPrice } from '@/lib/utils'
 import { trackAddToCart, trackBeginCheckout } from '@/lib/gtm'
@@ -78,6 +79,11 @@ export function ProductClient({ product, initialVariantId }: Props) {
     () => buildVariantImageMap(sortedVariants, product.images, product.slug),
     [sortedVariants, product.images, product.slug],
   )
+
+  // Combos (JRC-) são kit fechado de 3 óculos e ficam de fora do "Compre 1 Leve
+  // 2" (ver isFreeGlassesEligible em cart-store) — anunciar a promo na página
+  // deles prometeria um desconto que o carrinho e o checkout não vão aplicar.
+  const isCombo = useMemo(() => sortedVariants.some(isComboSku), [sortedVariants])
 
   // galleryItems: todas as fotos de cada variação, em sequência (foto de produto + extras,
   // como fotos de uso/rosto) antes de passar pra próxima variação. Setas/swipe navegam
@@ -535,7 +541,7 @@ export function ProductClient({ product, initialVariantId }: Props) {
         )}
 
         {/* ── Urgency: Compre 1 Leve 2 + offer timer ── */}
-        <UrgencyTimer variant="pdp" />
+        {!isCombo && <UrgencyTimer variant="pdp" />}
 
         {/* Bloco de destaque: Feature Boxes + Trust Icons num fundo cinza clarinho */}
         <div style={{ background: '#f4f4f5', border: '1px solid #e4e4e7', borderRadius: '4px', padding: '12px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -600,6 +606,7 @@ export function ProductClient({ product, initialVariantId }: Props) {
         </button>
 
         {/* CTA secundário: escolher 2º óculos grátis */}
+        {!isCombo && (
         <Link
           href="/colecao/compre-1-leve-2"
           style={{
@@ -624,11 +631,13 @@ export function ProductClient({ product, initialVariantId }: Props) {
         >
           ESCOLHER 2º ÓCULOS GRÁTIS
         </Link>
+        )}
 
         {/* Linha de Produção */}
         <ProductionVideosSection categorySlug={product.collection?.slug} />
 
         {/* Promo Box */}
+        {!isCombo && (
         <div style={{ background: '#fafafa', border: '1px solid #f4f4f5', borderRadius: '4px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
           <h3 style={{ fontSize: '18px', fontWeight: 400, color: '#18181b', marginBottom: '8px', fontFamily: 'var(--font-poppins), sans-serif' }}>
             COMPRE 1 E GANHE OUTRO!
@@ -642,6 +651,7 @@ export function ProductClient({ product, initialVariantId }: Props) {
             2. O <span style={{ fontWeight: 700 }}>desconto é aplicado automaticamente</span>
           </div>
         </div>
+        )}
 
         {/* Accordions removidos temporariamente — restaurar quando solicitado */}
 

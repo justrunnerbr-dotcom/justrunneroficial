@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { X, ShoppingBag, Lock } from 'lucide-react'
 import { useCartStore } from '@/lib/cart-store'
+import { isFreeGlassesEligible } from '@/lib/sku'
 import { buildCartCheckoutUrl } from '@/lib/yampi'
 import { formatPrice } from '@/lib/utils'
 import { track } from '@/lib/analytics/client'
@@ -88,7 +89,7 @@ export function CartDrawer() {
   let remainingFree = Math.floor(glassesCount / 2)
   const itemsWithDiscount = items.map(item => {
     let freeQty = 0
-    if (item.price >= 90 && !item.sku?.startsWith('JROP-')) {
+    if (isFreeGlassesEligible(item)) {
       freeQty = Math.min(remainingFree, item.quantity)
       remainingFree -= freeQty
     }

@@ -72,6 +72,7 @@ export const CATEGORY_SECTIONS_ORDER: {
   fileNameSlug: string
   layout: 'carousel' | 'grid' | 'fixedGrid'
 }[] = [
+  { slug: 'combos', title: 'Combos — 3 óculos por R$ 327', fileNameSlug: 'combos', layout: 'grid' },
   { slug: 'eye-jacket', title: 'Eye Jacket', fileNameSlug: 'eyejacket', layout: 'carousel' },
   { slug: 'flak', title: 'Flak', fileNameSlug: 'flak', layout: 'grid' },
   { slug: 'minute', title: 'Minute', fileNameSlug: 'minute', layout: 'fixedGrid' },
@@ -95,9 +96,15 @@ export default async function HomePage() {
     products: productsByCollection.get(c.id) ?? [],
   }))
 
+  // Combos (JRC-) são kits fechados de 3 óculos a R$327 e não entram no "Leve 2
+  // pelo preço de 1" (ver isFreeGlassesEligible em cart-store) — precisam ficar
+  // fora desta grade, mas continuam na seção de categoria logo abaixo.
   const featuredFirst = buildOrderedCards(C1L2_FEATURED_FIRST, collectionsWithProducts, 'c1l2-featured')
   const featuredSlugs = new Set(C1L2_FEATURED_FIRST.map((e) => e.productSlug))
-  const remainingProducts = collectionsWithProducts.flatMap((c) => c.products).filter((p) => !featuredSlugs.has(p.slug))
+  const remainingProducts = collectionsWithProducts
+    .filter((c) => c.slug !== 'combos')
+    .flatMap((c) => c.products)
+    .filter((p) => !featuredSlugs.has(p.slug))
   const c1l2Products = [...featuredFirst, ...remainingProducts]
 
   const publicDir = path.join(process.cwd(), 'public')
