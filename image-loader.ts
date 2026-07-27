@@ -27,7 +27,12 @@ const SUPABASE_RENDER_IMAGE = '/storage/v1/render/image/public/'
 export default function supabaseImageLoader({ src, width, quality }: LoaderArgs): string {
   if (src.includes(SUPABASE_PUBLIC_OBJECT)) {
     const base = src.replace(SUPABASE_PUBLIC_OBJECT, SUPABASE_RENDER_IMAGE)
-    return `${base}?width=${width}&quality=${quality ?? 75}`
+    // `resize=contain` é obrigatório: passando só `width`, o transformador do
+    // Supabase redimensiona a largura mas MANTÉM a altura original (2000x2000
+    // vira 640x2000), o que deforma e corta a foto. Com contain a proporção é
+    // preservada. Todas as fotos do catálogo são quadradas, então não há
+    // letterbox — foi conferido em imagens de 1800, 2000 e 2400px.
+    return `${base}?width=${width}&quality=${quality ?? 75}&resize=contain`
   }
 
   // Arquivos locais em /public (banners) e qualquer outra origem seguem

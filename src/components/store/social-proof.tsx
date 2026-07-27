@@ -87,9 +87,16 @@ export function SocialProof() {
                       overflow: 'hidden'
                     }}
                   >
-                    <img 
-                      src={src} 
-                      alt={`Cliente usando óculos ${i}`} 
+                    {/* A seção fica bem abaixo da dobra e o carrossel tem 90
+                        tags apontando para as mesmas 30 fotos — lazy evita
+                        baixar tudo no carregamento inicial da home e da PDP. */}
+                    <img
+                      src={src}
+                      alt={`Cliente usando óculos ${i}`}
+                      loading="lazy"
+                      decoding="async"
+                      width={140}
+                      height={180}
                       style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                     />
                   </div>
