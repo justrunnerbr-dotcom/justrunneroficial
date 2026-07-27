@@ -135,6 +135,10 @@ export default async function HomePage() {
       <OrganizationJsonLd />
       <WebSiteJsonLd />
 
+      {/* A home não tem título em texto no layout (o Hero é imagem), então o
+          h1 fica só para buscador e leitor de tela — sem alterar o visual. */}
+      <h1 className="visually-hidden">Óculos de sol esportivos Just Runner</h1>
+
       <Hero />
 
       <BenefitsBar />

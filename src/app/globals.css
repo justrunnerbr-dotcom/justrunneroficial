@@ -853,3 +853,17 @@ h1, h2, h3, h4, h5, h6 {
     gap: 16px;
   }
 }
+
+/* Conteúdo lido por buscador e leitor de tela, sem ocupar espaço na tela.
+   Usado no h1 da home, que não tem título visível no layout atual. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

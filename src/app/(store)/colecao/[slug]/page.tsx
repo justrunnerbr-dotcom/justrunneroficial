@@ -157,6 +157,22 @@ export default async function CollectionPage({ params }: PageProps) {
       {/* Products */}
       <div style={{ padding: '48px 0 80px' }}>
         <div className="page-width">
+          {/* Até aqui o nome da categoria só existia dentro da imagem do
+              banner, que o buscador não lê — e categoria sem banner (Combos)
+              abria sem título nenhum na tela. Mesmo estilo dos títulos de
+              seção da home (ver product-carousel.tsx). */}
+          <h1
+            style={{
+              fontFamily: 'var(--font-poppins), sans-serif',
+              fontWeight: 800,
+              fontSize: 'clamp(18px, 3vw, 28px)',
+              color: 'var(--color-heading)',
+              lineHeight: 1.2,
+              marginBottom: '8px',
+            }}
+          >
+            {collection.name}
+          </h1>
           <p
             style={{
               fontSize: '13px',

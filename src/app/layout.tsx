@@ -23,10 +23,17 @@ const montserrat = Montserrat({
 // não renderiza a imagem.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://justrunner.com.br'
 
+// Copy aprovada pelo usuário em 27/07/2026. Termo principal escolhido:
+// "óculos de sol esportivos". O title cabe inteiro no resultado do Google
+// (53 caracteres) e a description em 148.
+const SITE_TITLE = 'Óculos de Sol Esportivos | 2 por R$ 297 — Just Runner'
+const SITE_DESCRIPTION =
+  'Óculos de sol esportivos com proteção UV400 e lentes polarizadas. Leve 2 por R$ 297 com frete grátis para todo o Brasil. Mais de 150 mil clientes.'
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Just Runner',
-  description: 'Óculos de alta performance e estilo.',
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   icons: {
     icon: '/favicon.ico?v=2',
   },
@@ -38,8 +45,8 @@ export const metadata: Metadata = {
     siteName: 'Just Runner',
     locale: 'pt_BR',
     url: SITE_URL,
-    title: 'Just Runner',
-    description: 'Óculos de alta performance e estilo.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     images: [
       {
         url: '/og-image.jpg',
@@ -51,8 +58,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Just Runner',
-    description: 'Óculos de alta performance e estilo.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     images: ['/og-image.jpg'],
   },
 }
