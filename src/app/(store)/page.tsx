@@ -8,6 +8,7 @@ import { CategoryBanner } from '@/components/store/category-banner'
 import { WhatsAppButton } from '@/components/store/whatsapp-button'
 import { SocialProof } from '@/components/store/social-proof'
 import { resolveVariantImages } from '@/lib/product-image'
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/store/json-ld'
 
 export const revalidate = 300
 
@@ -131,6 +132,9 @@ export default async function HomePage() {
 
   return (
     <>
+      <OrganizationJsonLd />
+      <WebSiteJsonLd />
+
       <Hero />
 
       <BenefitsBar />

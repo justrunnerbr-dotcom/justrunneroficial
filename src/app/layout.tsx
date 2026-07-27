@@ -18,7 +18,13 @@ const montserrat = Montserrat({
   display: 'swap',
 })
 
+// metadataBase é obrigatório para o Next resolver as URLs relativas de
+// openGraph/twitter em URL absoluta — sem ele, link compartilhado no WhatsApp
+// não renderiza a imagem.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://justrunner.com.br'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'Just Runner',
   description: 'Óculos de alta performance e estilo.',
   icons: {
@@ -26,6 +32,28 @@ export const metadata: Metadata = {
   },
   verification: {
     google: '-vFwnd3dhefPd0O4rzg1kbaF5cBvwE1lawVkpAoUiN4',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Just Runner',
+    locale: 'pt_BR',
+    url: SITE_URL,
+    title: 'Just Runner',
+    description: 'Óculos de alta performance e estilo.',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Just Runner — 2 óculos por R$ 297 com frete grátis para todo o Brasil',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Just Runner',
+    description: 'Óculos de alta performance e estilo.',
+    images: ['/og-image.jpg'],
   },
 }
 

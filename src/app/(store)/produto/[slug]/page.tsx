@@ -6,6 +6,7 @@ import { ProductFAQ } from '@/components/store/product-faq'
 import { SocialProof } from '@/components/store/social-proof'
 import { ProductBanner } from '@/components/store/product-banner'
 import { isCombo as isComboSku } from '@/lib/sku'
+import { ProductJsonLd } from '@/components/store/json-ld'
 
 export const revalidate = 60
 
@@ -23,11 +24,30 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
   const product = await getProductBySlug(slug)
   if (!product) return {}
+
+  const title = `${product.name} — Just Runner`
+  const description = product.description
+    ? product.description.replace(/<[^>]+>/g, '').trim().slice(0, 160)
+    : `Compre ${product.name} na Just Runner.`
+
+  // Foto de capa como imagem de compartilhamento, servida já redimensionada
+  // pelo transformador do Supabase (ver image-loader.ts). As fotos do catálogo
+  // são quadradas, daí o 1200x1200.
+  const cover = [...(product.images ?? [])].sort((a, b) => a.position - b.position)[0]
+  const ogImage = cover
+    ? `${cover.url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')}?width=1200&quality=80&resize=contain`
+    : '/og-image.jpg'
+
   return {
-    title: `${product.name} — Just Runner`,
-    description: product.description
-      ? product.description.replace(/<[^>]+>/g, '').trim().slice(0, 160)
-      : `Compre ${product.name} na Just Runner.`,
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      images: [{ url: ogImage, width: 1200, height: 1200, alt: product.name }],
+    },
+    twitter: { card: 'summary_large_image' as const, title, description, images: [ogImage] },
   }
 }
 
@@ -48,6 +68,8 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
   return (
     <div style={{ paddingBottom: '32px' }}>
+      <ProductJsonLd product={product} />
+
       {/* ── Main 2-col layout ── */}
       <div className="product-page-top">
         <div className="page-width">
