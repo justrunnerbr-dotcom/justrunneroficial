@@ -80,7 +80,10 @@ async function main() {
             width: 8,
             length: 17,
             quantity_managed: false,
-            availability: 999,
+            // `availability` é "Prazo para postagem" EM DIAS, não estoque —
+            // estava 999 e o checkout somava 999 dias ao prazo dos Correios.
+            // Ver scripts/fix-yampi-prazo-postagem.ts.
+            availability: 1,
             availability_soldout: 0,
             blocked_sale: false,
             variations_values_ids: [],
