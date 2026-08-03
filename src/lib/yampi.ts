@@ -20,6 +20,37 @@ function getCheckoutDomain(alias: string): string {
   return `${alias}.yampi.com.br`
 }
 
+// A Yampi guarda utm_source/utm_medium/utm_campaign do pedido a partir dos parâmetros
+// que chegam na URL do checkout dela — e devolve esses três no payload do webhook
+// (ver YampiOrderResource em lib/yampi/sync.ts). Sem repassar nada aqui, todo pedido
+// nasce sem atribuição: era o caso até 02/08/2026, quando só 5 de 20 pedidos tinham
+// utm_source e nenhum tinha utm_content/utm_term.
+//
+// Lê o mesmo localStorage que lib/analytics/client.ts escreve (chave `jr_attribution`),
+// sem importar aquele módulo — este arquivo também é alcançado por código de servidor.
+// A Yampi só tem campo pros três UTMs clássicos; utm_content/utm_term (nome do anúncio
+// e do conjunto) chegam no pedido pela página /obrigado, não por aqui.
+function attributionParams(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    const url = new URLSearchParams(window.location.search)
+    let stored: Record<string, string> = {}
+    const raw = localStorage.getItem('jr_attribution')
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, string>
+      if (!parsed.expires_at || new Date(parsed.expires_at) >= new Date()) stored = parsed
+    }
+    const parts: string[] = []
+    for (const key of ['utm_source', 'utm_medium', 'utm_campaign'] as const) {
+      const val = url.get(key) || stored[key]
+      if (val) parts.push(`${key}=${encodeURIComponent(val)}`)
+    }
+    return parts.length ? `&${parts.join('&')}` : ''
+  } catch {
+    return ''
+  }
+}
+
 export function buildSingleCheckoutUrl(
   alias: string,
   skuId: string | null
@@ -31,7 +62,8 @@ export function buildSingleCheckoutUrl(
     `?product_option_id%5B%5D=${skuId}` +
     `&quantity%5B%5D=1` +
     `&redirectTo=checkout&skipToCheckout=1` +
-    `&store_token=${STORE_TOKEN}&clearCart=1`
+    `&store_token=${STORE_TOKEN}&clearCart=1` +
+    attributionParams()
   )
 }
 
@@ -52,6 +84,7 @@ export function buildCartCheckoutUrl(
     `https://${domain}/cart/items` +
     `?${productParams}` +
     `&redirectTo=checkout&skipToCheckout=1` +
-    `&store_token=${STORE_TOKEN}&clearCart=1`
+    `&store_token=${STORE_TOKEN}&clearCart=1` +
+    attributionParams()
   )
 }

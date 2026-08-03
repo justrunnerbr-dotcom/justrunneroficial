@@ -69,6 +69,14 @@ export interface YampiOrderResource {
     utm_source?:   string
     utm_medium?:   string
     utm_campaign?: string
+    // A Yampi não tem campo nativo pra esses dois; só chegam se o tema/checkout
+    // repassar. A fonte confiável deles é a página /obrigado (ver
+    // app/api/attribution/order/route.ts), que lê do localStorage do cliente.
+    utm_content?:  string
+    utm_term?:     string
+    shipping_address?: {
+      data?: { state?: string; city?: string }
+    }
     ip?:           string
   }
 }
@@ -171,6 +179,12 @@ export async function upsertYampiOrder(
       utm_source:       d.utm_source ?? null,
       utm_medium:       d.utm_medium ?? null,
       utm_campaign:     d.utm_campaign ?? null,
+      ...(d.utm_content ? { utm_content: d.utm_content } : {}),
+      ...(d.utm_term    ? { utm_term:    d.utm_term    } : {}),
+      // shipping_state alimenta o mapa regional do dashboard (lib/admin/sales-breakdown.ts).
+      // Estava nulo em 20 de 20 pedidos porque nunca foi mapeado aqui.
+      ...(d.shipping_address?.data?.state ? { shipping_state: d.shipping_address.data.state } : {}),
+      ...(d.shipping_address?.data?.city  ? { shipping_city:  d.shipping_address.data.city  } : {}),
       updated_at:       new Date().toISOString(),
       ...(createdAt ? { created_at: createdAt } : {}),
     },
