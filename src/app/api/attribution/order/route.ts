@@ -28,6 +28,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 interface Body {
   sale_id?:     string
   value?:       number
+  params_ok?:   boolean
+  raw_params?:  Record<string, string>
   session_id?:  string
   visitor_id?:  string
   attribution?: Record<string, string>
@@ -42,6 +44,21 @@ export async function POST(request: Request) {
     const db   = getDb()
     const attr = body.attribution ?? {}
     const done: string[] = []
+
+    // Redirect da Yampi configurado com nome de variável errado: chegou o placeholder
+    // cru em vez do valor. Registra pra ficar visível no banco em vez de sumir em
+    // silêncio — a URL do redirect só pode ser conferida no painel, não há API.
+    if (body.params_ok === false) {
+      await db.from('events').insert({
+        store_id:   STORE_ID,
+        session_id: body.session_id ?? null,
+        visitor_id: body.visitor_id ?? null,
+        event_type: 'obrigado_params_invalidos',
+        page:       '/obrigado',
+        properties: { raw_params: body.raw_params ?? {}, attribution: attr },
+      })
+      return NextResponse.json({ ok: true, params_invalidos: true, raw: body.raw_params })
+    }
 
     // 1. Pedido — o webhook pode ainda não ter chegado (corrida entre o redirect do
     // navegador e o POST server-to-server da Yampi), então tenta de novo uma vez.
