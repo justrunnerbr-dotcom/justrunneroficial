@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { Search, ShoppingBag, Menu, ChevronDown } from 'lucide-react'
 import { useCartStore } from '@/lib/cart-store'
 import { useHeaderContext } from '@/contexts/header-context'
+import { PromoCountdownBar } from './promo-countdown-bar'
 import type { Collection } from '@/lib/types'
 
 // Lazy-load heavy overlays — só carregam quando o usuário interage
@@ -18,6 +19,8 @@ interface HeaderProps {
   collections: Collection[]
   logoUrl?: string | null
   logoTransparentUrl?: string | null
+  /** Decidido no server (layout) comparando a data de fim da promo. */
+  showPromoBar?: boolean
 }
 
 const NAV_LINKS: { label: string; href: string; mega?: true }[] = [
@@ -32,6 +35,7 @@ export const Header = memo(function Header({
   collections,
   logoUrl,
   logoTransparentUrl,
+  showPromoBar = false,
 }: HeaderProps) {
   const pathname = usePathname()
   const { isTransparentPage } = useHeaderContext()
@@ -193,6 +197,10 @@ export const Header = memo(function Header({
           boxShadow: isSolid && scrolledPast10 ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
         }}
       >
+        {/* Fica dentro do <header> de propósito: assim a barra sobe junto quando
+            o header se esconde no scroll, em vez de ficar flutuando sozinha. */}
+        {showPromoBar && <PromoCountdownBar />}
+
         <div
           className="page-width"
           style={{ height: 'var(--header-height)', display: 'flex', alignItems: 'center', position: 'relative' }}

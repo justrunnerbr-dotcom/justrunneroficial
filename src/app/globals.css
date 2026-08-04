@@ -13,6 +13,8 @@
   --button-radius: 12px;
   --duration-default: 250ms;
   --header-height: 72px;
+  /* Precisa bater com PROMO_BAR_HEIGHT em src/lib/promo.ts */
+  --promo-bar-height: 48px;
 }
 
 * {
@@ -852,6 +854,86 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0 auto;
     gap: 16px;
   }
+}
+
+/* ── Barra de contagem regressiva da promo (topo do site) ──
+   Altura fixa em --promo-bar-height: o spacer do layout depende dela. */
+.promo-bar {
+  height: var(--promo-bar-height);
+  background: #f4f4f5;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 12px;
+}
+
+.promo-bar-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+  text-align: right;
+}
+
+.promo-bar-label strong {
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.promo-bar-label span {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+.promo-bar-clock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.promo-bar-colon {
+  font-size: 12px;
+  color: #a1a1aa;
+  padding-bottom: 8px;
+}
+
+.promo-bar-tile {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  min-width: 34px;
+  padding: 3px 5px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.promo-bar-tile b {
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-heading);
+  /* Sem isto a largura pula a cada segundo conforme os dígitos mudam. */
+  font-variant-numeric: tabular-nums;
+}
+
+.promo-bar-tile small {
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+@media (max-width: 480px) {
+  .promo-bar { gap: 9px; padding: 0 8px; }
+  .promo-bar-label strong { font-size: 11px; }
+  .promo-bar-label span { font-size: 9px; }
+  .promo-bar-tile { min-width: 29px; padding: 3px 3px 2px; }
+  .promo-bar-tile b { font-size: 12px; }
 }
 
 /* Conteúdo lido por buscador e leitor de tela, sem ocupar espaço na tela.
