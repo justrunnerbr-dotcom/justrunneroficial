@@ -9,11 +9,13 @@ import {
 import { getCostSettings, computeGatewayFee, computeYampiFee, computeFreightCost } from '@/lib/admin/cost-settings'
 import { getManualOrders } from '@/lib/admin/manual-orders'
 import { getSupplierOrderItems } from '@/lib/admin/supplier-orders'
+import { getSupplierMapping } from '@/lib/admin/supplier-mapping'
 import { CostManager } from './_components/cost-manager'
 import { PurchaseManager } from './_components/purchase-manager'
 import { OrdersCostTable, type OrderCostRow } from './_components/orders-cost-table'
 import { IntegrationsManager } from './_components/integrations-manager'
 import { SupplierOrderManager } from './_components/supplier-order-manager'
+import { SupplierMappingTable } from './_components/supplier-mapping-table'
 
 export const metadata = { title: 'Custo de Produtos · Just Runner Admin' }
 
@@ -140,11 +142,12 @@ export default async function CustosPage({
 }) {
   const sp    = await searchParams
   const view  = sp.view === 'compras' ? 'compras' : sp.view === 'pedidos' ? 'pedidos'
-    : sp.view === 'integracoes' ? 'integracoes' : sp.view === 'fornecedor-pedidos' ? 'fornecedor-pedidos' : 'custos'
+    : sp.view === 'integracoes' ? 'integracoes' : sp.view === 'fornecedor-pedidos' ? 'fornecedor-pedidos'
+    : sp.view === 'mapeamento' ? 'mapeamento' : 'custos'
   const range = getDateRangeFromSearchParams(sp)
 
   // Preserva o período (from/to/range) atual ao trocar de aba
-  function tabHref(v: 'custos' | 'compras' | 'pedidos' | 'integracoes' | 'fornecedor-pedidos') {
+  function tabHref(v: 'custos' | 'compras' | 'pedidos' | 'integracoes' | 'fornecedor-pedidos' | 'mapeamento') {
     const params = new URLSearchParams()
     if (sp.from) params.set('from', sp.from)
     if (sp.to)   params.set('to', sp.to)
@@ -154,8 +157,9 @@ export default async function CustosPage({
     return qs ? `?${qs}` : '?'
   }
 
-  const [suppliers, costs, purchases, settings, supplierOrderItems] = await Promise.all([
+  const [suppliers, costs, purchases, settings, supplierOrderItems, supplierMapping] = await Promise.all([
     getSuppliers(), getProductCosts(), getStockPurchases(), getCostSettings(), getSupplierOrderItems(),
+    getSupplierMapping(),
   ])
   const stockSummary = summarizeStock(purchases)
   const orders = view === 'pedidos' ? await getOrdersCostData(range, costs, settings, suppliers) : []
@@ -184,6 +188,7 @@ export default async function CustosPage({
         <TabLink href={tabHref('compras')} label="Registrar Compra / Estoque" active={view === 'compras'} />
         <TabLink href={tabHref('pedidos')} label="Pedidos × Custo" active={view === 'pedidos'} />
         <TabLink href={tabHref('fornecedor-pedidos')} label="Pedidos a Fornecedores" active={view === 'fornecedor-pedidos'} />
+        <TabLink href={tabHref('mapeamento')} label="Mapeamento de Fornecedor" active={view === 'mapeamento'} />
         <TabLink href={tabHref('integracoes')} label="Integrações" active={view === 'integracoes'} />
       </div>
 
@@ -197,6 +202,18 @@ export default async function CustosPage({
       {view === 'compras' && <PurchaseManager suppliers={suppliers} costs={costs} purchases={purchases} stockSummary={stockSummary} />}
       {view === 'pedidos' && <OrdersCostTable orders={orders} suppliers={suppliers} />}
       {view === 'fornecedor-pedidos' && <SupplierOrderManager suppliers={suppliers} costs={costs} items={supplierOrderItems} />}
+      {view === 'mapeamento' && (
+        supplierMapping.length > 0
+          ? <SupplierMappingTable rows={supplierMapping} suppliers={suppliers} />
+          : (
+            <div style={{ background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '12px', padding: '28px', fontSize: '13px', color: 'var(--admin-text-muted)', lineHeight: 1.6 }}>
+              Nenhum mapeamento ainda. Esta aba registra de qual fornecedor cada produto
+              <strong> realmente costuma vir</strong>, com base no volume comprado — diferente da aba
+              &quot;Custo por Fornecedor&quot;, que responde apenas qual é o mais barato. A tabela é preenchida
+              a partir do histórico de compras a fornecedores.
+            </div>
+          )
+      )}
       {view === 'integracoes' && <IntegrationsManager settings={settings} />}
     </div>
   )
