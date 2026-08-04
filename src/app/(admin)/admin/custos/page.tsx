@@ -11,6 +11,7 @@ import { getManualOrders } from '@/lib/admin/manual-orders'
 import { getSupplierOrderItems } from '@/lib/admin/supplier-orders'
 import { getSupplierMapping } from '@/lib/admin/supplier-mapping'
 import { getDailyRestockReport } from '@/lib/admin/daily-restock'
+import { chunkIds } from '@/lib/admin/supabase-pagination'
 import { CostManager } from './_components/cost-manager'
 import { PurchaseManager } from './_components/purchase-manager'
 import { OrdersCostTable, type OrderCostRow } from './_components/orders-cost-table'
@@ -46,12 +47,23 @@ async function getOrdersCostData(
 
   const overrideByOrderId = new Map(overrides.map(o => [o.order_id, o.custo_override]))
   const orderIds = (orders ?? []).map(o => o.id)
-  const { data: items } = orderIds.length > 0
-    ? await db.from('order_items').select('order_id, product_title, quantity').in('order_id', orderIds)
-    : { data: [] as { order_id: string; product_title: string; quantity: number }[] }
+
+  // Em lotes: com o mês inteiro o `.in()` de uma vez só passa de 15 KB de URL,
+  // a requisição falha e o cliente devolve `data: null` calado — o período
+  // inteiro aparecia com "sem custo". Ver IN_CHUNK_SIZE.
+  type ItemRow = { order_id: string; product_title: string; quantity: number }
+  const items: ItemRow[] = []
+  for (const chunk of chunkIds(orderIds)) {
+    const { data, error } = await db
+      .from('order_items')
+      .select('order_id, product_title, quantity')
+      .in('order_id', chunk)
+    if (error) { console.error('[custos] lote de order_items falhou:', error); continue }
+    items.push(...((data ?? []) as ItemRow[]))
+  }
 
   const rows: OrderCostRow[] = (orders ?? []).map(o => {
-    const orderItems = items?.filter(i => i.order_id === o.id) ?? []
+    const orderItems = items.filter(i => i.order_id === o.id)
     let autoCusto = 0
     let unmatchedCount = 0
     for (const it of orderItems) {

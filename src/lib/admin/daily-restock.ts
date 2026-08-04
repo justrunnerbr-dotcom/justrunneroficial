@@ -3,6 +3,7 @@ import type { DateRange } from '@/lib/admin/date-range'
 import type { ProductCost } from '@/lib/admin/product-costs'
 import { matchProductCostRecord } from '@/lib/admin/product-costs'
 import type { SupplierMappingRow } from '@/lib/admin/supplier-mapping'
+import { chunkIds } from '@/lib/admin/supabase-pagination'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const PAID_STATUSES = ['paid', 'invoiced', 'on_carriage', 'payment_confirmed', 'preparing_shipping', 'in_separation', 'in_transit', 'delivered']
@@ -76,9 +77,19 @@ export async function getDailyRestockReport(
     .lt('created_at', range.endISO)
 
   const orderIds = (orders ?? []).map(o => o.id)
-  const { data: items } = orderIds.length > 0
-    ? await db.from('order_items').select('product_title, quantity').in('order_id', orderIds)
-    : { data: [] as { product_title: string; quantity: number }[] }
+
+  // Em lotes — ver IN_CHUNK_SIZE: `.in()` com o período inteiro monta URL
+  // grande demais, a requisição falha e o cliente devolve null em silêncio.
+  type ItemRow = { product_title: string; quantity: number }
+  const items: ItemRow[] = []
+  for (const chunk of chunkIds(orderIds)) {
+    const { data, error } = await db
+      .from('order_items')
+      .select('product_title, quantity')
+      .in('order_id', chunk)
+    if (error) { console.error('[reposicao] lote de order_items falhou:', error); continue }
+    items.push(...((data ?? []) as ItemRow[]))
+  }
 
   const rowsByModel = new Map<string, DailyRestockRow>()
   const unmatched: DailyRestockUnmatched[] = []

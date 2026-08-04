@@ -5,6 +5,7 @@ import { getCostSettings, computeGatewayFee, computeYampiFee, computeFreightCost
 import { getManualOrders } from '@/lib/admin/manual-orders'
 import { getMetaLiveSpend } from '@/lib/admin/meta-ads'
 import { spendOrZero } from '@/lib/admin/source-status'
+import { chunkIds } from '@/lib/admin/supabase-pagination'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const APPROVED_STATUSES = ['paid', 'invoiced', 'on_carriage', 'payment_confirmed', 'preparing_shipping', 'in_separation', 'in_transit', 'delivered']
@@ -47,9 +48,20 @@ export async function getFinancialBreakdown(range: DateRange): Promise<Financial
 
   const orders = ordersRes.data ?? []
   const orderIds = orders.map(o => o.id)
-  const { data: items } = orderIds.length > 0
-    ? await db.from('order_items').select('order_id, product_title, quantity').in('order_id', orderIds)
-    : { data: [] as { order_id: string; product_title: string; quantity: number }[] }
+
+  // Em lotes — ver IN_CHUNK_SIZE. Aqui a consequência de falhar em silêncio é
+  // a pior de todas: sem os itens, o custo de produto vira 0 e o Lucro Líquido
+  // do período aparece inflado, com cara de número fechado.
+  type ItemRow = { order_id: string; product_title: string; quantity: number }
+  const items: ItemRow[] = []
+  for (const chunk of chunkIds(orderIds)) {
+    const { data, error } = await db
+      .from('order_items')
+      .select('order_id, product_title, quantity')
+      .in('order_id', chunk)
+    if (error) { console.error('[financeiro] lote de order_items falhou:', error); continue }
+    items.push(...((data ?? []) as ItemRow[]))
+  }
 
   let revenue = 0, productCost = 0, freightCost = 0, gatewayFee = 0, yampiFee = 0
 
