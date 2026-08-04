@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
 import { getDateRangePreset } from '@/lib/admin/date-range'
 import { getMetaAlertsData } from '@/lib/admin/meta-ads'
+import { detectarAlertas } from '@/lib/admin/alertas'
 
 interface Alert {
   type: 'error' | 'warning' | 'ok'
@@ -111,10 +112,11 @@ async function getAlerts(): Promise<Alert[]> {
 export default async function AlertasPage() {
   const brainRange  = getDateRangePreset('last_7_days')
   const db = getAdminSupabase()
-  const [alerts, brainStats, metaAlerts] = await Promise.all([
+  const [alerts, brainStats, metaAlerts, proativos] = await Promise.all([
     getAlerts(),
     getBrainQuickStats(db, brainRange),
     getMetaAlertsData(db, brainRange),
+    detectarAlertas(),
   ])
 
   const errors   = alerts.filter(a => a.type === 'error')
@@ -163,6 +165,35 @@ export default async function AlertasPage() {
           {errors.length} erro{errors.length !== 1 ? 's' : ''} · {warnings.length} aviso{warnings.length !== 1 ? 's' : ''} · {oks.length} OK
         </p>
       </div>
+
+      {/* Alertas proativos — vêm primeiro de propósito: são os que indicam que
+          o resto dos números da tela pode não ser confiável agora. */}
+      {proativos.length > 0 && (
+        <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {proativos.map(a => {
+            const critico = a.severidade === 'critico'
+            const cor     = critico ? '#dc2626' : '#b45309'
+            const fundo   = critico ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)'
+            const borda   = critico ? 'rgba(239,68,68,0.28)' : 'rgba(245,158,11,0.28)'
+            return (
+              <div key={a.chave} style={{
+                background: fundo, border: `1px solid ${borda}`, borderLeft: `4px solid ${cor}`,
+                borderRadius: '10px', padding: '14px 18px', display: 'flex', gap: '12px', alignItems: 'flex-start',
+              }}>
+                <AlertTriangle size={17} color={cor} style={{ marginTop: '2px', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: cor, marginBottom: '4px' }}>
+                    {a.titulo}
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'var(--admin-text-sec)', lineHeight: 1.55 }}>
+                    {a.detalhe}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Commerce Brain Section */}
       <div style={{ background: 'var(--admin-card)', borderRadius: '12px', border: '1px solid var(--admin-border)', padding: '20px 24px', marginBottom: '24px' }}>
