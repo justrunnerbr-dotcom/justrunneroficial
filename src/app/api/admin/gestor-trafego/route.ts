@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import fs from 'fs'
 import path from 'path'
+import { checkAuth, unauthorized } from '@/lib/admin/auth'
 import {
   getMetaCreateConfig,
   createCampaign,
@@ -15,10 +15,7 @@ import {
 } from '@/lib/admin/meta-create'
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  if (!secret || token !== secret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await checkAuth())) return unauthorized()
 
   const cfg = getMetaCreateConfig()
   if (!cfg) return NextResponse.json({ error: 'Meta não configurado. Verifique as variáveis de ambiente.' }, { status: 400 })

@@ -1,78 +1,96 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { authenticate } from '@/lib/admin/users'
+import { signSession, verifySession, SESSION_COOKIE, SESSION_TTL_SECONDS } from '@/lib/admin/session'
+import { logAudit, countRecentLoginFailures } from '@/lib/admin/audit'
+import { clientIp } from '@/lib/admin/auth'
 
-// In-memory rate limit: 5 attempts per IP per 15 minutes
-const attempts = new Map<string, { count: number; resetAt: number }>()
-
-function getClientIp(request: Request): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    'unknown'
-  )
-}
-
-function checkRateLimit(ip: string): { ok: boolean; remaining: number } {
-  const now  = Date.now()
-  const WINDOW = 15 * 60 * 1000 // 15 min
-  const MAX    = 10
-
-  const entry = attempts.get(ip)
-  if (!entry || entry.resetAt < now) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW })
-    return { ok: true, remaining: MAX - 1 }
-  }
-  entry.count++
-  if (entry.count > MAX) return { ok: false, remaining: 0 }
-  return { ok: true, remaining: MAX - entry.count }
-}
+const JANELA_MINUTOS = 15
+const MAX_TENTATIVAS = 10
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request)
-  const rate = checkRateLimit(ip)
+  const ip = clientIp(request)
 
-  if (!rate.ok) {
+  // O limitador antigo vivia num Map em memória: em serverless cada instância
+  // tem o próprio Map e cold start zera a contagem — na prática quase não
+  // limitava. Agora a contagem vem do log de auditoria, que é compartilhado.
+  const falhas = await countRecentLoginFailures(ip, JANELA_MINUTOS)
+  if (falhas >= MAX_TENTATIVAS) {
     return NextResponse.json(
-      { error: 'Muitas tentativas. Aguarde 15 minutos.' },
+      { error: `Muitas tentativas. Aguarde ${JANELA_MINUTOS} minutos.` },
       { status: 429 },
     )
   }
 
-  const { password }    = await request.json()
-  const adminPassword   = process.env.ADMIN_PASSWORD
-  const adminSecret     = process.env.ADMIN_SECRET
+  const body     = await request.json().catch(() => ({})) as { user?: string; password?: string }
+  const password = String(body.password ?? '')
+  // Sem ADMIN_USERS configurada existe só o usuário "admin" (senha antiga),
+  // então o campo de usuário é opcional e assume esse valor.
+  const user     = String(body.user ?? 'admin').trim() || 'admin'
 
-  if (!adminPassword || !adminSecret) {
+  const adminSecret = process.env.ADMIN_SECRET
+  if (!adminSecret) {
     return NextResponse.json(
-      { error: 'Admin não configurado. Defina ADMIN_PASSWORD e ADMIN_SECRET no Vercel.' },
+      { error: 'Admin não configurado. Defina ADMIN_SECRET e ADMIN_USERS (ou ADMIN_PASSWORD).' },
       { status: 503 },
     )
   }
 
-  if (password !== adminPassword) {
+  const authenticated = authenticate(user, password)
+
+  if (!authenticated) {
+    await logAudit({
+      actor:   user || 'anonimo',
+      action:  'login_falhou',
+      ip,
+      summary: `Tentativa de login falhou para "${user}"`,
+    })
+    const restantes = Math.max(0, MAX_TENTATIVAS - (falhas + 1))
     return NextResponse.json(
-      { error: `Senha incorreta. ${rate.remaining} tentativas restantes.` },
+      { error: `Credenciais incorretas. ${restantes} tentativa(s) restante(s).` },
       { status: 401 },
     )
   }
 
-  // Reset rate limit on successful login
-  attempts.delete(ip)
+  const token = await signSession(authenticated, adminSecret)
 
   const cookieStore = await cookies()
-  cookieStore.set('jhf_admin', adminSecret, {
+  cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure:   process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 dias
-    path: '/',
+    maxAge:   SESSION_TTL_SECONDS,
+    path:     '/',
   })
 
-  return NextResponse.json({ ok: true })
+  await logAudit({
+    actor:   authenticated,
+    action:  'login_ok',
+    ip,
+    summary: `${authenticated} entrou no admin`,
+  })
+
+  return NextResponse.json({ ok: true, user: authenticated })
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   const cookieStore = await cookies()
-  cookieStore.delete('jhf_admin')
+
+  const session = await verifySession(
+    cookieStore.get(SESSION_COOKIE)?.value,
+    process.env.ADMIN_SECRET,
+  )
+
+  cookieStore.delete(SESSION_COOKIE)
+
+  if (session) {
+    await logAudit({
+      actor:   session.u,
+      action:  'logout',
+      ip:      clientIp(request),
+      summary: `${session.u} saiu do admin`,
+    })
+  }
+
   return NextResponse.json({ ok: true })
 }

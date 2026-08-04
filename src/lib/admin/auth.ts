@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { SESSION_COOKIE, verifySession } from '@/lib/admin/session'
 
 // Guarda única de autenticação do admin.
 //
@@ -8,22 +9,25 @@ import { NextResponse } from 'next/server'
 // simplesmente não foi feita, deixando aberto um endpoint que lê faturamento e
 // dispara a API paga da Anthropic. Guarda duplicada é guarda que uma hora falta:
 // centralizar aqui é o que impede o mesmo buraco de voltar na próxima rota.
+//
+// A validação em si mora em session.ts — aqui só se lê o cookie e se traduz o
+// resultado pro formato que as rotas usam.
 
-export const SESSION_COOKIE = 'jhf_admin'
+export { SESSION_COOKIE }
 
 export interface AdminSession {
-  /** Quem está autenticado. Hoje há um só usuário; vira o nome real na sessão assinada. */
+  /** Quem está autenticado. Vem do token assinado, não de um valor fixo. */
   user: string
 }
 
 export async function getAdminSession(): Promise<AdminSession | null> {
-  const secret = process.env.ADMIN_SECRET
-  if (!secret) return null
-
   const cookieStore = await cookies()
-  const token = cookieStore.get(SESSION_COOKIE)?.value
+  const payload = await verifySession(
+    cookieStore.get(SESSION_COOKIE)?.value,
+    process.env.ADMIN_SECRET,
+  )
 
-  return token === secret ? { user: 'admin' } : null
+  return payload ? { user: payload.u } : null
 }
 
 export async function checkAuth(): Promise<boolean> {

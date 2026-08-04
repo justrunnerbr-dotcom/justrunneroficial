@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { LoginForm } from './LoginForm'
+import { isMultiUser } from '@/lib/admin/users'
 
 export default function AdminLoginPage() {
   return (
@@ -8,7 +9,7 @@ export default function AdminLoginPage() {
       justifyContent: 'center', background: '#0f172a',
     }}>
       <Suspense fallback={<div style={{ color: 'var(--admin-text-muted)', fontSize: '14px' }}>Carregando...</div>}>
-        <LoginForm />
+        <LoginForm multiUser={isMultiUser()} />
       </Suspense>
     </div>
   )

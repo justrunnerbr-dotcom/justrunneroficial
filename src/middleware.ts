@@ -1,18 +1,27 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { SESSION_COOKIE, verifySession } from '@/lib/admin/session'
 
-export function middleware(request: NextRequest) {
+// Roda no Edge runtime — por isso a verificação da sessão usa Web Crypto
+// (`crypto.subtle`) e não `node:crypto`, que não existe aqui.
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname === '/admin/login') return NextResponse.next()
 
-  const token  = request.cookies.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
+  const session = await verifySession(
+    request.cookies.get(SESSION_COOKIE)?.value,
+    process.env.ADMIN_SECRET,
+  )
 
-  if (!secret || token !== secret) {
+  if (!session) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('from', pathname)
-    return NextResponse.redirect(loginUrl)
+    const res = NextResponse.redirect(loginUrl)
+    // Cookie vencido ou adulterado não deve ficar para trás gerando um novo
+    // redirecionamento a cada navegação.
+    res.cookies.delete(SESSION_COOKIE)
+    return res
   }
 
   return NextResponse.next()

@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { refreshDailyAnalytics } from '@/lib/admin/daily-analytics'
+import { checkAuth } from '@/lib/admin/auth'
 
 const TZ = 'America/Sao_Paulo'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
 
 function getDb() {
   return createClient(

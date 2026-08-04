@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { upsertYampiOrder, type YampiOrderResource } from '@/lib/yampi/sync'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
+import { checkAuth } from '@/lib/admin/auth'
 
 function getDb() {
   return createClient(

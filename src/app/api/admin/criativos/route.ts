@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import fs from 'fs'
 import path from 'path'
+import { checkAuth, unauthorized } from '@/lib/admin/auth'
 
 const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 const VIDEO_EXTS = ['.mp4', '.mov', '.avi', '.webm']
@@ -18,10 +18,7 @@ function listFiles(dir: string, exts: string[]) {
 }
 
 export async function GET() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  if (!secret || token !== secret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await checkAuth())) return unauthorized()
 
   const root    = path.join(process.cwd(), 'gestor-trafego', 'criativos')
   const imagens = listFiles(path.join(root, 'imagens'), IMAGE_EXTS)

@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { getAdminSupabase } from '@/lib/admin-client'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
+import { checkAuth } from '@/lib/admin/auth'
 
 // PATCH body: { key: string, value: string }
 export async function PATCH(request: Request) {

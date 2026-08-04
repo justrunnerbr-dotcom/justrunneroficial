@@ -1,13 +1,14 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Lock, Eye, EyeOff } from 'lucide-react'
+import { Lock, Eye, EyeOff, User } from 'lucide-react'
 
-export function LoginForm() {
+export function LoginForm({ multiUser = false }: { multiUser?: boolean }) {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const from         = searchParams.get('from') ?? '/admin'
 
+  const [user,     setUser]     = useState('')
   const [password, setPassword] = useState('')
   const [showPwd,  setShowPwd]  = useState(false)
   const [loading,  setLoading]  = useState(false)
@@ -21,15 +22,19 @@ export function LoginForm() {
     const res = await fetch('/api/admin/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify(multiUser ? { user, password } : { password }),
     })
 
     if (res.ok) {
       router.push(from)
-    } else {
-      setError('Senha incorreta.')
-      setLoading(false)
+      return
     }
+
+    // A mensagem do servidor traz quantas tentativas restam antes do bloqueio —
+    // mais útil que um "senha incorreta" genérico.
+    const data = await res.json().catch(() => ({})) as { error?: string }
+    setError(data.error ?? 'Não foi possível entrar.')
+    setLoading(false)
   }
 
   return (
@@ -49,6 +54,35 @@ export function LoginForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {multiUser && (
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--admin-text-sec)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              Usuário
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={user}
+                onChange={e => setUser(e.target.value)}
+                placeholder="seu usuário"
+                autoFocus
+                required
+                autoComplete="username"
+                style={{
+                  width: '100%', height: '44px', padding: '0 44px 0 14px',
+                  border: `1px solid ${error ? '#ef4444' : '#e2e8f0'}`, borderRadius: '10px',
+                  fontSize: '15px', color: 'var(--admin-text-main)',
+                  outline: 'none', background: 'var(--admin-bg)', boxSizing: 'border-box',
+                }}
+              />
+              <User
+                size={16}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)' }}
+              />
+            </div>
+          </div>
+        )}
+
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--admin-text-sec)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
             Senha de acesso
@@ -59,8 +93,9 @@ export function LoginForm() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••••"
-              autoFocus
+              autoFocus={!multiUser}
               required
+              autoComplete="current-password"
               style={{
                 width: '100%', height: '44px', padding: '0 44px 0 14px',
                 border: `1px solid ${error ? '#ef4444' : '#e2e8f0'}`, borderRadius: '10px',
@@ -81,7 +116,7 @@ export function LoginForm() {
 
         <button
           type="submit"
-          disabled={loading || !password}
+          disabled={loading || !password || (multiUser && !user)}
           style={{
             width: '100%', height: '44px', borderRadius: '10px',
             background: loading ? '#94a3b8' : '#0f172a', color: '#ffffff',

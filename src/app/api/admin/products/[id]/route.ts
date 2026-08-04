@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getYampiCredentialsFromEnv, syncVariantNamesForProduct, logYampiCatalogSync } from '@/lib/yampi/catalog'
+import { checkAuth } from '@/lib/admin/auth'
 
 // Worst case is 20 variants on one product, each needing a GET+PUT round trip
 // to Yampi (see syncVariantNamesForProduct) — give that room to finish.
 export const maxDuration = 30
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
 
 export async function PATCH(
   request: Request,

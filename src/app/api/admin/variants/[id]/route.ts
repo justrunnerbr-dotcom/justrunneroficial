@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getYampiCredentialsFromEnv, syncVariantNameToYampi, logYampiCatalogSync } from '@/lib/yampi/catalog'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
+import { checkAuth } from '@/lib/admin/auth'
 
 // Only these fields may ever be updated from the client. Price, SKU, stock,
 // Yampi IDs and the internal id are never accepted here — Yampi/checkout/

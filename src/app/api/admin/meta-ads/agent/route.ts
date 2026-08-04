@@ -1,7 +1,7 @@
 import Anthropic        from '@anthropic-ai/sdk'
 import { NextResponse }  from 'next/server'
-import { cookies }       from 'next/headers'
 import { getAdminSupabase } from '@/lib/admin-client'
+import { checkAuth } from '@/lib/admin/auth'
 import {
   META_ACCOUNTS,
   getMetaAccountCampaigns,
@@ -16,13 +16,6 @@ const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const MODEL        = 'claude-sonnet-5'
 const MAX_HISTORY  = 20
 const MAX_TOOL_LOOPS = 10
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
 
 // ── Tools (function calling) ──────────────────────────────────────────────────
 

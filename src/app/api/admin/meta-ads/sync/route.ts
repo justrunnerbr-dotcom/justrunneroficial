@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { syncMetaInsights } from '@/lib/admin/meta-ads'
+import { checkAuth } from '@/lib/admin/auth'
 
 function getDb() {
   return createClient(
@@ -12,11 +12,7 @@ function getDb() {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies()
-  const adminToken  = cookieStore.get('jhf_admin')?.value
-  const adminSecret = process.env.ADMIN_SECRET
-
-  if (!adminSecret || adminToken !== adminSecret) {
+  if (!(await checkAuth())) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 

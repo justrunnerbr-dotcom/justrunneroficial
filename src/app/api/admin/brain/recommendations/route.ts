@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { checkAuth } from '@/lib/admin/auth'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
 
 function getDb() {
   return createClient(

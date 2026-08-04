@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { setMetaEntityStatus } from '@/lib/admin/meta-ads'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  return !!secret && token === secret
-}
+import { checkAuth } from '@/lib/admin/auth'
 
 export async function POST(request: Request) {
   if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
