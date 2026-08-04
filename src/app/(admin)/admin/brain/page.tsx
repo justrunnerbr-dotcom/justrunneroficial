@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { getDateRangeFromSearchParams } from '@/lib/admin/date-range'
 import { getCommerceBrainData } from '@/lib/admin/commerce-brain'
@@ -6,6 +5,7 @@ import type { FunnelStep, ProductDiagnostic, TrafficDiagnostic, DeviceDiagnostic
 import { RunBrainButton } from './_components/run-brain-button'
 import { getMetaBrainData } from '@/lib/admin/meta-ads'
 import Link from 'next/link'
+import { checkAuth } from '@/lib/admin/auth'
 
 function getDb() {
   return createClient(
@@ -361,10 +361,7 @@ export default async function CommerceBrainPage({
 }: {
   searchParams: Promise<{ range?: string; from?: string; to?: string }>
 }) {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  if (!secret || token !== secret) return null
+  if (!(await checkAuth())) return null
 
   const sp    = await searchParams
   const range = getDateRangeFromSearchParams(sp)

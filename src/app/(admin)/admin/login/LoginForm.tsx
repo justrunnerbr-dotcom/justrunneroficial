@@ -26,7 +26,16 @@ export function LoginForm({ multiUser = false }: { multiUser?: boolean }) {
     })
 
     if (res.ok) {
-      router.push(from)
+      // Navegação DURA de propósito, não router.push().
+      //
+      // O App Router guarda em cache o payload RSC das rotas que prefetchou.
+      // /admin foi prefetchado enquanto ainda não havia sessão, então o que
+      // está em cache é o redirecionamento pro login. Com router.push() o
+      // cliente reaproveita esse cache e devolve a pessoa pra cá logo depois
+      // de ela acertar a senha — parece senha errada, e só sai disso
+      // recarregando na mão. Só aparece em produção, onde o prefetch é
+      // agressivo; em dev o push funciona e esconde o problema.
+      window.location.assign(from)
       return
     }
 

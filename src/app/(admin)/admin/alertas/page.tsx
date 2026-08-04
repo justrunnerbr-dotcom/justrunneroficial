@@ -5,6 +5,11 @@ import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
 import { getDateRangePreset } from '@/lib/admin/date-range'
 import { getMetaAlertsData } from '@/lib/admin/meta-ads'
 import { detectarAlertas } from '@/lib/admin/alertas'
+import { checkAuth } from '@/lib/admin/auth'
+
+// Alerta congelado no build é pior que alerta nenhum: a página consulta a Meta
+// e o banco ao vivo, e o build tentava prerenderizar isso estaticamente.
+export const dynamic = 'force-dynamic'
 
 interface Alert {
   type: 'error' | 'warning' | 'ok'
@@ -110,6 +115,8 @@ async function getAlerts(): Promise<Alert[]> {
 }
 
 export default async function AlertasPage() {
+  if (!(await checkAuth())) return null
+
   const brainRange  = getDateRangePreset('last_7_days')
   const db = getAdminSupabase()
   const [alerts, brainStats, metaAlerts, proativos] = await Promise.all([

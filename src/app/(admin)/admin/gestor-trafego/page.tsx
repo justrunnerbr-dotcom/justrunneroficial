@@ -1,13 +1,10 @@
-import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { checkAdsManagement, getMetaCreateConfig } from '@/lib/admin/meta-create'
 import { Plus, CheckCircle2, XCircle, AlertTriangle, Megaphone, FolderOpen, ArrowRight } from 'lucide-react'
+import { checkAuth } from '@/lib/admin/auth'
 
 export default async function GestorTrafego() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  if (!secret || token !== secret) return null
+  if (!(await checkAuth())) return null
 
   const cfg        = getMetaCreateConfig()
   const permCheck  = cfg ? await checkAdsManagement() : { ok: false, permissions: [] }

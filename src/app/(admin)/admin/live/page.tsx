@@ -1,8 +1,8 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { LiveRefresh } from './_components/live-refresh'
 import { LiveTileMapLoader } from './_components/live-tile-map-loader'
 import type { LiveMapPoint } from './_components/live-tile-map'
+import { checkAuth } from '@/lib/admin/auth'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const TZ   = 'America/Sao_Paulo'
@@ -158,10 +158,7 @@ async function getLiveData() {
 }
 
 export default async function LivePage() {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  if (!secret || token !== secret) return null
+  if (!(await checkAuth())) return null
 
   const d = await getLiveData()
 

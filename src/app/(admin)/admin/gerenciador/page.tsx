@@ -1,9 +1,9 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { getDateRangeFromSearchParams } from '@/lib/admin/date-range'
 import { getGerenciadorData } from '@/lib/admin/gerenciador'
 import { isMetaConfigured } from '@/lib/admin/meta-ads'
 import { GerenciadorClient } from './_components/gerenciador-client'
+import { checkAuth } from '@/lib/admin/auth'
 
 function getDb() {
   return createClient(
@@ -18,10 +18,7 @@ export default async function GerenciadorPage({
 }: {
   searchParams: Promise<{ range?: string; from?: string; to?: string }>
 }) {
-  const cookieStore = await cookies()
-  const token  = cookieStore.get('jhf_admin')?.value
-  const secret = process.env.ADMIN_SECRET
-  if (!secret || token !== secret) return null
+  if (!(await checkAuth())) return null
 
   if (!isMetaConfigured()) {
     return (
