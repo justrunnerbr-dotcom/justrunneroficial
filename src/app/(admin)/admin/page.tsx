@@ -7,12 +7,15 @@ import { DashboardEditableLayout, type DashboardWidget } from './_components/das
 import { ReorderableRow } from './_components/reorderable-row'
 import { MetaTaxProvider, MetaTaxToggle, MarketingSpendAmount } from './_components/meta-tax-toggle'
 import type { RecommendationCardData } from './_components/brain-card'
-import { DollarSign, ShoppingBag, Users, Percent, Target, CheckCircle2, AlertCircle, Tag, BrainCircuit, TrendingUp, Megaphone, CreditCard, MousePointerClick } from 'lucide-react'
+import { DollarSign, ShoppingBag, Users, Percent, Target, CheckCircle2, AlertCircle, Tag, BrainCircuit, TrendingUp, Megaphone, CreditCard, MousePointerClick, Package, Receipt } from 'lucide-react'
 import Link from 'next/link'
 import { getDateRangeFromSearchParams, getPreviousPeriodRange, type DateRange } from '@/lib/admin/date-range'
 import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
 import { getMetaDashboardStats, getMetaLiveSpend } from '@/lib/admin/meta-ads'
 import { isUsable, statusLabel } from '@/lib/admin/source-status'
+import { getFinancialBreakdown } from '@/lib/admin/financial-breakdown'
+import { RoasRoiCard } from './_components/roas-roi-card'
+import { HoverBreakdownCard } from './_components/hover-breakdown-card'
 import { getSalesBreakdown } from '@/lib/admin/sales-breakdown'
 import { ConversionFunnelVisual } from './_components/conversion-funnel-visual'
 import { HourlySalesChart } from './_components/hourly-sales-chart'
@@ -196,12 +199,13 @@ export default async function AdminPage({
   const sp    = await searchParams
   const range = getDateRangeFromSearchParams(sp)
   const db    = getDb()
-  const [d, brainQ, metaStats, liveSpend, salesBreakdown] = await Promise.all([
+  const [d, brainQ, metaStats, liveSpend, salesBreakdown, financials] = await Promise.all([
     getDashboardData(range),
     getBrainQuickStats(db, range),
     getMetaDashboardStats(db, range),
     getMetaLiveSpend(range.start, range.endExclusive),
     getSalesBreakdown(range),
+    getFinancialBreakdown(range),
   ])
 
   // Só o dado marcado como confiável vira número na tela. Quando a consulta ao
@@ -239,14 +243,25 @@ export default async function AdminPage({
                 boxShadow: '0 8px 30px rgba(0,0,0,0.3)', height: '100%',
               }}>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Receita do Período</div>
-                  <div style={{ fontSize: '36px', fontWeight: 800, color: COLORS.textMain, fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {fmt(revCur)}
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Lucro Líquido</div>
+                  <div style={{ fontSize: '36px', fontWeight: 800, color: financials.netProfit >= 0 ? COLORS.textMain : COLORS.red, fontFamily: 'monospace', marginBottom: '8px' }}>
+                    {fmt(financials.netProfit)}
+                    {financials.missingCostSources.length > 0 && (
+                      <span style={{ fontSize: '18px', color: '#f59e0b', marginLeft: '8px' }}>*</span>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: financials.margin >= 0 ? COLORS.green : COLORS.red, background: financials.margin >= 0 ? 'rgba(var(--admin-accent-rgb), 0.1)' : 'rgba(var(--admin-red-rgb), 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                      {(financials.margin * 100).toFixed(1)}% margem
+                    </span>
+                    <span style={{ fontSize: '13px', color: COLORS.textMuted }}>Receita {fmt(revCur)}</span>
                     <TrendBadge up={revUp} pct={revPct} />
-                    <span style={{ fontSize: '13px', color: COLORS.textMuted }}>vs. {fmt(revPrev)} período ant.</span>
                   </div>
+                  {financials.missingCostSources.length > 0 && (
+                    <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '8px', lineHeight: 1.5 }}>
+                      Sem {financials.missingCostSources.join(' e ')} — o lucro real é menor que este.
+                    </div>
+                  )}
                 </div>
                 <div style={{ height: '60px', marginTop: '24px', display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
                   {[30, 45, 20, 60, 40, 80, 50, 90, 70, 100].map((h, i) => (
@@ -313,8 +328,12 @@ export default async function AdminPage({
                   { id: 'pedidos', node: <MetricCard title="Pedidos" value={d.cur.orders} sub={`Ant: ${d.prev.orders}`} icon={ShoppingBag} {...delta(d.cur.orders, d.prev.orders)} /> },
                   { id: 'ticket-medio', node: <MetricCard title="Ticket Médio" value={fmt(ticketMedioCur)} sub={`Ant: ${fmt(ticketMedioPrev)}`} icon={DollarSign} {...delta(ticketMedioCur, ticketMedioPrev)} /> },
                   { id: 'conversao', node: <MetricCard title="Conversão" value={`${(d.cur.conversion_rate * 100).toFixed(2)}%`} sub={`Sessões: ${d.cur.sessions}`} icon={Percent} {...delta(d.cur.conversion_rate, 0)} /> },
-                  { id: 'sessoes', node: <MetricCard title="Sessões" value={d.cur.sessions} sub={`Ant: ${d.prev.sessions}`} icon={Users} {...delta(d.cur.sessions, d.prev.sessions)} /> },
-                  { id: 'cpa', node: <MetricCard title="CPA" value={metaLive && d.paidCount > 0 ? <MarketingSpendAmount metaRaw={metaLive.total.spend} googleRaw={0} divideBy={d.paidCount} /> : '—'} sub={metaLive ? 'Custo por Aquisição' : 'Gasto de mídia indisponível'} icon={Target} up={true} pct={0} /> },
+                  // ROAS/ROI ocupa o lugar do antigo card de Sessões — a contagem
+                  // de sessões já aparece no subtítulo do card de Conversão.
+                  { id: 'roas-roi', node: <RoasRoiCard revenue={revCur} netProfit={financials.netProfit} metaRaw={metaLive?.total.spend ?? 0} googleRaw={0} partial={!financials.metaTrusted} /> },
+                  // ROAS e CPA dividem pelo investimento — com a fonte muda o
+                  // denominador encolhe e os dois ficam otimistas. O rótulo diz isso.
+                  { id: 'cpa', node: <MetricCard title="CPA" value={metaLive && d.paidCount > 0 ? <MarketingSpendAmount metaRaw={metaLive.total.spend} googleRaw={0} divideBy={d.paidCount} /> : '—'} sub={financials.metaTrusted ? 'Custo por Aquisição' : 'Parcial — CPA real é maior'} icon={Target} up={true} pct={0} /> },
                   { id: 'pagos', node: <MetricCard title="Pagos" value={d.paidCount} sub="Confirmados" icon={CheckCircle2} up={true} pct={0} /> },
                 ]}
               />
@@ -322,6 +341,92 @@ export default async function AdminPage({
           },
         ]}
       />
+
+      {/* Composição do Lucro Líquido: cada card abre o detalhe no hover, pra que
+          o número do topo nunca seja uma caixa-preta. */}
+      <div className="grid grid-cols-2 md:grid-cols-5" style={{ gap: '12px', marginTop: '16px' }}>
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '16px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            <DollarSign size={13} color={COLORS.textMuted} />
+            <span style={{ fontSize: '11px', fontWeight: 600, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Receita Aprovada</span>
+          </div>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: COLORS.textMain, fontFamily: 'monospace', lineHeight: 1.1 }}>{fmt(financials.revenue)}</div>
+        </div>
+
+        <HoverBreakdownCard
+          icon={<Percent size={13} color={COLORS.textMuted} />}
+          label="Margem Líquida"
+          value={
+            <span>
+              {`${(financials.margin * 100).toFixed(1)}%`}
+              {financials.missingCostSources.length > 0 && (
+                <span style={{ fontSize: '13px', color: '#f59e0b', marginLeft: '5px' }}>*</span>
+              )}
+            </span>
+          }
+          rows={[
+            { label: 'Receita',       value: fmt(financials.revenue) },
+            { label: 'Custo total',   value: fmt(financials.revenue - financials.netProfit) },
+            { label: 'Lucro Líquido', value: fmt(financials.netProfit) },
+          ]}
+          footerLabel={financials.missingCostSources.length > 0 ? 'Atenção' : undefined}
+          footerValue={
+            financials.missingCostSources.length > 0
+              ? `Sem ${financials.missingCostSources.join(' e ')} — lucro real é menor`
+              : undefined
+          }
+        />
+
+        <HoverBreakdownCard
+          icon={<Package size={13} color={COLORS.textMuted} />}
+          label="Custo de Produtos"
+          value={fmt(financials.productCost + financials.freightCost)}
+          rows={[
+            { label: 'Custo de Produto', value: fmt(financials.productCost) },
+            { label: 'Frete',            value: fmt(financials.freightCost) },
+          ]}
+          footerLabel="Produtos / Receita"
+          footerValue={financials.revenue > 0 ? `${((financials.productCost / financials.revenue) * 100).toFixed(2)}%` : '—'}
+        />
+
+        <HoverBreakdownCard
+          icon={<Receipt size={13} color={COLORS.textMuted} />}
+          label="Taxas e Impostos"
+          value={fmt(financials.gatewayFee + financials.yampiFee)}
+          rows={[
+            { label: 'Gateway (AppMax)', value: fmt(financials.gatewayFee) },
+            { label: 'Checkout (Yampi)', value: fmt(financials.yampiFee) },
+          ]}
+          footerLabel="Taxas / Receita"
+          footerValue={financials.revenue > 0 ? `${(((financials.gatewayFee + financials.yampiFee) / financials.revenue) * 100).toFixed(2)}%` : '—'}
+        />
+
+        <HoverBreakdownCard
+          icon={<Megaphone size={13} color={COLORS.textMuted} />}
+          label="Custo Marketing"
+          value={
+            <span>
+              {fmt(financials.metaSpend)}
+              {financials.missingCostSources.length > 0 && (
+                <span style={{ fontSize: '13px', color: '#f59e0b', marginLeft: '5px' }}>*</span>
+              )}
+            </span>
+          }
+          // Só Meta aqui de propósito: a Just Runner não tem integração com o
+          // Google Ads. Listar uma linha "Google Ads R$ 0,00" daria a entender
+          // que houve leitura e o gasto foi zero.
+          rows={[
+            {
+              label: 'Meta (Facebook/Instagram)',
+              value: financials.metaTrusted
+                ? fmt(financials.metaSpend)
+                : <span style={{ color: '#f59e0b' }}>indisponível</span>,
+            },
+          ]}
+          footerLabel="Ads / Receita"
+          footerValue={financials.revenue > 0 ? `${((financials.metaSpend / financials.revenue) * 100).toFixed(2)}%` : '—'}
+        />
+      </div>
       </MetaTaxProvider>
       ),
     },

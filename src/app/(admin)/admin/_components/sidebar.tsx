@@ -16,6 +16,7 @@ const NAV_GROUPS = [
       { label: 'Live View',    href: '/admin/live',         icon: Radio },
       { label: 'Alertas',      href: '/admin/alertas',      icon: Bell },
       { label: 'Saúde',        href: '/admin/saude',        icon: Activity },
+      { label: 'Auditoria',    href: '/admin/auditoria',    icon: ScrollText },
     ],
   },
   {
@@ -59,7 +60,6 @@ const NAV_GROUPS = [
     items: [
       { label: 'Home Builder', href: '/admin/home-builder', icon: Home },
       { label: 'SEO',          href: '/admin/seo',          icon: Search },
-      { label: 'Auditoria',    href: '/admin/auditoria',    icon: ScrollText },
       { label: 'Config',       href: '/admin/configuracoes',icon: Settings },
     ],
   },

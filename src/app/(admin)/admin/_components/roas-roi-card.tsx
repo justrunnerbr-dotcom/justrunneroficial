@@ -17,6 +17,9 @@ interface Props {
   netProfit: number
   metaRaw:   number
   googleRaw: number
+  /** Alguma fonte de gasto não pôde ser lida — o denominador está incompleto,
+   *  então ROAS e ROI saem inflados. Precisa ficar explícito no card. */
+  partial?:  boolean
 }
 
 // ROAS = receita ÷ gasto em ads (ignora outros custos, mostra retorno bruto
@@ -24,7 +27,7 @@ interface Props {
 // descontando produto, frete, taxas e impostos — reflete o retorno real do
 // negócio, não só a margem bruta sobre o anúncio). Clicar alterna qual
 // aparece nesse card, sem ocupar dois espaços.
-export function RoasRoiCard({ revenue, netProfit, metaRaw, googleRaw }: Props) {
+export function RoasRoiCard({ revenue, netProfit, metaRaw, googleRaw, partial = false }: Props) {
   const { applyTax } = useContext(MetaTaxContext)
   const [metric, setMetric] = useState<'roas' | 'roi'>('roas')
 
@@ -62,9 +65,13 @@ export function RoasRoiCard({ revenue, netProfit, metaRaw, googleRaw }: Props) {
         </div>
         <TrendingUp size={16} color={COLORS.textMuted} />
       </div>
-      <div style={{ fontSize: '24px', fontWeight: 700, color: COLORS.textMain, fontFamily: 'monospace' }}>{value}</div>
-      <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
-        {metric === 'roas' ? 'Retorno por real investido' : 'Retorno sobre o investimento'}
+      <div style={{ fontSize: '24px', fontWeight: 700, color: COLORS.textMain, fontFamily: 'monospace' }}>
+        {value}{partial && spend > 0 ? <span style={{ fontSize: '13px', color: '#f59e0b', marginLeft: '6px' }}>*</span> : null}
+      </div>
+      <div style={{ fontSize: '12px', color: partial ? '#f59e0b' : COLORS.textMuted }}>
+        {partial
+          ? 'Parcial — valor real é menor'
+          : metric === 'roas' ? 'Retorno por real investido' : 'Retorno sobre o investimento'}
       </div>
     </div>
   )
