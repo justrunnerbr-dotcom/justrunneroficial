@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Package, FolderOpen, Home, Image,
   Search, BarChart3, Settings, Megaphone, ExternalLink,
-  LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, ScrollText,
+  LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, ScrollText, Activity,
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -15,6 +15,7 @@ const NAV_GROUPS = [
       { label: 'Dashboard',    href: '/admin',              icon: LayoutDashboard },
       { label: 'Live View',    href: '/admin/live',         icon: Radio },
       { label: 'Alertas',      href: '/admin/alertas',      icon: Bell },
+      { label: 'Saúde',        href: '/admin/saude',        icon: Activity },
     ],
   },
   {

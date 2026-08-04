@@ -4,6 +4,7 @@ import { getProductCosts, matchProductCost } from '@/lib/admin/product-costs'
 import { getCostSettings, computeGatewayFee, computeYampiFee, computeFreightCost } from '@/lib/admin/cost-settings'
 import { getManualOrders } from '@/lib/admin/manual-orders'
 import { getMetaLiveSpend } from '@/lib/admin/meta-ads'
+import { spendOrZero } from '@/lib/admin/source-status'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 const APPROVED_STATUSES = ['paid', 'invoiced', 'on_carriage', 'payment_confirmed', 'preparing_shipping', 'in_separation', 'in_transit', 'delivered']
@@ -18,6 +19,15 @@ export interface FinancialBreakdown {
   googleAdsSpend:  number  // sempre 0 aqui — sem integração Google Ads na Just Runner
   netProfit:       number
   margin:          number  // netProfit / revenue
+
+  /** true quando o gasto do Meta entrou completo no cálculo. */
+  metaTrusted:      boolean
+  /**
+   * Fontes de custo que falharam e portanto NÃO foram descontadas.
+   * Enquanto tiver item aqui, `netProfit` e `margin` estão OTIMISTAS —
+   * a UI é obrigada a marcar esses números como parciais.
+   */
+  missingCostSources: string[]
 }
 
 export async function getFinancialBreakdown(range: DateRange): Promise<FinancialBreakdown> {
@@ -70,11 +80,28 @@ export async function getFinancialBreakdown(range: DateRange): Promise<Financial
     productCost += mi.unit_cost * mi.quantity
   }
 
-  const metaSpend      = liveSpend?.total.spend ?? 0
+  // Gasto de mídia: a fonte informa se o número dela é confiável. Um gasto que
+  // não pôde ser lido continua sendo somado como 0 (não há alternativa no
+  // cálculo), mas a flag vai junto pra que ninguém leia o Lucro Líquido
+  // resultante como se fosse fechado.
+  const meta = spendOrZero(liveSpend, d => d.total.spend)
+
+  const metaSpend      = meta.value
   const googleAdsSpend = 0
+
+  // Meta parcial (só algumas contas falharam) também não é confiável pro total.
+  const metaFullyTrusted = meta.trusted && (liveSpend.data?.failedAccounts.length ?? 0) === 0
+
+  const missingCostSources: string[] = []
+  if (!metaFullyTrusted) missingCostSources.push('Meta Ads')
 
   const netProfit = revenue - productCost - freightCost - gatewayFee - yampiFee - metaSpend - googleAdsSpend
   const margin    = revenue > 0 ? netProfit / revenue : 0
 
-  return { revenue, productCost, freightCost, gatewayFee, yampiFee, metaSpend, googleAdsSpend, netProfit, margin }
+  return {
+    revenue, productCost, freightCost, gatewayFee, yampiFee,
+    metaSpend, googleAdsSpend, netProfit, margin,
+    metaTrusted: metaFullyTrusted,
+    missingCostSources,
+  }
 }

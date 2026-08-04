@@ -1,8 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { DateRange } from '@/lib/admin/date-range'
+import {
+  type SourceResult,
+  sourceOk,
+  sourceError,
+  sourceNotConfigured,
+} from '@/lib/admin/source-status'
 
 const STORE_ID   = 'b0000000-0000-0000-0000-000000000001'
 const META_API_VER   = 'v21.0'
+const META_SOURCE    = 'meta-ads'
+// Teto por chamada à Graph API — ver comentário em withTimeout (source-status).
+const META_TIMEOUT_MS = 15_000
 const PAID_STATUSES  = ['paid', 'invoiced', 'on_carriage', 'payment_confirmed', 'preparing_shipping', 'in_separation', 'in_transit', 'delivered']
 
 // Todo `until` que chega neste arquivo segue a convenção interna de DateRange
@@ -241,9 +250,14 @@ async function fetchAccountInsights(
   accountId: string,
   since: string,
   until: string,
-): Promise<MetaLiveSpendPeriod> {
+): Promise<MetaLiveSpendPeriod | null> {
+  // Devolve null (não zeros) quando a consulta falha. Zerar em silêncio já
+  // escondeu dois bugs reais neste projeto — o `META_AD_ACCOUNT_ID` inexistente
+  // e o `video_play_actions` duplicado no `fields` — que faziam a Graph API
+  // responder erro e o painel exibir "gasto R$ 0" como se a conta não tivesse
+  // rodado.
   const token = process.env.META_ACCESS_TOKEN
-  if (!token || !accountId) return { spend: 0, impressions: 0, clicks: 0, reach: 0 }
+  if (!token || !accountId) return null
   try {
     const params = new URLSearchParams({
       fields:     'spend,impressions,clicks,reach',
@@ -252,10 +266,16 @@ async function fetchAccountInsights(
     })
     const res  = await fetch(
       `https://graph.facebook.com/${META_API_VER}/act_${accountId}/insights?${params}`,
-      { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
+      { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: AbortSignal.timeout(META_TIMEOUT_MS) },
     )
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      console.error(`[meta-ads] insights HTTP ${res.status} na conta ${accountId}: ${detail.slice(0, 300)}`)
+      return null
+    }
     const data = await res.json() as { data?: Array<Record<string, string>> }
     const row  = data.data?.[0]
+    // Sem linha = conta sem entrega no período. Zero legítimo, diferente de erro.
     if (!row) return { spend: 0, impressions: 0, clicks: 0, reach: 0 }
     return {
       spend:       parseFloat(row.spend       ?? '0') || 0,
@@ -263,8 +283,9 @@ async function fetchAccountInsights(
       clicks:      parseInt(row.clicks        ?? '0') || 0,
       reach:       parseInt(row.reach         ?? '0') || 0,
     }
-  } catch {
-    return { spend: 0, impressions: 0, clicks: 0, reach: 0 }
+  } catch (err) {
+    console.error(`[meta-ads] insights falhou na conta ${accountId}:`, err)
+    return null
   }
 }
 
@@ -277,7 +298,7 @@ async function getAccountCampaignCount(
     const params = new URLSearchParams({ fields: 'status', limit: '100' })
     const res  = await fetch(
       `https://graph.facebook.com/${META_API_VER}/act_${accountId}/campaigns?${params}`,
-      { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' },
+      { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: AbortSignal.timeout(META_TIMEOUT_MS) },
     )
     const data = await res.json() as { data?: Array<{ status: string }> }
     const rows = data.data ?? []
@@ -306,14 +327,23 @@ export interface MetaLiveSpend {
   total:      MetaLiveSpendPeriod
   totalPrev:  MetaLiveSpendPeriod
   periodDays: number
+  /**
+   * Contas cuja consulta falhou e que por isso NÃO entraram em `total`.
+   * Se vier preenchido, o total está subestimado — quem exibe precisa avisar
+   * que o número é parcial em vez de apresentá-lo como fechado.
+   */
+  failedAccounts: string[]
 }
 
-export async function getMetaLiveSpend(since: string, until: string): Promise<MetaLiveSpend | null> {
+export async function getMetaLiveSpend(
+  since: string,
+  until: string,
+): Promise<SourceResult<MetaLiveSpend>> {
   const token = process.env.META_ACCESS_TOKEN
-  if (!token) return null
+  if (!token) return sourceNotConfigured(META_SOURCE, 'META_ACCESS_TOKEN ausente')
 
   const accounts = META_ACCOUNTS.filter(a => a.id)
-  if (!accounts.length) return null
+  if (!accounts.length) return sourceNotConfigured(META_SOURCE, 'nenhuma conta de anúncio configurada')
 
   const { prevSince, prevUntil } = getPrevPeriod(since, until)
   const sinceMs   = new Date(since).getTime()
@@ -334,17 +364,37 @@ export async function getMetaLiveSpend(since: string, until: string): Promise<Me
         prevPeriod,
         activeCampaigns: counts.active,
         pausedCampaigns: counts.paused,
-        dailyAvg:        periodDays > 0 ? period.spend / periodDays : 0,
+        failed:          period === null,
       }
     }),
   )
 
-  return {
-    accounts:   results,
-    total:      sumPeriods(results.map(r => r.period)),
-    totalPrev:  sumPeriods(results.map(r => r.prevPeriod)),
-    periodDays,
+  const failedAccounts = results.filter(r => r.failed).map(r => r.name)
+
+  // Todas falharam: não há nada confiável a mostrar.
+  if (failedAccounts.length === accounts.length) {
+    return sourceError(META_SOURCE, `todas as ${accounts.length} contas falharam na consulta de insights`)
   }
+
+  const usable = results
+    .filter(r => !r.failed)
+    .map(r => ({
+      id:              r.id,
+      name:            r.name,
+      period:          r.period as MetaLiveSpendPeriod,
+      prevPeriod:      r.prevPeriod ?? { spend: 0, impressions: 0, clicks: 0, reach: 0 },
+      activeCampaigns: r.activeCampaigns,
+      pausedCampaigns: r.pausedCampaigns,
+      dailyAvg:        periodDays > 0 ? (r.period as MetaLiveSpendPeriod).spend / periodDays : 0,
+    }))
+
+  return sourceOk(META_SOURCE, {
+    accounts:   usable,
+    total:      sumPeriods(usable.map(r => r.period)),
+    totalPrev:  sumPeriods(usable.map(r => r.prevPeriod)),
+    periodDays,
+    failedAccounts,
+  })
 }
 
 export async function getMetaLiveCampaigns(since: string, until: string): Promise<MetaLiveCampaign[]> {

@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { getDateRangeFromSearchParams, getPreviousPeriodRange, type DateRange } from '@/lib/admin/date-range'
 import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
 import { getMetaDashboardStats, getMetaLiveSpend } from '@/lib/admin/meta-ads'
+import { isUsable, statusLabel } from '@/lib/admin/source-status'
 import { getSalesBreakdown } from '@/lib/admin/sales-breakdown'
 import { ConversionFunnelVisual } from './_components/conversion-funnel-visual'
 import { HourlySalesChart } from './_components/hourly-sales-chart'
@@ -206,7 +207,14 @@ export default async function AdminPage({
     getSalesBreakdown(range),
   ])
 
-  const totalAdClicks = liveSpend?.total.clicks ?? 0
+  // Só o dado marcado como confiável vira número na tela. Quando a consulta ao
+  // Meta falha, a UI mostra "indisponível" em vez de R$ 0,00 — zero silencioso
+  // aqui infla ROAS e Lucro Líquido sem deixar rastro.
+  const metaLive     = isUsable(liveSpend) ? liveSpend.data : null
+  const metaEstado   = statusLabel(liveSpend)
+  const metaParcial  = (metaLive?.failedAccounts.length ?? 0) > 0
+
+  const totalAdClicks = metaLive?.total.clicks ?? 0
 
   const revCur  = d.cur.revenue
   const revPrev = d.prev.revenue
@@ -262,22 +270,36 @@ export default async function AdminPage({
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Investimento Meta</span>
-                    <span style={{ background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px' }}>LIVE</span>
+                    {metaLive && !metaParcial && (
+                      <span style={{ background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px' }}>LIVE</span>
+                    )}
+                    {metaLive && metaParcial && (
+                      <span style={{ background: 'rgba(245,158,11,0.12)', color: '#b45309', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px' }}>PARCIAL</span>
+                    )}
+                    {!metaLive && (
+                      <span style={{ background: 'rgba(239,68,68,0.12)', color: '#dc2626', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px', textTransform: 'uppercase' }}>{metaEstado}</span>
+                    )}
                     <MetaTaxToggle />
                   </div>
                   <div style={{ fontSize: '36px', fontWeight: 800, color: COLORS.textMain, fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {liveSpend ? <MarketingSpendAmount metaRaw={liveSpend.total.spend} googleRaw={0} /> : '—'}
+                    {metaLive ? <MarketingSpendAmount metaRaw={metaLive.total.spend} googleRaw={0} /> : '—'}
                   </div>
-                  {liveSpend && (
-                    <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
-                      {liveSpend.total.impressions.toLocaleString('pt-BR')} imp · {liveSpend.total.clicks.toLocaleString('pt-BR')} cliques
+                  {metaLive && (
+                    <div style={{ fontSize: '13px', color: metaParcial ? '#b45309' : COLORS.textMuted }}>
+                      {metaLive.total.impressions.toLocaleString('pt-BR')} imp · {metaLive.total.clicks.toLocaleString('pt-BR')} cliques
+                      {metaParcial && ` · sem ${metaLive.failedAccounts.join(', ')}`}
+                    </div>
+                  )}
+                  {!metaLive && (
+                    <div style={{ fontSize: '13px', color: '#dc2626' }}>
+                      Não foi possível ler o gasto — o número não é zero, é desconhecido.
                     </div>
                   )}
                 </div>
 
-                {liveSpend && (
+                {metaLive && (
                   <InvestmentBarChart
-                    sources={liveSpend.accounts.map(acc => ({ name: acc.name, spend: acc.period.spend, isMeta: true }))}
+                    sources={metaLive.accounts.map(acc => ({ name: acc.name, spend: acc.period.spend, isMeta: true }))}
                   />
                 )}
               </div>
@@ -295,7 +317,7 @@ export default async function AdminPage({
                   { id: 'ticket-medio', node: <MetricCard title="Ticket Médio" value={fmt(ticketMedioCur)} sub={`Ant: ${fmt(ticketMedioPrev)}`} icon={DollarSign} {...delta(ticketMedioCur, ticketMedioPrev)} /> },
                   { id: 'conversao', node: <MetricCard title="Conversão" value={`${(d.cur.conversion_rate * 100).toFixed(2)}%`} sub={`Sessões: ${d.cur.sessions}`} icon={Percent} {...delta(d.cur.conversion_rate, 0)} /> },
                   { id: 'sessoes', node: <MetricCard title="Sessões" value={d.cur.sessions} sub={`Ant: ${d.prev.sessions}`} icon={Users} {...delta(d.cur.sessions, d.prev.sessions)} /> },
-                  { id: 'cpa', node: <MetricCard title="CPA" value={liveSpend && d.paidCount > 0 ? <MarketingSpendAmount metaRaw={liveSpend.total.spend} googleRaw={0} divideBy={d.paidCount} /> : '—'} sub="Custo por Aquisição" icon={Target} up={true} pct={0} /> },
+                  { id: 'cpa', node: <MetricCard title="CPA" value={metaLive && d.paidCount > 0 ? <MarketingSpendAmount metaRaw={metaLive.total.spend} googleRaw={0} divideBy={d.paidCount} /> : '—'} sub={metaLive ? 'Custo por Aquisição' : 'Gasto de mídia indisponível'} icon={Target} up={true} pct={0} /> },
                   { id: 'pagos', node: <MetricCard title="Pagos" value={d.paidCount} sub="Confirmados" icon={CheckCircle2} up={true} pct={0} /> },
                 ]}
               />

@@ -3,7 +3,8 @@ import { CheckCircle, XCircle, ExternalLink, AlertTriangle, Wifi, TrendingUp, Tr
 import { META_PIXEL_ID } from '@/lib/meta'
 import { CopyButton } from './copy-button'
 import { MetaSyncButton } from './_components/meta-sync-button'
-import { getMetaPageData, isMetaConfigured, getMetaLiveSpend, getMetaLiveCampaigns } from '@/lib/admin/meta-ads'
+import { getMetaPageData, isMetaConfigured, getMetaLiveSpend, getMetaLiveCampaigns, type MetaLiveSpend } from '@/lib/admin/meta-ads'
+import { isUsable, statusLabel, sourceNotConfigured } from '@/lib/admin/source-status'
 import { getDateRangeFromSearchParams, type DateRange } from '@/lib/admin/date-range'
 
 const DIAG_STYLE: Record<string, { color: string; bg: string }> = {
@@ -100,7 +101,9 @@ export default async function MetaAdsPage({
     getFeedStats(),
     getSKUCount(),
     configured ? getMetaPageData(db, range) : Promise.resolve(null),
-    configured ? getMetaLiveSpend(range.start, range.endExclusive) : Promise.resolve(null),
+    configured
+      ? getMetaLiveSpend(range.start, range.endExclusive)
+      : Promise.resolve(sourceNotConfigured<MetaLiveSpend>('meta-ads', 'Meta Ads não configurado')),
     configured ? getMetaLiveCampaigns(range.start, range.endExclusive) : Promise.resolve([]),
   ])
 
@@ -112,15 +115,21 @@ export default async function MetaAdsPage({
   const fmtX     = (n: number) => `${n.toFixed(2)}×`
   const hasData  = metaData?.hasData ?? false
 
-  const totalSpend     = liveSpend?.total.spend ?? 0
-  const totalPrevSpend = liveSpend?.totalPrev.spend ?? 0
-  const periodDays     = liveSpend?.periodDays ?? 1
-  const totalImp       = liveSpend?.total.impressions ?? 0
-  const totalClicks    = liveSpend?.total.clicks ?? 0
+  // Só o dado confiável vira número. Falha na Graph API não pode virar R$ 0,00
+  // apresentado como se a conta simplesmente não tivesse rodado.
+  const metaLive    = isUsable(liveSpend) ? liveSpend.data : null
+  const metaEstado  = statusLabel(liveSpend)
+  const metaParcial = (metaLive?.failedAccounts.length ?? 0) > 0
+
+  const totalSpend     = metaLive?.total.spend ?? 0
+  const totalPrevSpend = metaLive?.totalPrev.spend ?? 0
+  const periodDays     = metaLive?.periodDays ?? 1
+  const totalImp       = metaLive?.total.impressions ?? 0
+  const totalClicks    = metaLive?.total.clicks ?? 0
   const avgCtr         = totalImp > 0 ? (totalClicks / totalImp) * 100 : 0
   const avgCpm         = totalImp > 0 ? (totalSpend / totalImp) * 1000 : 0
 
-  const accountStats = liveSpend?.accounts.map(acc => {
+  const accountStats = metaLive?.accounts.map(acc => {
     const cpm = acc.period.impressions > 0 ? (acc.period.spend / acc.period.impressions) * 1000 : 0
     const ctr = acc.period.impressions > 0 ? (acc.period.clicks / acc.period.impressions) * 100 : 0
     const cpc = acc.period.clicks > 0 ? acc.period.spend / acc.period.clicks : 0
@@ -152,9 +161,24 @@ export default async function MetaAdsPage({
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(34,197,94,0.1)', color: '#16a34a', border: '1px solid rgba(34,197,94,0.3)' }}>
-            <Wifi size={13} /> 3 contas · LIVE
-          </div>
+          {/* Este selo era o texto fixo "3 contas · LIVE" no HTML: dizia LIVE
+              mesmo com a consulta falhando, e citava 3 contas independente de
+              quantas existiam. Agora reflete o estado real da fonte. */}
+          {metaLive && !metaParcial && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(34,197,94,0.1)', color: '#16a34a', border: '1px solid rgba(34,197,94,0.3)' }}>
+              <Wifi size={13} /> {metaLive.accounts.length} conta{metaLive.accounts.length === 1 ? '' : 's'} · LIVE
+            </div>
+          )}
+          {metaLive && metaParcial && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(245,158,11,0.12)', color: '#b45309', border: '1px solid rgba(245,158,11,0.3)' }}>
+              <Wifi size={13} /> parcial · sem {metaLive.failedAccounts.join(', ')}
+            </div>
+          )}
+          {!metaLive && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(239,68,68,0.12)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.3)' }}>
+              <Wifi size={13} /> Meta {metaEstado}
+            </div>
+          )}
           <MetaSyncButton lastSync={metaData?.lastSync ?? null} configured={configured} />
         </div>
       </div>
