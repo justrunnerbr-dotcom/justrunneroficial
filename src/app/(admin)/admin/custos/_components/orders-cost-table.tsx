@@ -30,7 +30,7 @@ export type OrderCostRow = {
   status: string
   createdAt: string
   total: number
-  items: { title: string; qty: number; supplierName?: string | null }[]
+  items: { title: string; qty: number; supplierName?: string | null; unitCost: number | null; supplierId: string | null; modelName: string }[]
   autoCusto: number | null
   unmatchedCount: number
   overrideCusto: number | null
@@ -42,40 +42,87 @@ export type OrderCostRow = {
   customerName?: string | null
 }
 
-function EditableCusto({ row, onSave, onClear, loading }: {
+/** Corrige o custo de cada item do pedido individualmente (não um valor único
+ *  pro pedido inteiro) — cada correção grava direto no cadastro de custo do
+ *  fornecedor (product_costs), então já vale pra pedidos futuros do mesmo
+ *  modelo, não só esse pedido. O total do pedido (usado na margem da linha)
+ *  vira a soma dos itens corrigidos. */
+function EditableCusto({ row, suppliers, onSaveItems, onClear, loading }: {
   row: OrderCostRow
-  onSave: (orderId: string, value: number) => Promise<void>
+  suppliers: Supplier[]
+  onSaveItems: (orderId: string, items: { supplierId: string; modelName: string; unitCost: number; qty: number }[]) => Promise<void>
   onClear: (orderId: string) => Promise<void>
   loading: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const current = row.overrideCusto ?? row.autoCusto
-  const [value, setValue] = useState(String(current ?? ''))
+  const [values, setValues] = useState<string[]>(() => row.items.map(i => String(i.unitCost ?? '')))
+  const [supplierIds, setSupplierIds] = useState<string[]>(() => row.items.map(i => i.supplierId ?? suppliers[0]?.id ?? ''))
+
+  function openEditor() {
+    setValues(row.items.map(i => String(i.unitCost ?? '')))
+    setSupplierIds(row.items.map(i => i.supplierId ?? suppliers[0]?.id ?? ''))
+    setEditing(true)
+  }
 
   async function handleSave() {
-    const parsed = parseFloat(value.replace(',', '.'))
-    if (isNaN(parsed) || parsed < 0) return
-    await onSave(row.id, parsed)
+    const parsed = values.map(v => parseFloat(v.replace(',', '.')))
+    if (parsed.some(p => isNaN(p) || p < 0)) return
+    if (supplierIds.some(id => !id)) return
+    const items = row.items.map((it, idx) => ({
+      supplierId: supplierIds[idx],
+      modelName: it.modelName,
+      unitCost: parsed[idx],
+      qty: it.qty,
+    }))
+    await onSaveItems(row.id, items)
     setEditing(false)
   }
 
   if (editing) {
     return (
-      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <input
-          autoFocus
-          style={{ width: '80px', textAlign: 'right', padding: '4px 8px', background: 'var(--admin-bg)', border: '1px solid var(--admin-border)', borderRadius: '8px', fontSize: '12px', color: 'var(--admin-text-main)' }}
-          value={value}
-          inputMode="decimal"
-          onChange={e => setValue(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
-        />
-        <button onClick={handleSave} disabled={loading} style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Salvar">
-          <Check size={13} color="#16a34a" />
-        </button>
-        <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Cancelar">
-          <X size={13} color="var(--admin-text-muted)" />
-        </button>
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          position: 'absolute', right: 0, top: '-8px', zIndex: 20, textAlign: 'left',
+          background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '10px',
+          padding: '12px', width: '280px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+        }}>
+          {row.items.map((it, idx) => (
+            <div key={idx} style={{ marginBottom: idx < row.items.length - 1 ? '10px' : '0' }}>
+              <div style={{ fontSize: '11px', color: 'var(--admin-text-sec)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {it.qty}× {it.title}
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {!it.supplierId && (
+                  <select
+                    value={supplierIds[idx]}
+                    onChange={e => setSupplierIds(prev => prev.map((v, i) => i === idx ? e.target.value : v))}
+                    style={{ flex: 1, padding: '4px 6px', background: 'var(--admin-bg)', border: '1px solid var(--admin-border)', borderRadius: '6px', fontSize: '11px', color: 'var(--admin-text-main)' }}
+                  >
+                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                )}
+                <input
+                  autoFocus={idx === 0}
+                  style={{ width: '90px', textAlign: 'right', padding: '4px 8px', background: 'var(--admin-bg)', border: '1px solid var(--admin-border)', borderRadius: '6px', fontSize: '12px', color: 'var(--admin-text-main)' }}
+                  placeholder="Custo R$"
+                  value={values[idx]}
+                  inputMode="decimal"
+                  onChange={e => setValues(prev => prev.map((v, i) => i === idx ? e.target.value : v))}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
+                />
+              </div>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px', borderTop: '1px solid var(--admin-border)', paddingTop: '10px' }}>
+            <button onClick={() => setEditing(false)} disabled={loading} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--admin-text-muted)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <X size={13} /> Cancelar
+            </button>
+            <button onClick={handleSave} disabled={loading} style={{ background: 'var(--admin-accent)', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: '#fff', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Check size={13} /> Salvar (corrige no fornecedor também)
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -88,7 +135,7 @@ function EditableCusto({ row, onSave, onClear, loading }: {
         </button>
       )}
       <button
-        onClick={() => setEditing(true)}
+        onClick={openEditor}
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: current === null ? 'var(--admin-red)' : 'var(--admin-text-main)', fontFamily: 'monospace', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
       >
         {current === null ? 'sem custo' : fmtBrl.format(current)}
@@ -103,12 +150,22 @@ export function OrdersCostTable({ orders, suppliers }: { orders: OrderCostRow[];
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
-  async function handleSave(orderId: string, value: number) {
+  async function handleSaveItems(orderId: string, items: { supplierId: string; modelName: string; unitCost: number; qty: number }[]) {
     setLoading(true)
     try {
+      // corrige o cadastro de custo do fornecedor pra cada item — vale pra
+      // pedidos futuros do mesmo modelo, não só esse pedido
+      for (const it of items) {
+        await fetch('/api/admin/product-costs', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ supplierId: it.supplierId, modelName: it.modelName, cost: it.unitCost }),
+        })
+      }
+      // soma os itens corrigidos pra já refletir a margem certa nesse pedido
+      const total = items.reduce((s, it) => s + it.unitCost * it.qty, 0)
       await fetch('/api/admin/order-cost-overrides', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, custoOverride: value }),
+        body: JSON.stringify({ orderId, custoOverride: total }),
       })
       router.refresh()
     } finally { setLoading(false) }
@@ -206,7 +263,7 @@ export function OrdersCostTable({ orders, suppliers }: { orders: OrderCostRow[];
                     <td style={{ padding: '8px 14px', textAlign: 'right' }}>
                       {o.isManual
                         ? <span style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--admin-text-main)' }}>{fmtBrl.format(o.autoCusto ?? 0)}</span>
-                        : <EditableCusto row={o} onSave={handleSave} onClear={handleClear} loading={loading} />}
+                        : <EditableCusto row={o} suppliers={suppliers} onSaveItems={handleSaveItems} onClear={handleClear} loading={loading} />}
                     </td>
                     <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--admin-text-muted)' }} title="AppMax + Yampi">
                       {fmtBrl.format(taxas)}

@@ -4,7 +4,7 @@ import { getAdminSupabase } from '@/lib/admin-client'
 import { getDateRangeFromSearchParams } from '@/lib/admin/date-range'
 import {
   getSuppliers, getProductCosts, getStockPurchases, summarizeStock,
-  matchProductCost, getOrderCostOverrides,
+  matchProductCost, matchProductCostRecord, getOrderCostOverrides,
 } from '@/lib/admin/product-costs'
 import { getCostSettings, computeGatewayFee, computeYampiFee, computeFreightCost } from '@/lib/admin/cost-settings'
 import { getManualOrders } from '@/lib/admin/manual-orders'
@@ -79,7 +79,16 @@ async function getOrdersCostData(
       status: o.status,
       createdAt: o.created_at,
       total,
-      items: orderItems.map(i => ({ title: i.product_title.replace(/^\[JR\]\s*/, ''), qty: i.quantity })),
+      items: orderItems.map(i => {
+        const match = matchProductCostRecord(i.product_title, costs)
+        return {
+          title: i.product_title.replace(/^\[JR\]\s*/, ''),
+          qty: i.quantity,
+          unitCost: match?.cost ?? null,
+          supplierId: match?.supplier_id ?? null,
+          modelName: match?.model_name ?? i.product_title.replace(/^\[JR\]\s*/, ''),
+        }
+      }),
       autoCusto: unmatchedCount === orderItems.length ? null : autoCusto,
       unmatchedCount,
       overrideCusto: overrideByOrderId.get(o.id) ?? null,
@@ -100,7 +109,11 @@ async function getOrdersCostData(
       status: 'manual',
       createdAt: o.created_at,
       total: o.total,
-      items: orderItems.map(i => ({ title: i.product_title, qty: i.quantity, supplierName: i.supplier_id ? supplierNameById.get(i.supplier_id) : null })),
+      items: orderItems.map(i => ({
+        title: i.product_title, qty: i.quantity,
+        supplierName: i.supplier_id ? supplierNameById.get(i.supplier_id) : null,
+        unitCost: i.unit_cost, supplierId: i.supplier_id ?? null, modelName: i.product_title,
+      })),
       autoCusto,
       unmatchedCount: 0,
       overrideCusto: null,
