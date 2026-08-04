@@ -2,6 +2,7 @@ import Anthropic          from '@anthropic-ai/sdk'
 import { NextResponse }    from 'next/server'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getFunnelData }    from '@/lib/admin/meta-ads'
+import { checkAuth, unauthorized } from '@/lib/admin/auth'
 
 interface MetricsInput {
   spend: number; impressions: number; clicks: number; reach: number
@@ -19,6 +20,10 @@ interface RequestBody {
 }
 
 export async function POST(req: Request) {
+  // Esta rota lê faturamento e consome crédito pago da Anthropic a cada chamada
+  // — a guarda vem antes de tudo, inclusive da leitura do body.
+  if (!(await checkAuth())) return unauthorized()
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: 'ANTHROPIC_API_KEY não encontrada. Adicione a variável de ambiente no Vercel e no .env.local.' },
