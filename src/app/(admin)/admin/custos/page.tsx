@@ -10,12 +10,14 @@ import { getCostSettings, computeGatewayFee, computeYampiFee, computeFreightCost
 import { getManualOrders } from '@/lib/admin/manual-orders'
 import { getSupplierOrderItems } from '@/lib/admin/supplier-orders'
 import { getSupplierMapping } from '@/lib/admin/supplier-mapping'
+import { getDailyRestockReport } from '@/lib/admin/daily-restock'
 import { CostManager } from './_components/cost-manager'
 import { PurchaseManager } from './_components/purchase-manager'
 import { OrdersCostTable, type OrderCostRow } from './_components/orders-cost-table'
 import { IntegrationsManager } from './_components/integrations-manager'
 import { SupplierOrderManager } from './_components/supplier-order-manager'
 import { SupplierMappingTable } from './_components/supplier-mapping-table'
+import { DailyRestockReportView } from './_components/daily-restock-report'
 
 export const metadata = { title: 'Custo de Produtos · Just Runner Admin' }
 
@@ -138,16 +140,16 @@ function TabLink({ href, label, active }: { href: string; label: string; active:
 export default async function CustosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; range?: string; from?: string; to?: string }>
+  searchParams: Promise<{ view?: string; range?: string; from?: string; to?: string; fornecedor?: string }>
 }) {
   const sp    = await searchParams
   const view  = sp.view === 'compras' ? 'compras' : sp.view === 'pedidos' ? 'pedidos'
     : sp.view === 'integracoes' ? 'integracoes' : sp.view === 'fornecedor-pedidos' ? 'fornecedor-pedidos'
-    : sp.view === 'mapeamento' ? 'mapeamento' : 'custos'
+    : sp.view === 'mapeamento' ? 'mapeamento' : sp.view === 'reposicao' ? 'reposicao' : 'custos'
   const range = getDateRangeFromSearchParams(sp)
 
   // Preserva o período (from/to/range) atual ao trocar de aba
-  function tabHref(v: 'custos' | 'compras' | 'pedidos' | 'integracoes' | 'fornecedor-pedidos' | 'mapeamento') {
+  function tabHref(v: 'custos' | 'compras' | 'pedidos' | 'integracoes' | 'fornecedor-pedidos' | 'mapeamento' | 'reposicao') {
     const params = new URLSearchParams()
     if (sp.from) params.set('from', sp.from)
     if (sp.to)   params.set('to', sp.to)
@@ -163,6 +165,12 @@ export default async function CustosPage({
   ])
   const stockSummary = summarizeStock(purchases)
   const orders = view === 'pedidos' ? await getOrdersCostData(range, costs, settings, suppliers) : []
+
+  // Fornecedor da aba Reposição: o escolhido na URL, senão o primeiro cadastrado.
+  const restockSupplierId = sp.fornecedor ?? suppliers[0]?.id ?? ''
+  const restockReport = view === 'reposicao' && restockSupplierId
+    ? await getDailyRestockReport(range, restockSupplierId, costs, supplierMapping)
+    : null
 
   const fmtBrl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
   const totalInvested = purchases.reduce((s, p) => s + p.total_cost, 0)
@@ -188,6 +196,7 @@ export default async function CustosPage({
         <TabLink href={tabHref('compras')} label="Registrar Compra / Estoque" active={view === 'compras'} />
         <TabLink href={tabHref('pedidos')} label="Pedidos × Custo" active={view === 'pedidos'} />
         <TabLink href={tabHref('fornecedor-pedidos')} label="Pedidos a Fornecedores" active={view === 'fornecedor-pedidos'} />
+        <TabLink href={tabHref('reposicao')} label="Reposição do Dia" active={view === 'reposicao'} />
         <TabLink href={tabHref('mapeamento')} label="Mapeamento de Fornecedor" active={view === 'mapeamento'} />
         <TabLink href={tabHref('integracoes')} label="Integrações" active={view === 'integracoes'} />
       </div>
@@ -202,6 +211,15 @@ export default async function CustosPage({
       {view === 'compras' && <PurchaseManager suppliers={suppliers} costs={costs} purchases={purchases} stockSummary={stockSummary} />}
       {view === 'pedidos' && <OrdersCostTable orders={orders} suppliers={suppliers} />}
       {view === 'fornecedor-pedidos' && <SupplierOrderManager suppliers={suppliers} costs={costs} items={supplierOrderItems} />}
+      {view === 'reposicao' && (
+        restockReport
+          ? <DailyRestockReportView suppliers={suppliers} supplierId={restockSupplierId} report={restockReport} />
+          : (
+            <div style={{ background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '12px', padding: '28px', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
+              Cadastre ao menos um fornecedor na aba &quot;Custo por Fornecedor&quot; para gerar a lista de reposição.
+            </div>
+          )
+      )}
       {view === 'mapeamento' && (
         supplierMapping.length > 0
           ? <SupplierMappingTable rows={supplierMapping} suppliers={suppliers} />

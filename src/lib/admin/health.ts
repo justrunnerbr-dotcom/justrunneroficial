@@ -46,7 +46,7 @@ const EXPECTED_TABLES = [
   'meta_ads_agent_memory', 'meta_ads_agent_messages', 'meta_sync_logs',
   'order_cost_overrides', 'order_items', 'orders', 'product_costs', 'products',
   'recovery_actions', 'sessions', 'settings', 'stock_purchases',
-  'supplier_order_items', 'suppliers', 'variants',
+  'supplier_mapping', 'supplier_order_items', 'suppliers', 'variants',
   'whatsapp_conversations', 'whatsapp_messages', 'yampi_catalog_sync_logs',
 ]
 

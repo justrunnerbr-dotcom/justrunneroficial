@@ -61,22 +61,27 @@ function jaccard(a: Set<string>, b: Set<string>) {
  *  quanto o nome real do catálogo do site. Retorna o MENOR custo entre os
  *  fornecedores que batem (o override por pedido cobre o caso raro de ter
  *  sido o fornecedor mais caro). */
-export function matchProductCost(productTitle: string, costs: ProductCost[]): number | null {
+export function matchProductCostRecord(productTitle: string, costs: ProductCost[]): ProductCost | null {
   const clean = productTitle.replace(/^\[JR\]\s*/, '').replace(/\s+/g, ' ').trim()
   const n = norm(clean)
 
   const exact = costs.filter(c => norm(c.model_name) === n)
-  if (exact.length > 0) return Math.min(...exact.map(c => c.cost))
+  if (exact.length > 0) return exact.reduce((min, c) => (c.cost < min.cost ? c : min))
 
   const titleTokens = tokenSet(clean)
   let bestScore = 0
-  let bestCosts: number[] = []
+  let bestMatches: ProductCost[] = []
   for (const c of costs) {
     const score = jaccard(titleTokens, tokenSet(c.model_name))
-    if (score > bestScore) { bestScore = score; bestCosts = [c.cost] }
-    else if (score === bestScore && score > 0) { bestCosts.push(c.cost) }
+    if (score > bestScore) { bestScore = score; bestMatches = [c] }
+    else if (score === bestScore && score > 0) { bestMatches.push(c) }
   }
-  return bestScore >= 0.6 ? Math.min(...bestCosts) : null
+  if (bestScore < 0.6) return null
+  return bestMatches.reduce((min, c) => (c.cost < min.cost ? c : min))
+}
+
+export function matchProductCost(productTitle: string, costs: ProductCost[]): number | null {
+  return matchProductCostRecord(productTitle, costs)?.cost ?? null
 }
 
 export type OrderCostOverride = { order_id: string; custo_override: number; notes: string | null }
