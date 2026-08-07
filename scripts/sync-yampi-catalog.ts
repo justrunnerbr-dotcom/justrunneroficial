@@ -44,10 +44,18 @@ async function main() {
   const { data: collections } = await supabase.from('collections').select('id,slug')
   const collectionSlugById = new Map(collections!.map((c) => [c.id, c.slug]))
 
+  // A coleção "oferta-progressiva" tem os gêmeos -op (R$175) e é sincronizada
+  // pelo sync-yampi-oferta-progressiva.ts, que os categoriza SÓ em "Oferta
+  // Progressiva" (8375993). Sem este filtro, um gêmeo cairia aqui e ganharia a
+  // categoria JUST RUNNER OFICIAL (8375893) — a mesma da regra "2º grátis" —,
+  // liberando dois óculos por R$175 no checkout.
+  const opCollectionId = collections!.find((c) => c.slug === 'oferta-progressiva')?.id
+
   const { data: products } = await supabase
     .from('products')
     .select('id,name,collection_id,variants(*),images(*)')
     .eq('status', 'active')
+    .neq('collection_id', opCollectionId)
 
   let created = 0
   let skipped = 0
