@@ -16,8 +16,9 @@ export default async function StoreLayout({
     getCollections(),
   ])
 
-  // As páginas usam ISR (60–300s), então isto fica no máximo alguns minutos
-  // defasado depois que a promo acabar — irrelevante para uma promo de dias.
+  // Constante de build (`PROMO_ATIVA` em lib/promo), não data — o ISR das
+  // páginas não tem como deixar isto defasado. O relógio em si roda no cliente
+  // e reinicia sozinho à meia-noite.
   const promoAtiva = isPromoActive()
 
   return (

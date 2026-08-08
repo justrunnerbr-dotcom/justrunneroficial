@@ -2,29 +2,27 @@
 
 import { Fragment, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { PROMO_END_MS } from '@/lib/promo'
+import { msUntilReset } from '@/lib/promo'
 
-const LABELS = ['DIAS', 'HORAS', 'MIN', 'SEG'] as const
+const LABELS = ['HORAS', 'MIN', 'SEG'] as const
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
 function split(ms: number): number[] {
   const s = Math.max(0, Math.floor(ms / 1000))
-  return [
-    Math.floor(s / 86400),
-    Math.floor((s % 86400) / 3600),
-    Math.floor((s % 3600) / 60),
-    s % 60,
-  ]
+  return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60]
 }
 
 /**
- * Barra de contagem regressiva no topo do site. A data de fim é fixa
- * (`PROMO_END_MS`), então a contagem é a mesma para todo visitante.
+ * Barra de contagem regressiva no topo do site. O alvo é sempre a próxima
+ * meia-noite de Brasília (`msUntilReset`), então a contagem é a mesma para todo
+ * visitante e reinicia sozinha na virada do dia — ninguém precisa prorrogar
+ * data nenhuma no código.
  *
- * Quem decide se a barra existe é o layout (server), comparando a data — aqui
- * só roda o relógio. Se a promo virar durante a navegação, a barra congela em
- * zero e some no próximo carregamento, evitando pulo de layout no meio da sessão.
+ * Quem decide se a barra existe é o layout (server), lendo `PROMO_ATIVA`; aqui
+ * só roda o relógio. Como o tempo restante é recalculado do relógio a cada
+ * segundo (em vez de decrementado), a virada das 00:00 volta para 23:59:59
+ * sem precisar de tratamento especial e sem depender da aba ficar aberta.
  */
 export function PromoCountdownBar() {
   // null até montar — o servidor não tem como renderizar o relógio sem divergir
@@ -32,7 +30,7 @@ export function PromoCountdownBar() {
   const [remaining, setRemaining] = useState<number | null>(null)
 
   useEffect(() => {
-    const tick = () => setRemaining(PROMO_END_MS - Date.now())
+    const tick = () => setRemaining(msUntilReset())
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
