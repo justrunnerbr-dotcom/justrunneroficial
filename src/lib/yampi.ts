@@ -67,9 +67,16 @@ export function buildSingleCheckoutUrl(
   )
 }
 
+/**
+ * `promocode` é o nome do parâmetro que a Yampi aceita para já entrar no
+ * checkout com o cupom aplicado — confirmado batendo no checkout real em
+ * 2026-08-08 contra `coupon`, `cupom`, `discount_code` e `coupon_code`, que
+ * são silenciosamente ignorados (a página abre normal, só sem o desconto).
+ */
 export function buildCartCheckoutUrl(
   alias: string,
-  items: CartItem[]
+  items: CartItem[],
+  promocode?: string | null
 ): string | null {
   const validItems = items.filter((i) => i.yampiProductId)
   if (validItems.length === 0) return null
@@ -85,6 +92,7 @@ export function buildCartCheckoutUrl(
     `?${productParams}` +
     `&redirectTo=checkout&skipToCheckout=1` +
     `&store_token=${STORE_TOKEN}&clearCart=1` +
+    (promocode ? `&promocode=${encodeURIComponent(promocode)}` : '') +
     attributionParams()
   )
 }

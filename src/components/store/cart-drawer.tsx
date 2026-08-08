@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { X, ShoppingBag, Lock } from 'lucide-react'
 import { useCartStore } from '@/lib/cart-store'
 import { isFreeGlassesEligible } from '@/lib/sku'
+import { CUPOM, cupomElegivel } from '@/lib/coupon'
 import { buildCartCheckoutUrl } from '@/lib/yampi'
 import { formatPrice } from '@/lib/utils'
 import { track } from '@/lib/analytics/client'
@@ -22,7 +23,10 @@ const UPSELLS = [
 ]
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, total, subtotal, discount, progressiveOfferDiscount, eligibleGlassesCount } = useCartStore()
+  const {
+    items, isOpen, closeCart, total, subtotal, discount, progressiveOfferDiscount,
+    eligibleGlassesCount, couponApplied, couponDiscount, applyCoupon, removeCoupon,
+  } = useCartStore()
   const yampiAlias  = process.env.NEXT_PUBLIC_YAMPI_ALIAS ?? ''
   const [checkingOut, setCheckingOut] = useState(false)
 
@@ -33,7 +37,10 @@ export function CartDrawer() {
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCheckout = () => {
-    const url = buildCartCheckoutUrl(yampiAlias, items)
+    // Só manda o cupom se ele realmente vale para este carrinho — a Yampi
+    // ignora um promocode inválido, mas mandar sempre esconderia a diferença
+    // entre "não vale" e "vale e falhou".
+    const url = buildCartCheckoutUrl(yampiAlias, items, couponDiscount() > 0 ? CUPOM.codigo : null)
     if (!url || checkingOut) return
     setCheckingOut(true)
     
@@ -65,6 +72,8 @@ export function CartDrawer() {
           cart_total: total(),
           cart_subtotal: subtotal(),
           discount: discount(),
+          coupon: couponDiscount() > 0 ? CUPOM.codigo : null,
+          coupon_discount: couponDiscount(),
           items: items.map((item) => ({
             product_id: item.productId,
             variant_id: item.variantId,
@@ -217,6 +226,12 @@ export function CartDrawer() {
                   <span>-{formatPrice(progressiveOfferDiscount())}</span>
                 </div>
               )}
+              {couponDiscount() > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontWeight: 600 }}>
+                  <span>🏷️ Cupom {CUPOM.codigo}</span>
+                  <span>-{formatPrice(couponDiscount())}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px', borderTop: '1px solid #e4e4e7', marginTop: '2px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#18181b', fontFamily: 'var(--font-poppins), sans-serif' }}>Total</span>
                 <div style={{ textAlign: 'right' }}>
@@ -227,6 +242,48 @@ export function CartDrawer() {
                 </div>
               </div>
             </div>
+
+            {/* Cupom: só aparece quando a regra da Yampi realmente aceita este
+                carrinho (ver lib/coupon.ts). Oferecer e o checkout recusar é
+                pior do que não oferecer. */}
+            {cupomElegivel(items) && (
+              couponDiscount() > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#15803d' }}>
+                    ✓ Cupom {CUPOM.codigo} aplicado
+                  </span>
+                  <button
+                    onClick={removeCoupon}
+                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', color: '#71717a', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    remover
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: '#fffbeb', border: '1px dashed #fcd34d', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#92400e' }}>
+                    🏷️ Cupom {CUPOM.codigo} disponível
+                  </span>
+                  <button
+                    onClick={() => {
+                      applyCoupon()
+                      try {
+                        track({
+                          event_type: 'coupon_applied',
+                          value: CUPOM.valor,
+                          properties: { code: CUPOM.codigo, source: 'cart_drawer', cart_subtotal: subtotal() },
+                        })
+                      } catch (e) {
+                        console.error('Internal tracking failed', e)
+                      }
+                    }}
+                    style={{ background: '#18181b', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-poppins), sans-serif' }}
+                  >
+                    Aplicar −{formatPrice(CUPOM.valor)}
+                  </button>
+                </div>
+              )
+            )}
 
             {/* Urgency timer compacto */}
             <UrgencyTimer variant="cart" />

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem } from './types'
 import { PROGRESSIVE_OFFER_SKU_PREFIX, isFreeGlassesEligible } from './sku'
+import { CUPOM, cupomElegivel } from './coupon'
 
 // Oferta Progressiva (produtos JROP-, catálogo duplicado a R$175 cada): 1
 // óculos = R$175, 2 óculos = R$297 (desconto fixo de R$53 no 2º). Faixas de
@@ -13,16 +14,22 @@ const PROGRESSIVE_OFFER_TIER2_MIN_QTY = 2
 interface CartState {
   items: CartItem[]
   isOpen: boolean
+  /** O cliente clicou em "Aplicar cupom". Só a intenção — quem decide se o
+   *  desconto vale de fato é `couponDiscount()`, que reconfere a elegibilidade. */
+  couponApplied: boolean
   addItem: (item: CartItem) => void
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clearCart: () => void
   openCart: () => void
   closeCart: () => void
+  applyCoupon: () => void
+  removeCoupon: () => void
   total: () => number
   subtotal: () => number
   discount: () => number
   progressiveOfferDiscount: () => number
+  couponDiscount: () => number
   itemCount: () => number
   eligibleGlassesCount: () => number
 }
@@ -32,6 +39,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      couponApplied: false,
 
       addItem: (newItem) => {
         set((state) => {
@@ -68,9 +76,12 @@ export const useCartStore = create<CartState>()(
         }))
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], couponApplied: false }),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
+
+      applyCoupon: () => set({ couponApplied: true }),
+      removeCoupon: () => set({ couponApplied: false }),
 
       subtotal: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
@@ -95,7 +106,17 @@ export const useCartStore = create<CartState>()(
         return opQty >= PROGRESSIVE_OFFER_TIER2_MIN_QTY ? PROGRESSIVE_OFFER_TIER2_DISCOUNT : 0
       },
 
-      total: () => get().subtotal() - get().discount() - get().progressiveOfferDiscount(),
+      // Reconfere a elegibilidade em vez de confiar só na flag: quem aplicou o
+      // cupom e depois tirou do carrinho o item que o sustentava tem que ver o
+      // desconto sumir na hora, senão o total do site não bate com o checkout.
+      couponDiscount: () =>
+        get().couponApplied && cupomElegivel(get().items) ? CUPOM.valor : 0,
+
+      total: () =>
+        get().subtotal() -
+        get().discount() -
+        get().progressiveOfferDiscount() -
+        get().couponDiscount(),
 
       itemCount: () =>
         get().items.reduce((sum, i) => sum + i.quantity, 0),
@@ -105,7 +126,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'jhf-cart',
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({ items: state.items, couponApplied: state.couponApplied }),
     }
   )
 )
