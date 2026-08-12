@@ -117,8 +117,8 @@ export default function TrocaseDevolucoes() {
           <div style={{ ...TEXT_STYLE, marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <span>
               WhatsApp:{' '}
-              <a href="https://wa.me/5511988766461" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-heading)', fontWeight: 500 }}>
-                (11) 98876-6461
+              <a href="https://wa.me/5511989072335" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-heading)', fontWeight: 500 }}>
+                (11) 98907-2335
               </a>{' '}
               · Seg–Sáb, 9h às 18h
             </span>

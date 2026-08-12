@@ -136,8 +136,8 @@ export default function PoliticaPrivacidadePage() {
             </span>
             <span>
               WhatsApp:{' '}
-              <a href="https://wa.me/5511988766461" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-heading)', fontWeight: 500 }}>
-                (11) 98876-6461
+              <a href="https://wa.me/5511989072335" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-heading)', fontWeight: 500 }}>
+                (11) 98907-2335
               </a>
             </span>
           </div>

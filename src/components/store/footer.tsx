@@ -177,12 +177,12 @@ export function Footer() {
           >
             <span>Seg — Sáb: 9h às 18h</span>
             <a
-              href="https://wa.me/5511988766461"
+              href="https://wa.me/5511989072335"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#aaa' }}
             >
-              WhatsApp: (11) 98876-6461
+              WhatsApp: (11) 98907-2335
             </a>
             <a href="mailto:suportejustrunner@gmail.com" style={{ color: '#aaa' }}>
               suportejustrunner@gmail.com
