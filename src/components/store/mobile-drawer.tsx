@@ -17,6 +17,7 @@ type DrawerLevel = 'main' | 'collections' | 'all-categories'
 const COLLECTIONS_QUICK_LINKS = [
   { label: 'Compre 1 Leve 2', href: '/colecao/compre-1-leve-2' },
   { label: 'Combos', href: '/colecao/combos' },
+  { label: 'Lançamentos', href: '/colecao/lancamentos' },
 ]
 
 const BACK_LEVEL: Record<DrawerLevel, DrawerLevel> = {

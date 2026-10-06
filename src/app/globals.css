@@ -245,6 +245,18 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Entre 990 e 1199px o menu com 6 itens encostava nos ícones da direita
+   (Lançamentos entrou em 2026-10-06): aperta o espaçamento só nessa faixa.
+   !important porque o padding/fonte do link vêm inline (navLink em header.tsx). */
+@media (min-width: 990px) and (max-width: 1199px) {
+  .header-desktop-nav > a,
+  .header-desktop-nav > div > a,
+  .header-desktop-nav > div > button {
+    padding: 0 7px !important;
+    font-size: 12.5px !important;
+  }
+}
+
 /* Cart bubble pop animation */
 @keyframes bubble-pop {
   0%   { transform: scale(1); }

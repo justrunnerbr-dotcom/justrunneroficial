@@ -27,6 +27,7 @@ const NAV_LINKS: { label: string; href: string; mega?: true }[] = [
   { label: 'Inicio', href: '/' },
   { label: 'Compre 1 Leve 2', href: '/colecao/compre-1-leve-2' },
   { label: 'Combos', href: '/colecao/combos' },
+  { label: 'Lançamentos', href: '/colecao/lancamentos' },
   { label: 'Categorias', href: '/colecao', mega: true },
   { label: 'Oferta Progressiva', href: '/colecao/oferta-progressiva' },
 ]
