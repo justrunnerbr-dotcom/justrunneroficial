@@ -62,6 +62,9 @@ export default function TrocaseDevolucoes() {
           </p>
 
           <h2 style={HEADING_STYLE}>3. Condições para troca ou devolução</h2>
+          <p style={{ ...TEXT_STYLE, marginBottom: '8px' }}>
+            A troca deve ser solicitada em até <strong style={{ color: 'var(--color-heading)' }}>7 dias corridos</strong> após o recebimento do produto. Após esse prazo, não realizamos trocas.
+          </p>
           <p style={{ ...TEXT_STYLE, marginBottom: '8px' }}>Para que a troca ou devolução seja aceita, o produto deve:</p>
           <ul style={LIST_STYLE}>
             <li>Estar sem sinais de uso ou danos causados pelo cliente</li>
@@ -137,7 +140,7 @@ export default function TrocaseDevolucoes() {
           </p>
 
           <p style={{ ...TEXT_STYLE, fontSize: '13px', marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
-            Última atualização: junho de 2026 · Just Runner · CNPJ 62.880.024/0001-30
+            Última atualização: outubro de 2026 · Just Runner · CNPJ 62.880.024/0001-30
           </p>
 
         </div>

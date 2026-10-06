@@ -41,7 +41,7 @@ const FAQ_DATA: Record<TabKey, { q: string, a: string }[]> = {
     { q: 'Como rastrear meu pedido?', a: 'Você receberá o código de rastreio por e-mail e WhatsApp assim que o pedido for despachado.' }
   ],
   'Trocas & Devoluções': [
-    { q: 'Como funciona a política de trocas?', a: 'Você tem até 30 dias após o recebimento para solicitar a primeira troca gratuitamente.' },
+    { q: 'Como funciona a política de trocas?', a: 'Você tem até 7 dias corridos após o recebimento para solicitar a primeira troca gratuitamente.' },
     { q: 'E se eu não gostar, posso devolver?', a: 'Sim! Garantimos seu direito de arrependimento com devolução gratuita em até 7 dias após o recebimento.' }
   ]
 }
