@@ -49,16 +49,14 @@ export function buildOrderedCards(
     .filter((p): p is NonNullable<typeof p> => p !== undefined)
 }
 
-// Primeiros 6 cards da grade "Leve 2 pelo preço de 1" — curadoria manual pedida
-// pelo usuário (2026-07-08). Variante/foto de capa escolhida por padronização
-// visual (ângulo ¾, já que Flak/Plantaris/Minute só têm foto nesse ângulo).
+// Primeiros cards da grade "Leve 2 pelo preço de 1" — curadoria manual pedida
+// pelo usuário (2026-10-06, substitui a de 2026-07-08).
 const C1L2_FEATURED_FIRST: OrderEntry[] = [
-  { collectionSlug: 'radar', productSlug: 'radar-ev-preta', variantId: 'e72555e9-6f81-4034-b9ba-65c44ee5c428' }, // Lente Preta
-  { collectionSlug: 'flak', productSlug: 'flak-preta', variantId: 'd3d36a7c-2eb0-4286-ae73-c03757b1767f' }, // Lente Preta
-  { collectionSlug: 'plantaris', productSlug: 'plantaris-preta', variantId: '4b9813f4-20bf-498a-b2a6-8157329c5ab3' }, // Único
-  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-brain-dead', variantId: '30cbf368-2983-4cfa-8f66-1b46a86b61a1' }, // Lente Preta
-  { collectionSlug: 'minute', productSlug: 'minute-preta', variantId: '11079fce-96bf-4c79-b1b9-094c1cf45239' }, // Lente Ruby
-  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-redux', variantId: '1dc19f08-9672-48d8-a3e5-af6bc7c10861' }, // Lente Preta
+  { collectionSlug: 'radar', productSlug: 'radar-ev-preta', variantId: 'b4438460-26dc-433f-a45e-c8876f7ffa08' }, // Lente Ruby
+  { collectionSlug: 'minute', productSlug: 'minute-preta', variantId: 'a8b304d0-c7b6-42de-a5ba-695df1e3389b' }, // Lente Preta
+  { collectionSlug: 'flak', productSlug: 'flak-preta', variantId: '18140f3d-94e8-4459-af13-8895162167b7' }, // Lente Espelhada
+  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-redux', variantId: '0d909e84-cc78-4e4a-ad17-4a76f54e2f9b' }, // Cinza · Lente Preta
+  { collectionSlug: 'plantaris', productSlug: 'plantaris-podpah', variantId: '40430303-69ef-4390-9e93-72fbc3ed2350' }, // Único
 ]
 
 // ── Seções de categoria única (Home) — 1 por categoria real da Just Runner ────
