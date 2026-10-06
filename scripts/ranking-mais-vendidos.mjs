@@ -104,6 +104,8 @@ async function main() {
           continue
         }
         if (!slugBySku.has(sku)) casadosPorNome += item.quantity
+        // Combo é kit (ordem fixa por número), não entra no ranking de modelos.
+        if (slug.startsWith('combo-')) continue
         slug = slug.replace(/-op$/, '')
         unidades.set(slug, (unidades.get(slug) ?? 0) + item.quantity)
       }

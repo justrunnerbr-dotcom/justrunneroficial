@@ -27,6 +27,12 @@ function filterHiddenItems<T extends { slug: string; name?: string }>(items: T[]
   })
 }
 
+// O banco ordena nome como texto ("Combo 10" antes de "Combo 2"); aqui os
+// números contam como número.
+function byNameNatural(a: Product, b: Product): number {
+  return a.name.localeCompare(b.name, 'pt-BR', { numeric: true, sensitivity: 'base' })
+}
+
 export const getCollections = cache(async function getCollections(): Promise<Collection[]> {
   if (!isSupabaseConfigured()) return filterHiddenItems(mockCollections)
   return safe(async () => {
@@ -80,7 +86,7 @@ export async function getProductsByCollection(collectionId: string): Promise<Pro
       .eq('status', 'active')
       .order('name', { ascending: true })
     if (error) throw error
-    return filterHiddenItems((data ?? []) as Product[])
+    return filterHiddenItems((data ?? []) as Product[]).sort(byNameNatural)
   }, [])
 }
 
@@ -220,7 +226,7 @@ export async function getProductsBatchByCollections(
     const result = new Map<string, Product[]>()
     for (const id of collectionIds) result.set(id, [])
 
-    for (const product of filterHiddenItems((data ?? []) as Product[])) {
+    for (const product of filterHiddenItems((data ?? []) as Product[]).sort(byNameNatural)) {
       const arr = result.get(product.collection_id) ?? []
       arr.push(product)
       result.set(product.collection_id, arr)

@@ -28,8 +28,7 @@ function isHidden(slug: string, name: string): boolean {
   const s = slug.toLowerCase()
   const n = name.toLowerCase()
   return (
-    s.includes('sutro') || s.includes('case') ||
-    n.includes('sutro') || n.includes('case')
+    s.includes('case') || n.includes('case')
   )
 }
 

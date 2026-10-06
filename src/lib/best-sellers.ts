@@ -30,7 +30,6 @@ export const BEST_SELLER_SLUGS: string[] = [
   'plantaris-podpah', // 3
   'dartboard', // 2
   'radar-ev-bronze', // 2
-  'combo-1', // 1
   'eye-jacket-brain-dead', // 1
   'minute-branca', // 1
   'plantaris-preta-haste-transparente', // 1
