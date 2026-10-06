@@ -68,6 +68,10 @@ export async function sendCapiEvent(params: {
     try {
       const res = await fetch(`https://graph.facebook.com/v21.0/${pixelId}/events`, {
         method:  'POST',
+        // Roda dentro do webhook da Yampi: sem teto, uma Meta lenta segura a
+        // resposta e a Yampi desativa o webhook por falha de entrega (aconteceu
+        // em 21/07 e 19/08/2026). Estourou o tempo, cai no catch e só loga.
+        signal:  AbortSignal.timeout(4000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: [{
