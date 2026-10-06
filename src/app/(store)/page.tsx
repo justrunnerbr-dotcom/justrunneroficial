@@ -8,6 +8,7 @@ import { CategoryBanner } from '@/components/store/category-banner'
 import { WhatsAppButton } from '@/components/store/whatsapp-button'
 import { SocialProof } from '@/components/store/social-proof'
 import { resolveVariantImages } from '@/lib/product-image'
+import { sortByBestSellers } from '@/lib/best-sellers'
 import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/store/json-ld'
 
 export const revalidate = 300
@@ -110,7 +111,9 @@ export default async function HomePage() {
   const categorySections = CATEGORY_SECTIONS_ORDER.map((section) => {
     const collection = collectionsWithProducts.find((c) => c.slug === section.slug)
     // fixedGrid = vitrine fixa "2 colunas, 6 no total" (igual Leve 2 pelo preço de 1) — corta em 6.
-    const products = section.layout === 'fixedGrid' ? (collection?.products ?? []).slice(0, 6) : (collection?.products ?? [])
+    // Mais vendidos primeiro, igual à página da categoria (src/lib/best-sellers.ts).
+    const ranked = sortByBestSellers(collection?.products ?? [])
+    const products = section.layout === 'fixedGrid' ? ranked.slice(0, 6) : ranked
 
     const desktopPath = `banners-categorias/BANNER CATEGORIA/banner_categoria_${section.fileNameSlug}.jpg`
     const mobilePath = `banners-categorias/BANNER CATEGORIA/banner_categoria_${section.fileNameSlug}_mobile.jpg`

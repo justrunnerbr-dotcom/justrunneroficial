@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import fs from 'fs'
 import path from 'path'
+import { sortByBestSellers } from '@/lib/best-sellers'
 import { getCollectionBySlug, getProductsByCollection, getAllCollectionSlugs, getCollections, getProductsBatchByCollections } from '@/lib/queries'
 import { ProductsGrid } from '@/components/store/products-grid'
 import { OfertaProgressivaHome } from '@/components/store/oferta-progressiva-home'
@@ -35,7 +36,9 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function CollectionPage({ params }: PageProps) {
   const { slug } = await params
   let collection = await getCollectionBySlug(slug)
-  let products = collection ? await getProductsByCollection(collection.id) : []
+  // Dentro da categoria, os mais vendidos vêm primeiro (ranking da Yampi em
+  // src/lib/best-sellers.ts); o resto segue em ordem alfabética.
+  let products = collection ? sortByBestSellers(await getProductsByCollection(collection.id)) : []
 
   // Home espelhada, catálogo da JHF Oferta Progressiva (teste A/B) — ver PROMPT
   // CLAUDE 55+ na sessão. Mesma ordem/banners da Home principal, produtos R$175.
@@ -67,8 +70,8 @@ export default async function CollectionPage({ params }: PageProps) {
     const productMap = await getProductsBatchByCollections(allCollections.map(c => c.id))
     const allProducts = allCollections.flatMap(c => productMap.get(c.id) ?? [])
 
-    // Mesma curadoria dos 6 primeiros cards da Home (ver page.tsx raiz da store)
-    const featuredOrder = ['radar-ev-preta', 'flak-preta', 'plantaris-preta', 'eye-jacket-brain-dead', 'minute-preta', 'eye-jacket-redux']
+    // Mesma curadoria dos primeiros cards da Home (ver page.tsx raiz da store)
+    const featuredOrder = ['radar-ev-preta', 'minute-preta', 'flak-preta', 'eye-jacket-redux', 'plantaris-podpah']
     const featured = featuredOrder
       .map((slug) => allProducts.find((p) => p.slug === slug))
       .filter((p): p is NonNullable<typeof p> => p !== undefined)

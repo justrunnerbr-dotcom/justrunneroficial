@@ -16,7 +16,7 @@ type DrawerLevel = 'main' | 'collections' | 'all-categories'
 // dentro do próprio menu, não navega direto pra página.
 const COLLECTIONS_QUICK_LINKS = [
   { label: 'Compre 1 Leve 2', href: '/colecao/compre-1-leve-2' },
-  { label: 'Mais Vendidos', href: '/colecao/mais-vendidos' },
+  { label: 'Combos', href: '/colecao/combos' },
 ]
 
 const BACK_LEVEL: Record<DrawerLevel, DrawerLevel> = {
