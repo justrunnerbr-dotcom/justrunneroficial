@@ -21,7 +21,9 @@ function filterHiddenItems<T extends { slug: string; name?: string }>(items: T[]
   return items.filter((item) => {
     const s = item.slug?.toLowerCase() || ''
     const n = item.name?.toLowerCase() || ''
-    return !s.includes('sutro') && !s.includes('case') && !n.includes('sutro') && !n.includes('case')
+    // "sutro" saiu daqui em 2026-10-06: o filtro veio do template da JHF e
+    // escondia o Sutro, que a Just Runner passou a vender.
+    return !s.includes('case') && !n.includes('case')
   })
 }
 

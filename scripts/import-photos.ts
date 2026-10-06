@@ -35,6 +35,9 @@ const SUPABASE_URL =
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 
 const BUCKET = 'products'
+// Preço padrão do catálogo principal (mesmo de add-variantes-lente-preta.mjs).
+const PRICE = 297
+const COMPARE_PRICE = 348
 const MIME: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -132,6 +135,12 @@ function parseFilename(category: string, filename: string, fullPath: string): Pa
   const override = OVERRIDES[category]?.(base)
   if (override) {
     return { category, fullPath, ext, product: override.product, variant: override.variant, position }
+  }
+
+  // "Plantaris Squared Bege Único" -> produto de variação única.
+  const unico = base.match(/^(.+?)\s+[ÚU]nico$/i)
+  if (unico) {
+    return { category, fullPath, ext, product: unico[1].trim(), variant: 'Único', position }
   }
 
   const m = base.match(/\bLente\b/i)
@@ -267,21 +276,25 @@ async function main(): Promise<void> {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } })
 
   // ── 1. Upsert collections ───────────────────────────────────────────────
-  console.log('\n▸ Upsert collections...')
-  const categories = [...groups.keys()]
-  const collectionRows = categories.map((cat, i) => ({
-    slug: slugify(cat),
-    name: titleCase(cat),
-    description: null,
-    image_url: null,
-    position: i + 1,
-  }))
-  const { error: colErr } = await supabase.from('collections').upsert(collectionRows, { onConflict: 'slug' })
-  if (colErr) { console.error('ERRO collections:', colErr.message); process.exit(1) }
+  // Só cria as categorias que faltam, no fim da ordem. As existentes não são
+  // tocadas: nome e posição delas são curados à mão (a ordem do menu é por
+  // venda desde 2026-10-06).
+  console.log('\n▸ Collections...')
+  const { data: colBefore, error: colReadErr } = await supabase.from('collections').select('id, slug, position')
+  if (colReadErr) { console.error('ERRO collections:', colReadErr.message); process.exit(1) }
+  const existingColSlugs = new Set((colBefore ?? []).map((c: { slug: string }) => c.slug))
+  let nextPosition = Math.max(0, ...(colBefore ?? []).map((c: { position: number | null }) => c.position ?? 0)) + 1
+  const collectionRows = [...groups.keys()]
+    .filter((cat) => !existingColSlugs.has(slugify(cat)))
+    .map((cat) => ({ slug: slugify(cat), name: titleCase(cat), description: null, image_url: null, position: nextPosition++ }))
+  if (collectionRows.length > 0) {
+    const { error: colErr } = await supabase.from('collections').insert(collectionRows)
+    if (colErr) { console.error('ERRO collections:', colErr.message); process.exit(1) }
+  }
 
   const { data: colData } = await supabase.from('collections').select('id, slug')
   const collectionBySlug = new Map<string, string>((colData ?? []).map((c: { id: string; slug: string }) => [c.slug, c.id]))
-  console.log(`  ✓ ${collectionRows.length} collections`)
+  console.log(`  ✓ ${collectionRows.length} nova(s): ${collectionRows.map((c) => c.slug).join(', ') || '—'}`)
 
   // ── 2. Insert products (skip existing) ──────────────────────────────────
   console.log('\n▸ Insert products...')
@@ -322,7 +335,7 @@ async function main(): Promise<void> {
         if (variantIdByKey.has(key)) { position++; continue }
         const sku = `JR-${slugify(product).toUpperCase().replace(/-/g, '_')}-${slugify(variant).toUpperCase().replace(/-/g, '_')}`
         const { data, error } = await supabase.from('variants')
-          .insert({ product_id: productId, name: variant, price: 0, compare_price: null, sku, stock: 0, yampi_product_id: null, position })
+          .insert({ product_id: productId, name: variant, price: PRICE, compare_price: COMPARE_PRICE, sku, stock: 0, yampi_product_id: null, position })
           .select('id').single()
         if (error) { console.error(`ERRO variante "${product} / ${variant}":`, error.message); continue }
         variantIdByKey.set(key, (data as { id: string }).id)
@@ -334,8 +347,15 @@ async function main(): Promise<void> {
 
   // ── 4. Upload photos + insert images ─────────────────────────────────────
   console.log(`\n▸ Upload de ${totalImages} fotos + registros de imagem...`)
-  const { data: existingImages } = await supabase.from('images').select('url')
+  const { data: existingImages } = await supabase.from('images').select('url, product_id, variant_id, position')
   const existingUrls = new Set<string>((existingImages ?? []).map((i: { url: string }) => i.url))
+  // Variação (ou produto) que já tem foto: as novas entram depois das atuais,
+  // com upload sem upsert — uma foto já publicada nunca é substituída.
+  const nextImagePos = new Map<string, number>()
+  for (const img of (existingImages ?? []) as { product_id: string; variant_id: string | null; position: number | null }[]) {
+    const k = `${img.product_id}::${img.variant_id ?? ''}`
+    nextImagePos.set(k, Math.max(nextImagePos.get(k) ?? 0, (img.position ?? 0) + 1))
+  }
 
   let uploaded = 0, skipped = 0, errors = 0
   for (const [category, byProduct] of groups) {
@@ -349,11 +369,13 @@ async function main(): Promise<void> {
         const variantId = variant === '__product__' ? null : (variantIdByKey.get(variantKey(productId, variant)) ?? null)
         const variantSlug = variant === '__product__' ? 'geral' : slugify(variant)
 
+        const offset = nextImagePos.get(`${productId}::${variantId ?? ''}`) ?? 0
         for (const file of files) {
-          const storagePath = `${categorySlug}/${productSlug}/${variantSlug}/${file.position}${file.ext}`
+          const position = offset + file.position
+          const storagePath = `${categorySlug}/${productSlug}/${variantSlug}/${position}${file.ext}`
           const buffer = readFileSync(file.fullPath)
           const { error: upErr } = await supabase.storage.from(BUCKET)
-            .upload(storagePath, buffer, { contentType: MIME[file.ext], upsert: true })
+            .upload(storagePath, buffer, { contentType: MIME[file.ext], upsert: false })
           if (upErr) { errors++; console.log(`  ✗ ${storagePath}: ${upErr.message}`); continue }
           uploaded++
 
@@ -366,7 +388,7 @@ async function main(): Promise<void> {
             variant_id: variantId,
             url: publicUrl,
             alt: variant === '__product__' ? product : `${product} — ${variant}`,
-            position: file.position,
+            position,
           })
           if (imgErr) console.log(`  ✗ registro de imagem ${storagePath}: ${imgErr.message}`)
           process.stdout.write(`  ${uploaded + skipped}/${totalImages}\r`)

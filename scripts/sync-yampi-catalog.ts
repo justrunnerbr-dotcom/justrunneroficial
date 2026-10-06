@@ -12,7 +12,7 @@ const env = Object.fromEntries(
     .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
     .map((l) => {
       const i = l.indexOf('=')
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()]
+      return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^"|"$/g, '')] // `vercel env pull` grava entre aspas
     }),
 )
 
@@ -38,6 +38,15 @@ const CATEGORY_MAP: Record<string, number> = {
   plantaris: 7784466,
   radar: 7784465,
   'straight-jacket': 8375892,
+  // Lançamentos de 2026-10-06 (sutro reaproveita a categoria que já existia na Yampi)
+  '1311': 8441423,
+  ellipse: 8441424,
+  holbrook: 8441425,
+  'm-frame': 8441426,
+  'monster-dog': 8441427,
+  soto: 8441428,
+  sphaera: 8441429,
+  sutro: 8180539,
 }
 
 async function main() {
