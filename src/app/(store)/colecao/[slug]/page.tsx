@@ -3,6 +3,8 @@ import Image from 'next/image'
 import fs from 'fs'
 import path from 'path'
 import { sortByBestSellers } from '@/lib/best-sellers'
+import { LANCAMENTOS, LANCAMENTOS_BANNER, LANCAMENTOS_SLUG, LANCAMENTOS_TITLE } from '@/lib/lancamentos'
+import { buildOrderedCards } from '../../page'
 import { getCollectionBySlug, getProductsByCollection, getAllCollectionSlugs, getCollections, getProductsBatchByCollections } from '@/lib/queries'
 import { ProductsGrid } from '@/components/store/products-grid'
 import { OfertaProgressivaHome } from '@/components/store/oferta-progressiva-home'
@@ -21,7 +23,9 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
-  const collection = await getCollectionBySlug(slug)
+  const collection =
+    (await getCollectionBySlug(slug)) ??
+    (slug === LANCAMENTOS_SLUG ? { name: LANCAMENTOS_TITLE, description: 'Novos modelos, mesma performance.' } : null)
   if (!collection) return {}
   const title = `${collection.name} — Just Runner`
   const description = collection.description ?? `Explore a coleção ${collection.name} na Just Runner.`
@@ -77,6 +81,31 @@ export default async function CollectionPage({ params }: PageProps) {
       .filter((p): p is NonNullable<typeof p> => p !== undefined)
     const featuredSlugs = new Set(featuredOrder)
     products = [...featured, ...allProducts.filter((p) => !featuredSlugs.has(p.slug))]
+  }
+
+  // Coleção virtual "Lançamentos" — mesma curadoria da seção da home.
+  if (!collection && slug === LANCAMENTOS_SLUG) {
+    collection = {
+      id: 'virtual-lancamentos',
+      name: LANCAMENTOS_TITLE,
+      slug: LANCAMENTOS_SLUG,
+      description: 'Novos modelos, mesma performance.',
+      image_url: LANCAMENTOS_BANNER.desktop,
+      mobile_image_url: LANCAMENTOS_BANNER.mobile,
+      position: 0,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any
+
+    const slugs = [...new Set(LANCAMENTOS.map((e) => e.collectionSlug))]
+    const lancCollections = (await getCollections()).filter((c) => slugs.includes(c.slug))
+    const lancProducts = await getProductsBatchByCollections(lancCollections.map((c) => c.id))
+    products = buildOrderedCards(
+      LANCAMENTOS,
+      lancCollections.map((c) => ({ ...c, products: lancProducts.get(c.id) ?? [] })),
+      LANCAMENTOS_SLUG,
+    )
   }
 
   // Virtual collection for "Mais Vendidos"
@@ -187,7 +216,7 @@ export default async function CollectionPage({ params }: PageProps) {
             {products.length} produto{products.length !== 1 ? 's' : ''}
           </p>
 
-          <ProductsGrid products={products} unroll={slug !== 'compre-1-leve-2' && slug !== 'mais-vendidos'} />
+          <ProductsGrid products={products} unroll={slug !== 'compre-1-leve-2' && slug !== 'mais-vendidos' && slug !== LANCAMENTOS_SLUG} />
         </div>
       </div>
     </>

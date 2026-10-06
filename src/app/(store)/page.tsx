@@ -9,6 +9,7 @@ import { WhatsAppButton } from '@/components/store/whatsapp-button'
 import { SocialProof } from '@/components/store/social-proof'
 import { resolveVariantImages } from '@/lib/product-image'
 import { sortByBestSellers } from '@/lib/best-sellers'
+import { LANCAMENTOS, LANCAMENTOS_BANNER, LANCAMENTOS_SLUG, LANCAMENTOS_TITLE } from '@/lib/lancamentos'
 import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/store/json-ld'
 
 export const revalidate = 300
@@ -107,6 +108,8 @@ export default async function HomePage() {
     .filter((p) => !featuredSlugs.has(p.slug))
   const c1l2Products = [...featuredFirst, ...remainingProducts]
 
+  const lancamentosProducts = buildOrderedCards(LANCAMENTOS, collectionsWithProducts, LANCAMENTOS_SLUG)
+
   const publicDir = path.join(process.cwd(), 'public')
   const categorySections = CATEGORY_SECTIONS_ORDER.map((section) => {
     const collection = collectionsWithProducts.find((c) => c.slug === section.slug)
@@ -172,6 +175,20 @@ export default async function HomePage() {
               fullGrid={section.layout === 'grid'}
               fixedGrid={section.layout === 'fixedGrid'}
             />
+
+            {/* Lançamentos — vitrine curada (src/lib/lancamentos.ts), logo abaixo de Combos */}
+            {section.slug === 'combos' && lancamentosProducts.length > 0 && (
+              <div>
+                <CategoryBanner desktopSrc={LANCAMENTOS_BANNER.desktop} mobileSrc={LANCAMENTOS_BANNER.mobile} alt={`Banner ${LANCAMENTOS_TITLE}`} href={`/colecao/${LANCAMENTOS_SLUG}`} />
+                <ProductCarousel
+                  title={LANCAMENTOS_TITLE}
+                  products={lancamentosProducts}
+                  href={`/colecao/${LANCAMENTOS_SLUG}`}
+                  unroll={false}
+                  mobileScroll
+                />
+              </div>
+            )}
           </div>
         )
       })}
