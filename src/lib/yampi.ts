@@ -1,4 +1,5 @@
 import type { CartItem } from './types'
+import { getQuizCupom, quizCupomLiberado, quizSubtotalPromo } from './quiz/client'
 
 // store_token público da loja (visível nos redirects de /r/TOKEN)
 const STORE_TOKEN = 'BDMGAOde7Xbg3YDZxV5e7IJb5rkqTGKHZJ2SaUtU'
@@ -51,6 +52,14 @@ function attributionParams(): string {
   }
 }
 
+// Cupom do bônus do quiz: só quando os óculos do Compre 1 Leve 2 já liberam o
+// brinde (R$ 594 cheio). Abaixo disso a Yampi mostraria "Cupom inválido" à toa.
+// Como ele não acumula, ganha de qualquer outro cupom do carrinho.
+function quizPromocode(items: CartItem[]): string | null {
+  if (!quizCupomLiberado(quizSubtotalPromo(items))) return null
+  return getQuizCupom()?.code ?? null
+}
+
 export function buildSingleCheckoutUrl(
   alias: string,
   skuId: string | null
@@ -82,6 +91,7 @@ export function buildCartCheckoutUrl(
   if (validItems.length === 0) return null
 
   const domain = getCheckoutDomain(alias)
+  const code = quizPromocode(validItems) ?? promocode
 
   const productParams = validItems
     .map((i) => `product_option_id%5B%5D=${i.yampiProductId}&quantity%5B%5D=${i.quantity}`)
@@ -92,7 +102,7 @@ export function buildCartCheckoutUrl(
     `?${productParams}` +
     `&redirectTo=checkout&skipToCheckout=1` +
     `&store_token=${STORE_TOKEN}&clearCart=1` +
-    (promocode ? `&promocode=${encodeURIComponent(promocode)}` : '') +
+    (code ? `&promocode=${encodeURIComponent(code)}` : '') +
     attributionParams()
   )
 }

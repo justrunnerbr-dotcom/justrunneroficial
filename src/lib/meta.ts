@@ -304,5 +304,10 @@ export function metaLead(params: MetaLeadParams, eventId?: string): string {
     },
     { eventID: eid },
   )
+  // Espelho no servidor com o mesmo event_id — a Meta deduplica.
+  sendServerCapi('Lead', eid, {
+    content_name: params.content_name,
+    content_category: params.content_category,
+  })
   return eid
 }

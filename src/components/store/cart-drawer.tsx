@@ -10,6 +10,8 @@ import { track } from '@/lib/analytics/client'
 import { trackBeginCheckout } from '@/lib/gtm'
 import { metaInitiateCheckout } from '@/lib/meta'
 import { CartItemRow } from './cart-item'
+import { QuizBonusRow } from './quiz-bonus-row'
+import { quizSubtotalPromo } from '@/lib/quiz/client'
 import { UrgencyTimer } from './urgency-timer'
 
 const UPSELLS = [
@@ -201,6 +203,7 @@ export function CartDrawer() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginBottom: '16px' }}>
               {itemsWithDiscount.map((item) => <CartItemRow key={item.variantId} item={item} freeQty={item.freeQty} />)}
+              <QuizBonusRow subtotalCheio={quizSubtotalPromo(items)} />
             </div>
           )}
 

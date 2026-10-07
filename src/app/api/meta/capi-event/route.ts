@@ -7,7 +7,8 @@ import { sendCapiEvent } from '@/lib/meta/capi'
 // perde com ad-blocker ou ITP do Safari. Isso é redundância, não substituição:
 // o pixel client-side continua disparando normalmente; o event_id em comum faz
 // a Meta deduplicar as duas versões do mesmo evento.
-const ALLOWED_EVENTS = new Set(['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout', 'Search'])
+// Lead: resposta completa do quiz (/quiz, 07/10/2026).
+const ALLOWED_EVENTS = new Set(['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout', 'Search', 'Lead'])
 
 function readCookie(cookieHeader: string | null, name: string): string | undefined {
   if (!cookieHeader) return undefined
