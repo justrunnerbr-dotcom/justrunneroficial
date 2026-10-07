@@ -53,6 +53,8 @@ export async function GET(request: Request) {
     if (typeof metaSpend === 'number') registros.push({ date, platform: 'meta', amount: metaSpend, updated_at: agora })
     else falhas.push(`meta:${date}`)
 
+    // Just Runner não tem conta de Google Ads: sem credencial não é falha, é zero gasto.
+    if (google?.status === 'not_configured') continue
     const googleSpend = google?.data?.spend
     if (typeof googleSpend === 'number') registros.push({ date, platform: 'google', amount: googleSpend, updated_at: agora })
     else falhas.push(`google:${date}`)
