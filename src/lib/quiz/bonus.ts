@@ -26,17 +26,17 @@ export interface QuizBonus {
   variantId: string
 }
 
-// Cores mais vendidas da loja (pedidos pagos desde 13/07/2026) entre os modelos
-// de custo baixo — mesmo critério da JHF. freebieId sai do script de brindes.
+// Escolhidos pelo dono em 07/10/2026 (versão [JR OP] de cada um).
+// Brindes criados por scripts/_quiz-cria-brindes.mjs.
 export const QUIZ_BONUS: QuizBonus[] = [
-  { id: 'flak-preta-preta',      nome: 'Flak Preta Lente Preta',         yampiSku: 301469995, freebieId: 0, variantId: '5a484011-76db-4ee1-baf3-5547f92b4536' },
-  { id: 'plantaris-preta',       nome: 'Plantaris Preta',                yampiSku: 301470047, freebieId: 0, variantId: '16905776-a09a-4914-bcc6-93fb6d952da4' },
-  { id: 'flak-preta-espelhada',  nome: 'Flak Preta Lente Espelhada',     yampiSku: 301469993, freebieId: 0, variantId: 'e0b8c1dc-39d7-4953-89d1-4787ebb1ac56' },
-  { id: 'minute-cristal',        nome: 'Minute Cristal',                 yampiSku: 301470029, freebieId: 0, variantId: 'c89a7be6-7a0c-41c9-b1a3-5e84c34e4940' },
-  { id: 'radar-ev-preta-azul',   nome: 'Radar EV Preta Lente Azul',      yampiSku: 301470062, freebieId: 0, variantId: 'e21adbf2-8908-4cdb-b7ac-fe722398fc1a' },
-  { id: 'radar-ev-preta-preta',  nome: 'Radar EV Preta Lente Preta',     yampiSku: 301470068, freebieId: 0, variantId: '8754d78e-9138-47a4-8df2-065b34ab09e6' },
-  { id: 'minute-cooper-vr28',    nome: 'Minute Cooper Lente VR28',       yampiSku: 301470026, freebieId: 0, variantId: 'ed9e29a4-2d0c-4c4b-a347-4decb9779eb4' },
-  { id: 'hstn-preta-preta',      nome: 'HSTN Preta Lente Preta',         yampiSku: 301470012, freebieId: 0, variantId: '2c366ebb-683e-4101-9c11-d63c888e1235' },
+  { id: 'hstn-preta',            nome: 'HSTN Preta Lente Preta',          yampiSku: 301470012, freebieId: 8057, variantId: '2c366ebb-683e-4101-9c11-d63c888e1235' },
+  { id: 'flak-preta',            nome: 'Flak Preta Lente Preta',          yampiSku: 301469995, freebieId: 8058, variantId: '5a484011-76db-4ee1-baf3-5547f92b4536' },
+  { id: 'flak-espelhada',        nome: 'Flak Preta Lente Espelhada',      yampiSku: 301469993, freebieId: 8059, variantId: 'e0b8c1dc-39d7-4953-89d1-4787ebb1ac56' },
+  { id: 'minute-preta',          nome: 'Minute Preta Lente Preta',        yampiSku: 303265721, freebieId: 8060, variantId: '2d0b03c5-1d1c-4d2d-b9fc-05eeb6174642' },
+  { id: 'minute-cooper',         nome: 'Minute Cooper Lente VR28',        yampiSku: 301470026, freebieId: 8061, variantId: 'ed9e29a4-2d0c-4c4b-a347-4decb9779eb4' },
+  { id: 'radar-ev-preta',        nome: 'Radar EV Preta Lente Preta',      yampiSku: 301470068, freebieId: 8062, variantId: '8754d78e-9138-47a4-8df2-065b34ab09e6' },
+  { id: 'plantaris-preta',       nome: 'Plantaris Preta',                 yampiSku: 301470047, freebieId: 8063, variantId: '16905776-a09a-4914-bcc6-93fb6d952da4' },
+  { id: 'eye-jacket-redux-preta', nome: 'Eye Jacket Redux Preta Lente Preta', yampiSku: 303265724, freebieId: 8064, variantId: '1217ea4e-1ef4-4b7a-b8ae-369c5f151de8' },
 ]
 
 /** Onde o site guarda o cupom do quiz até o checkout (localStorage). */
