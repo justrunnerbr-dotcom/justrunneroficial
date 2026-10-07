@@ -56,13 +56,31 @@ function jaccard(a: Set<string>, b: Set<string>) {
   return union === 0 ? 0 : inter / union
 }
 
-/** Casa o título de um item de pedido contra o banco de custos já cadastrado
- *  (product_costs), que cobre tanto o nome do PDF/planilha do fornecedor
- *  quanto o nome real do catálogo do site. Retorna o MENOR custo entre os
- *  fornecedores que batem (o override por pedido cobre o caso raro de ter
- *  sido o fornecedor mais caro). */
+/** Mesma lógica de casamento de matchProductCost, mas devolve o registro
+ *  inteiro (id/supplier_id/model_name) em vez de só o número — usado quando
+ *  precisa saber QUAL linha de product_costs corrigir, não só o valor. */
+/** [OP] (versão R$ 175) e [BUMP] (order bump) são o mesmo óculos do [SO]: sem
+ *  tirar a etiqueta, ela vira um token a mais e derruba o casamento. */
+export function cleanCostTitle(productTitle: string): string {
+  return productTitle.replace(/^\[[^\]]*\]\s*/, '').replace(/\s+/g, ' ').trim()
+}
+
+/** O custo cadastrado mais parecido com o título, SEM o corte de 0,6 — só
+ *  serve de sugestão (fornecedor e valor de referência) na hora de cadastrar
+ *  um modelo novo, nunca como custo do pedido. */
+export function closestProductCost(productTitle: string, costs: ProductCost[]): ProductCost | null {
+  const titleTokens = tokenSet(cleanCostTitle(productTitle))
+  let best: ProductCost | null = null
+  let bestScore = 0
+  for (const c of costs) {
+    const score = jaccard(titleTokens, tokenSet(c.model_name))
+    if (score > bestScore) { bestScore = score; best = c }
+  }
+  return best
+}
+
 export function matchProductCostRecord(productTitle: string, costs: ProductCost[]): ProductCost | null {
-  const clean = productTitle.replace(/^\[JR\]\s*/, '').replace(/\s+/g, ' ').trim()
+  const clean = cleanCostTitle(productTitle)
   const n = norm(clean)
 
   const exact = costs.filter(c => norm(c.model_name) === n)

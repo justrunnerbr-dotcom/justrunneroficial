@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { getDateRangeFromSearchParams } from '@/lib/admin/date-range'
 import { DateRangePicker } from './date-range-picker'
 
 export function DateRangeFilter() {
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
   const range = getDateRangeFromSearchParams({
@@ -14,14 +15,19 @@ export function DateRangeFilter() {
     to:    searchParams.get('to')    ?? undefined,
   })
 
+  // O Dashboard tem a própria barra de período, com comparação e atalhos.
+  if (pathname === '/admin') return null
+
   return (
     <>
-      <div style={{
+      <div className="px-4 md:px-10" style={{
         background: 'var(--admin-card)',
         borderBottom: '1px solid var(--admin-border)',
-        padding: '10px 40px',
+        paddingTop: '10px',
+        paddingBottom: '10px',
         display: 'flex',
         alignItems: 'center',
+        flexWrap: 'wrap',
         gap: '12px',
       }}>
         <span style={{

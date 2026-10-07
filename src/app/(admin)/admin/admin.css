@@ -1,35 +1,97 @@
+/*
+ * Escala do admin.
+ *
+ * Antes daqui só existiam tokens de COR. Espaçamento, tipografia e raio eram
+ * escritos à mão em cada componente, e o resultado medido em 19/08 era: 25
+ * tamanhos de fonte diferentes (incluindo 11.5px e 12.5px), 22 raios de borda e
+ * 124 valores de padding. Valores quase-iguais mas nunca iguais são o que o
+ * olho lê como "sem acabamento" sem conseguir apontar o motivo.
+ *
+ * Toda medida nova sai destas escalas. Se um valor não existe aqui, o certo é
+ * usar o mais próximo, não inventar um intermediário.
+ */
 #admin-root {
-  /* LIGHT THEME */
-  --admin-bg: #F8FAFC;
+  /* ── Espaçamento: passo de 4px, sem valores entre os degraus ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* ── Tipografia: cinco degraus. 11.5px e 12.5px não existem mais ── */
+  --fs-xs: 11px;    /* rótulo de eixo, legenda secundária */
+  --fs-sm: 13px;    /* corpo de tabela, texto de apoio */
+  --fs-md: 15px;    /* corpo padrão */
+  --fs-lg: 20px;    /* título de card */
+  --fs-xl: 30px;    /* número de destaque */
+
+  --lh-tight: 1.25;
+  --lh-normal: 1.55;
+
+  /* ── Raio: três degraus ── */
+  --r-sm: 6px;      /* badge, botão pequeno */
+  --r-md: 10px;     /* controle, item de lista */
+  --r-lg: 14px;     /* card */
+
+  /* ── Elevação: leve, editorial — sombra marca hierarquia, não profundidade ── */
+  --sh-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --sh-md: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+
+  /* LIGHT THEME — base clara e arejada, acento único em azul */
+  --admin-bg: #FBFBFD;
   --admin-card: #FFFFFF;
-  --admin-card-hover: #F1F5F9;
-  --admin-border: rgba(0,0,0,0.08);
-  --admin-text-main: #0F172A;
-  --admin-text-sec: #475569;
-  --admin-text-muted: #94A3B8;
-  --admin-accent: #38BDF8;
-  --admin-accent-rgb: 56, 189, 248;
-  --admin-red: #EF4444;
-  --admin-red-rgb: 239, 68, 68;
-  --admin-alert: #F59E0B;
-  --admin-info: #6366F1;
+  --admin-card-hover: #F7F8FA;
+  --admin-border: #E8EAEF;
+  --admin-border-strong: #D8DBE2;
+  --admin-text-main: #1A1D26;
+  --admin-text-sec: #545A67;
+  --admin-text-muted: #8A909E;
+  --admin-accent: #4F46E5;
+  --admin-accent-rgb: 79, 70, 229;
+  --admin-accent-soft: #EEF0FE;
+  --admin-red: #D92D20;
+  --admin-red-rgb: 217, 45, 32;
+  --admin-red-soft: #FEF3F2;
+  --admin-alert: #B54708;
+  --admin-alert-rgb: 181, 71, 8;
+  --admin-alert-soft: #FFFAEB;
+  --admin-green: #067647;
+  --admin-green-soft: #ECFDF3;
+  --admin-info: #175CD3;
+  --admin-info-soft: #EFF8FF;
 }
 
+/*
+ * Dark: só as cores mudam. Espaçamento, tipografia e raio são os mesmos —
+ * é o que mantém as duas versões reconhecíveis como a mesma interface.
+ */
 #admin-root[data-theme='dark'] {
-  /* DARK THEME */
-  --admin-bg: #0B0F0E;
-  --admin-card: #111716;
-  --admin-card-hover: #131A18;
-  --admin-border: rgba(255,255,255,0.06);
-  --admin-text-main: #F4F7F5;
-  --admin-text-sec: #8A9791;
-  --admin-text-muted: #5F6B66;
-  --admin-accent: #38BDF8;
-  --admin-accent-rgb: 56, 189, 248;
-  --admin-red: #EF4444;
-  --admin-red-rgb: 239, 68, 68;
-  --admin-alert: #F59E0B;
-  --admin-info: #6366F1;
+  --admin-bg: #0E1014;
+  --admin-card: #16181D;
+  --admin-card-hover: #1C1F26;
+  --admin-border: #262A33;
+  --admin-border-strong: #343946;
+  --admin-text-main: #ECEDF0;
+  --admin-text-sec: #9CA3B0;
+  --admin-text-muted: #6B7280;
+  --admin-accent: #818CF8;
+  --admin-accent-rgb: 129, 140, 248;
+  --admin-accent-soft: #1E1B4B;
+  --admin-red: #F97066;
+  --admin-red-rgb: 249, 112, 102;
+  --admin-red-soft: #2D1512;
+  --admin-alert: #FDB022;
+  --admin-alert-rgb: 253, 176, 34;
+  --admin-alert-soft: #2B1D05;
+  --admin-green: #47CD89;
+  --admin-green-soft: #0C2A1C;
+  --admin-info: #53B1FD;
+  --admin-info-soft: #0C1C33;
+
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sh-md: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .admin-sidebar { width: var(--admin-sidebar-width, 250px); transition: width 0.2s ease; }

@@ -111,7 +111,7 @@ export function RecoveryList({ carts }: { carts: EnrichedCart[] }) {
           <div
             key={cart.id}
             style={{
-              display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px',
+              display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px 14px', padding: '14px 20px',
               borderBottom: idx < carts.length - 1 ? '1px solid var(--admin-border)' : 'none',
             }}
           >

@@ -342,15 +342,15 @@ function EmptyState({ summary }: { summary: BrainSummary }) {
   )
 }
 
-function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+function Section({ id, title, sub, children }: { id?: string; title: string; sub?: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
+    <section id={id} style={{ scrollMarginTop: '24px', background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--admin-text-main)' }}>{title}</h2>
         {sub && <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--admin-text-muted)' }}>{sub}</p>}
       </div>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -392,6 +392,17 @@ export default async function CommerceBrainPage({
         <RunBrainButton />
       </div>
 
+      {summary.hasEnoughData && (
+        <nav aria-label="Seções do Commerce Brain" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
+          {[
+            ['diagnostico', 'Diagnóstico'], ['funil', 'Funil'], ['produtos', 'Produtos'],
+            ['trafego', 'Tráfego'], ['dispositivos', 'Dispositivos'], ['meta-ads', 'Meta Ads'], ['jornadas', 'Jornadas'],
+          ].map(([id, label]) => (
+            <a key={id} href={`#${id}`} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--admin-border)', background: 'var(--admin-card)', color: 'var(--admin-text-main)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>{label}</a>
+          ))}
+        </nav>
+      )}
+
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
         <SummaryCard label="Sessões"      value={fmtNum(summary.sessions)} />
@@ -421,7 +432,7 @@ export default async function CommerceBrainPage({
         <>
           {/* Insights */}
           {insights.length > 0 && (
-            <Section title="Diagnóstico Automático" sub={`${insights.length} ponto(s) identificado(s) no período`}>
+            <Section id="diagnostico" title="Diagnóstico Automático" sub={`${insights.length} ponto(s) identificado(s) no período`}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {insights.map((ins, i) => <InsightCard key={i} insight={ins} />)}
               </div>
@@ -429,7 +440,7 @@ export default async function CommerceBrainPage({
           )}
 
           {insights.length === 0 && (
-            <Section title="Diagnóstico Automático">
+            <Section id="diagnostico" title="Diagnóstico Automático">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', fontSize: '14px', color: 'var(--admin-text-muted)' }}>
                 <span style={{ fontSize: '20px' }}>✅</span>
                 Nenhuma anomalia crítica detectada no período. Funil dentro dos parâmetros esperados.
@@ -439,7 +450,7 @@ export default async function CommerceBrainPage({
 
           {/* Funnel */}
           <Section
-            title="Funil de Conversão"
+            id="funil" title="Funil de Conversão"
             sub={`Maior gargalo identificado: ${summary.biggestGap}`}
           >
             <FunnelBar steps={funnel} />
@@ -452,24 +463,24 @@ export default async function CommerceBrainPage({
 
           {/* Products */}
           <Section
-            title="Diagnóstico por Produto"
+            id="produtos" title="Diagnóstico por Produto"
             sub={`${products.length} produto(s) com dados no período · Média ATC da loja: ${fmtPct(storeAvgAtc)}`}
           >
             <ProductsTable products={products} storeAvgAtc={storeAvgAtc} />
           </Section>
 
           {/* Traffic */}
-          <Section title="Diagnóstico por Origem de Tráfego" sub="Sessões agrupadas por utm_source">
+          <Section id="trafego" title="Diagnóstico por Origem de Tráfego" sub="Sessões agrupadas por utm_source">
             <TrafficTable traffic={traffic} />
           </Section>
 
           {/* Devices */}
-          <Section title="Diagnóstico por Dispositivo">
+          <Section id="dispositivos" title="Diagnóstico por Dispositivo">
             <DeviceCards devices={devices} />
           </Section>
 
           {/* Meta Ads Intelligence */}
-          <Section title="Meta Ads Intelligence" sub="Dados de mídia paga cruzados com Commerce Brain">
+          <Section id="meta-ads" title="Meta Ads Intelligence" sub="Dados de mídia paga cruzados com Commerce Brain">
             {metaBrain ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -510,7 +521,7 @@ export default async function CommerceBrainPage({
 
           {/* Journeys */}
           <Section
-            title="Jornadas Recentes"
+            id="jornadas" title="Jornadas Recentes"
             sub="Últimas 20 sessões com eventos registrados"
           >
             <JourneyList journeys={journeys} />

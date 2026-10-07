@@ -115,21 +115,22 @@ export default async function MetaAdsPage({
   const fmtX     = (n: number) => `${n.toFixed(2)}×`
   const hasData  = metaData?.hasData ?? false
 
-  // Só o dado confiável vira número. Falha na Graph API não pode virar R$ 0,00
-  // apresentado como se a conta simplesmente não tivesse rodado.
-  const metaLive    = isUsable(liveSpend) ? liveSpend.data : null
-  const metaEstado  = statusLabel(liveSpend)
-  const metaParcial = (metaLive?.failedAccounts.length ?? 0) > 0
+  // `liveSpend` carrega o estado da fonte; `spend` é o dado em si, que só
+  // existe quando a consulta deu certo. Falha não vira zero silencioso — vira
+  // o aviso renderizado logo abaixo do título.
+  const spend        = liveSpend?.data ?? null
+  const spendFailed  = liveSpend != null && liveSpend.status !== 'ok'
+  const spendPartial = (spend?.failedAccounts.length ?? 0) > 0
 
-  const totalSpend     = metaLive?.total.spend ?? 0
-  const totalPrevSpend = metaLive?.totalPrev.spend ?? 0
-  const periodDays     = metaLive?.periodDays ?? 1
-  const totalImp       = metaLive?.total.impressions ?? 0
-  const totalClicks    = metaLive?.total.clicks ?? 0
+  const totalSpend     = spend?.total.spend ?? 0
+  const totalPrevSpend = spend?.totalPrev.spend ?? 0
+  const periodDays     = spend?.periodDays ?? 1
+  const totalImp       = spend?.total.impressions ?? 0
+  const totalClicks    = spend?.total.clicks ?? 0
   const avgCtr         = totalImp > 0 ? (totalClicks / totalImp) * 100 : 0
   const avgCpm         = totalImp > 0 ? (totalSpend / totalImp) * 1000 : 0
 
-  const accountStats = metaLive?.accounts.map(acc => {
+  const accountStats = spend?.accounts.map(acc => {
     const cpm = acc.period.impressions > 0 ? (acc.period.spend / acc.period.impressions) * 1000 : 0
     const ctr = acc.period.impressions > 0 ? (acc.period.clicks / acc.period.impressions) * 100 : 0
     const cpc = acc.period.clicks > 0 ? acc.period.spend / acc.period.clicks : 0
@@ -149,7 +150,7 @@ export default async function MetaAdsPage({
     ? activeAccts.filter(a => a.cpc > 0).reduce((b, a) => a.cpc < b.cpc ? a : b, activeAccts.filter(a => a.cpc > 0)[0]) : null
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1200px' }}>
+    <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
       <style>{`.meta-account-card:hover { border-color: var(--admin-accent) !important; box-shadow: 0 0 0 1px var(--admin-accent) !important; }`}</style>
 
       {/* ── Header ──────────────────────────────────────────────────── */}
@@ -161,27 +162,39 @@ export default async function MetaAdsPage({
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Este selo era o texto fixo "3 contas · LIVE" no HTML: dizia LIVE
-              mesmo com a consulta falhando, e citava 3 contas independente de
-              quantas existiam. Agora reflete o estado real da fonte. */}
-          {metaLive && !metaParcial && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(34,197,94,0.1)', color: '#16a34a', border: '1px solid rgba(34,197,94,0.3)' }}>
-              <Wifi size={13} /> {metaLive.accounts.length} conta{metaLive.accounts.length === 1 ? '' : 's'} · LIVE
-            </div>
-          )}
-          {metaLive && metaParcial && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(245,158,11,0.12)', color: '#b45309', border: '1px solid rgba(245,158,11,0.3)' }}>
-              <Wifi size={13} /> parcial · sem {metaLive.failedAccounts.join(', ')}
-            </div>
-          )}
-          {!metaLive && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '20px', background: 'rgba(239,68,68,0.12)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.3)' }}>
-              <Wifi size={13} /> Meta {metaEstado}
-            </div>
-          )}
+          {/* O selo reflete o estado real da consulta — antes era fixo em verde
+              "LIVE" mesmo quando a API não tinha respondido nada. */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600,
+            padding: '6px 14px', borderRadius: '20px',
+            background: spendFailed ? 'rgba(239,68,68,0.1)' : spendPartial ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)',
+            color:      spendFailed ? '#dc2626'             : spendPartial ? '#b45309'             : '#16a34a',
+            border:     `1px solid ${spendFailed ? 'rgba(239,68,68,0.3)' : spendPartial ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)'}`,
+          }}>
+            <Wifi size={13} />
+            {spendFailed
+              ? 'dados indisponíveis'
+              : spendPartial
+                ? `${spend?.accounts.length ?? 0} de ${(spend?.accounts.length ?? 0) + (spend?.failedAccounts.length ?? 0)} contas`
+                : `${spend?.accounts.length ?? 0} contas · LIVE`}
+          </div>
           <MetaSyncButton lastSync={metaData?.lastSync ?? null} configured={configured} />
         </div>
       </div>
+
+      {(spendFailed || spendPartial) && (
+        <div style={{
+          marginBottom: '24px', padding: '14px 18px', borderRadius: '10px',
+          background: spendFailed ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+          border: `1px solid ${spendFailed ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
+          fontSize: '13px', color: 'var(--admin-text-main)', lineHeight: 1.6,
+        }}>
+          <strong>{spendFailed ? 'Gasto do Meta indisponível.' : 'Números parciais.'}</strong>{' '}
+          {spendFailed
+            ? 'A consulta à API da Meta falhou neste período — os valores abaixo não representam o investimento real. Não use esta tela para decidir orçamento até o selo voltar a verde.'
+            : `Não foi possível ler ${spend?.failedAccounts.join(', ')}. O investimento total está subestimado.`}
+        </div>
+      )}
 
       {liveSpend && (
         <>
@@ -436,7 +449,7 @@ export default async function MetaAdsPage({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
                   <tr style={{ background: 'var(--admin-bg)', borderBottom: '1px solid var(--admin-border)' }}>
-                    {['Campanha', 'Gasto', 'Impressões', 'Cliques', 'CTR', 'CPC', 'Compras Meta', 'ROAS Meta', 'Sessões JHF', 'ATC', 'Pedidos', 'Receita Real', 'ROAS Real', 'Diagnóstico'].map(h => (
+                    {['Campanha', 'Gasto', 'Impressões', 'Cliques', 'CTR', 'CPC', 'Compras Meta', 'ROAS Meta', 'Sessões', 'ATC', 'Pedidos', 'Receita Real', 'ROAS Real', 'Diagnóstico'].map(h => (
                       <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: '10px', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -509,7 +522,7 @@ export default async function MetaAdsPage({
           <Row label="SKUs no feed"     value={`${feedStats.items} itens`}        ok={feedStats.ok} />
           <Row label="SKUs no Supabase" value={`${skuCount} variantes`}           ok={skuCount > 0} />
           <Row label="Domínio"          value="justrunner.com.br"                ok={true} />
-          <Row label="g:id"             value="variant.sku (JHF-DART_GOLD_VR28)" ok={true} />
+          <Row label="g:id"             value="variant.sku (JR-MINUTE_COOPER-LENTE_VR28)" ok={true} />
           <Row label="Cache"            value="1h (ISR Vercel)"                  ok={true} />
           <a href={feedUrl} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--admin-accent)', textDecoration: 'none', marginTop: '16px', fontWeight: 500 }}>
             <ExternalLink size={13} /> Abrir feed XML

@@ -1,12 +1,21 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { canOpenPage, type AdminArea } from '@/lib/admin/roles'
 import {
   LayoutDashboard, Package, FolderOpen, Home, Image,
   Search, BarChart3, Settings, Megaphone, ExternalLink,
-  LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, ScrollText, Activity,
+  LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Activity, ScrollText, Sparkles, ClipboardCheck,
 } from 'lucide-react'
+
+type AdminStyle = 'prizm' | 'max' | 'carbon'
+const STYLES: { key: AdminStyle; label: string }[] = [
+  { key: 'prizm', label: 'Prizm' },
+  { key: 'max', label: 'Liquid Glass Pro' },
+  { key: 'carbon', label: 'Carbono' },
+]
+const STYLE_DEFAULT_MODE: Record<AdminStyle, 'light' | 'dark'> = { prizm: 'dark', max: 'light', carbon: 'dark' }
 
 const NAV_GROUPS = [
   {
@@ -46,8 +55,15 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: 'Financeiro',
+    items: [
+      { label: 'Fechamento do Mês', href: '/admin/financeiro/fechamento', icon: ClipboardCheck },
+    ],
+  },
+  {
     label: 'Marketing',
     items: [
+      { label: 'Análise Suprema',   href: '/admin/analise-suprema',   icon: Sparkles },
       { label: 'Commerce Brain',    href: '/admin/brain',             icon: BrainCircuit },
       { label: 'Gestor de Tráfego', href: '/admin/gestor-trafego',    icon: MousePointerClick },
       { label: 'Meta Ads',          href: '/admin/meta-ads',          icon: Megaphone },
@@ -65,9 +81,20 @@ const NAV_GROUPS = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ area = 'full' }: { area?: AdminArea }) {
   const pathname = usePathname()
   const router   = useRouter()
+
+  // Esconder o link não protege nada — quem guarda é o `checkAuth` de cada
+  // rota. Isto existe só para o colaborador não encarar um menu de 30 itens
+  // onde 29 o expulsam de volta.
+  const navGroups = useMemo(
+    () => NAV_GROUPS
+      .map(group => ({ ...group, items: group.items.filter(item => canOpenPage(area, item.href)) }))
+      .filter(group => group.items.length > 0),
+    [area],
+  )
+
   const [theme, setTheme] = useState('dark')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -83,11 +110,17 @@ export function Sidebar() {
     setOpenGroups(prev => ({ ...prev, [label]: !prev[label] }))
   }
 
+  const [style, setStyle] = useState<AdminStyle>('prizm')
+
   useEffect(() => {
-    const saved = localStorage.getItem('admin-theme') || 'dark'
-    setTheme(saved)
+    // O tema já foi aplicado antes da pintura pelo script do layout; aqui só
+    // sincroniza o estado dos botões com o que está no <div id="admin-root">.
     const root = document.getElementById('admin-root')
-    if (root) root.dataset.theme = saved
+    const savedStyle = root?.dataset.style
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lê do DOM uma vez na montagem
+    if (savedStyle === 'prizm' || savedStyle === 'max' || savedStyle === 'carbon') setStyle(savedStyle)
+    const saved = root?.dataset.theme === 'light' ? 'light' : 'dark'
+    setTheme(saved)
 
     const savedCollapsed = localStorage.getItem('admin-sidebar-collapsed') === 'true'
     setCollapsed(savedCollapsed)
@@ -118,6 +151,17 @@ export function Sidebar() {
     localStorage.setItem('admin-theme', newTheme)
     const root = document.getElementById('admin-root')
     if (root) root.dataset.theme = newTheme
+  }
+
+  function chooseStyle(next: AdminStyle) {
+    // Cada estilo abre no modo em que foi desenhado (Glass é claro, os outros escuros).
+    const mode = STYLE_DEFAULT_MODE[next]
+    setStyle(next)
+    setTheme(mode)
+    localStorage.setItem('admin-style', next)
+    localStorage.setItem('admin-theme', mode)
+    const root = document.getElementById('admin-root')
+    if (root) { root.dataset.style = next; root.dataset.theme = mode }
   }
 
   async function handleLogout() {
@@ -182,16 +226,11 @@ export function Sidebar() {
       {/* Logo */}
       <div style={{ padding: collapsed ? '24px 12px' : '24px 20px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : '12px', justifyContent: collapsed ? 'center' : 'flex-start' }}>
-          <div style={{
-            width: '32px', height: '32px', background: 'var(--admin-accent)', borderRadius: '8px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '14px', fontWeight: 800, color: '#fff', flexShrink: 0,
-            boxShadow: '0 0 12px rgba(var(--admin-accent-rgb), 0.4)'
-          }}>J</div>
+          <div className="adm-logo">J</div>
           {!collapsed && (
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--admin-text-main)', letterSpacing: '0.2px' }}>Just Runner</div>
-              <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>Performance Admin</div>
+              <div className="adm-brand-name">Just Runner</div>
+              <div className="adm-brand-sub">Admin</div>
             </div>
           )}
         </div>
@@ -199,7 +238,7 @@ export function Sidebar() {
 
       {/* Nav groups */}
       <nav style={{ flex: 1, padding: '12px 12px', overflowY: 'auto' }}>
-        {NAV_GROUPS.map((group) => {
+        {navGroups.map((group) => {
           const isOpen = collapsed ? true : Boolean(openGroups[group.label])
           if (collapsed) {
             return (
@@ -212,17 +251,11 @@ export function Sidebar() {
                       key={item.href}
                       href={item.href}
                       title={item.label}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: '10px', margin: '2px 0', borderRadius: '8px',
-                        color: active ? 'var(--admin-accent)' : 'var(--admin-text-muted)',
-                        background: active ? 'rgba(var(--admin-accent-rgb), 0.08)' : 'transparent',
-                        textDecoration: 'none', transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = 'var(--admin-text-main)'; e.currentTarget.style.background = 'var(--admin-card-hover)' } }}
-                      onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'var(--admin-text-muted)'; e.currentTarget.style.background = 'transparent' } }}
+                      aria-label={item.label}
+                      aria-current={active ? 'page' : undefined}
+                      className={`adm-nav-i mini${active ? ' on' : ''}`}
                     >
-                      <Icon size={16} strokeWidth={active ? 2 : 1.8} style={{ flexShrink: 0 }} />
+                      <Icon size={18} strokeWidth={1.8} style={{ flexShrink: 0 }} />
                     </Link>
                   )
                 })}
@@ -233,27 +266,16 @@ export function Sidebar() {
           <div key={group.label} style={{ marginBottom: '16px' }}>
             <button
               type="button"
+              className="adm-ng"
+              aria-expanded={isOpen}
               onClick={() => toggleGroup(group.label)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                width: '100%', padding: '0 8px 8px 12px', background: 'none', border: 'none',
-                cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: 'var(--admin-text-sec)',
-                textTransform: 'uppercase', letterSpacing: '0.8px',
-              }}
             >
               {group.label}
-              <span style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: '20px', height: '20px', borderRadius: '6px',
-                background: 'var(--admin-card-hover)',
-              }}>
-                <ChevronDown
-                  size={15}
-                  strokeWidth={2.5}
-                  color="var(--admin-text-main)"
-                  style={{ transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-                />
-              </span>
+              <ChevronDown
+                size={14}
+                strokeWidth={2.2}
+                style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+              />
             </button>
             {isOpen && group.items.map((item) => {
               const active = isActive(item.href)
@@ -262,29 +284,10 @@ export function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    padding: '8px 12px', margin: '2px 0', borderRadius: '8px',
-                    fontSize: '13px', fontWeight: active ? 500 : 400,
-                    color: active ? 'var(--admin-accent)' : 'var(--admin-text-muted)',
-                    background: active ? 'rgba(var(--admin-accent-rgb), 0.08)' : 'transparent',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.color = 'var(--admin-text-main)'
-                      e.currentTarget.style.background = 'var(--admin-card-hover)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.color = 'var(--admin-text-muted)'
-                      e.currentTarget.style.background = 'transparent'
-                    }
-                  }}
+                  aria-current={active ? 'page' : undefined}
+                  className={`adm-nav-i${active ? ' on' : ''}`}
                 >
-                  <Icon size={16} strokeWidth={active ? 2 : 1.8} style={{ flexShrink: 0 }} />
+                  <Icon size={18} strokeWidth={1.8} style={{ flexShrink: 0 }} />
                   {item.label}
                 </Link>
               )
@@ -295,51 +298,37 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div style={{ padding: '16px 12px', borderTop: '1px solid var(--admin-border)', flexShrink: 0 }}>
-        <button
-          onClick={toggleTheme}
-          title={collapsed ? (theme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}
-          style={{
-            display: 'flex', alignItems: 'center', gap: collapsed ? 0 : '12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            padding: '8px 12px', borderRadius: '8px', width: '100%',
-            fontSize: '13px', color: 'var(--admin-text-muted)', background: 'none',
-            border: 'none', cursor: 'pointer', textAlign: 'left',
-            transition: 'all 0.2s ease',
-            marginBottom: '4px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--admin-text-main)'
-            e.currentTarget.style.background = 'var(--admin-card-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--admin-text-muted)'
-            e.currentTarget.style.background = 'transparent'
-          }}
-        >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          {!collapsed && (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
-        </button>
+      <div style={{ padding: '14px 10px', borderTop: '1px solid var(--admin-border)', flexShrink: 0 }}>
+        <div className={`adm-theme${collapsed ? ' mini' : ''}`}>
+          <span className="adm-theme-l">Tema</span>
+          <div className="adm-swatches" role="group" aria-label="Tema do admin">
+            {STYLES.map(s => (
+              <button
+                key={s.key}
+                type="button"
+                className={`adm-sw adm-sw-${s.key}`}
+                aria-pressed={style === s.key}
+                aria-label={`Tema ${s.label}`}
+                title={s.label}
+                onClick={() => chooseStyle(s.key)}
+              />
+            ))}
+            <button
+              type="button"
+              className="adm-mode"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+              title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
+        </div>
         <Link
           href="/"
           target="_blank"
           title={collapsed ? 'Ver Loja' : undefined}
-          style={{
-            display: 'flex', alignItems: 'center', gap: collapsed ? 0 : '12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            padding: '8px 12px', borderRadius: '8px',
-            fontSize: '13px', color: 'var(--admin-text-muted)', textDecoration: 'none',
-            transition: 'all 0.2s ease',
-            marginBottom: '4px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--admin-text-main)'
-            e.currentTarget.style.background = 'var(--admin-card-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--admin-text-muted)'
-            e.currentTarget.style.background = 'transparent'
-          }}
+          className={`adm-foot-btn${collapsed ? ' mini' : ''}`}
         >
           <ExternalLink size={16} />
           {!collapsed && 'Ver Loja'}
@@ -347,22 +336,7 @@ export function Sidebar() {
         <button
           onClick={handleLogout}
           title={collapsed ? 'Sair' : undefined}
-          style={{
-            display: 'flex', alignItems: 'center', gap: collapsed ? 0 : '12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            padding: '8px 12px', borderRadius: '8px', width: '100%',
-            fontSize: '13px', color: 'var(--admin-text-muted)', background: 'none',
-            border: 'none', cursor: 'pointer', textAlign: 'left',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--admin-red)'
-            e.currentTarget.style.background = 'rgba(var(--admin-red-rgb), 0.08)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--admin-text-muted)'
-            e.currentTarget.style.background = 'transparent'
-          }}
+          className={`adm-foot-btn danger${collapsed ? ' mini' : ''}`}
         >
           <LogOut size={16} />
           {!collapsed && 'Sair'}

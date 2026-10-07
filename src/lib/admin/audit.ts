@@ -27,6 +27,8 @@ export type AuditAction =
   | 'config_alterada'
   | 'campanha_criada'
   | 'cliente_contatado'
+  | 'exportacao'
+  | 'fechamento_alterado'
 
 export interface AuditEntry {
   actor:       string

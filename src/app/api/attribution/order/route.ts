@@ -83,6 +83,8 @@ export async function POST(request: Request) {
           ...(!data.utm_medium   && attr.utm_medium   ? { utm_medium:   attr.utm_medium   } : {}),
           ...(!data.utm_campaign && attr.utm_campaign ? { utm_campaign: attr.utm_campaign } : {}),
           metadata: { attribution: attr, session_id: body.session_id ?? null },
+          // Coluna própria pro join com events.session_id (funil e canais da Análise Suprema).
+          ...(body.session_id ? { session_id: body.session_id } : {}),
           updated_at: new Date().toISOString(),
         }
         await db.from('orders').update(patch).eq('id', orderId)

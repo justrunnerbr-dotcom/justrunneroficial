@@ -4,7 +4,7 @@ import { getMetaPageData, getMetaAlertsData, isMetaConfigured } from '@/lib/admi
 import { getDateRangeFromSearchParams, type DateRange } from '@/lib/admin/date-range'
 import { AgentChat } from './_components/agent-chat'
 
-export const metadata = { title: 'Agente Meta Ads · JHF Admin' }
+export const metadata = { title: 'Agente Meta Ads · Just Runner Admin' }
 
 function OverviewCard({ icon: Icon, label, value, sub, color }: {
   icon: React.ComponentType<{ size?: number; color?: string }>
@@ -50,7 +50,7 @@ export default async function AgenteMetaAdsPage({
   const realRoas   = metaData?.realRoas ?? 0
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1000px' }}>
+    <div style={{ padding: '32px', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Agente Meta Ads</h1>
         <p style={{ fontSize: '14px', color: 'var(--admin-text-muted)' }}>

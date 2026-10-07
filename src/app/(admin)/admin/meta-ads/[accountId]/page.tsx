@@ -116,7 +116,7 @@ export default async function AccountCampaignsPage({
   }
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1400px' }}>
+    <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
 
       {/* Breadcrumb + Header */}
       <div style={{ marginBottom: '20px' }}>

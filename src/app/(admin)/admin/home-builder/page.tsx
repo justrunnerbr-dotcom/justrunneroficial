@@ -35,7 +35,7 @@ export default async function HomeBuilderPage() {
   const [blocks, settings] = await Promise.all([getHomeConfig(), getSettings()])
 
   return (
-    <div style={{ padding: '32px', maxWidth: '900px' }}>
+    <div style={{ padding: '32px', maxWidth: '900px', margin: '0 auto' }}>
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Home Builder</h1>
         <p style={{ fontSize: '14px', color: 'var(--admin-text-muted)' }}>

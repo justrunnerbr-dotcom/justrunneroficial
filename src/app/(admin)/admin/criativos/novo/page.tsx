@@ -15,7 +15,7 @@ export default async function NovoCreativoPage() {
   const { products, collections } = await getOptions()
 
   return (
-    <div style={{ padding: '32px', maxWidth: '720px' }}>
+    <div style={{ padding: '32px', maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
         <Link href="/admin/criativos" style={{ color: 'var(--admin-text-muted)', textDecoration: 'none' }}>Criativos</Link>
         <span>/</span>

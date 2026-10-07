@@ -19,7 +19,7 @@ export default async function ConfigPage() {
   ]
 
   return (
-    <div style={{ padding: '32px', maxWidth: '800px' }}>
+    <div style={{ padding: '32px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Configurações</h1>
         <p style={{ fontSize: '14px', color: 'var(--admin-text-muted)' }}>Settings gerais da loja armazenados no Supabase.</p>

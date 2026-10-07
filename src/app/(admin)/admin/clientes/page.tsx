@@ -45,7 +45,7 @@ export default async function ClientesPage({
   const withOrders = customers.filter(c => (c.total_orders ?? 0) > 0).length
 
   return (
-    <div style={{ padding: '32px', maxWidth: '900px' }}>
+    <div className="px-4 py-6 md:p-8" style={{ maxWidth: '900px', margin: '0 auto' }}>
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Clientes</h1>
         <p style={{ fontSize: '14px', color: 'var(--admin-text-muted)' }}>
@@ -56,7 +56,7 @@ export default async function ClientesPage({
       </div>
 
       {customers.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: '12px', marginBottom: '24px' }}>
           {[
             { label: 'Novos clientes', value: String(customers.length) },
             { label: 'Com pedido',     value: String(withOrders) },
@@ -72,6 +72,8 @@ export default async function ClientesPage({
 
       {customers.length > 0 ? (
         <div style={{ background: 'var(--admin-card)', borderRadius: '12px', border: '1px solid var(--admin-border)', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: '600px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1fr 0.8fr', gap: '12px', padding: '10px 20px', borderBottom: '1px solid var(--admin-border)', background: 'var(--admin-bg)' }}>
             {['Nome / E-mail', 'Telefone', 'Pedidos', 'Total gasto', 'Desde'].map(h => (
               <div key={h} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</div>
@@ -104,6 +106,8 @@ export default async function ClientesPage({
               </div>
             </div>
           ))}
+          </div>
+          </div>
         </div>
       ) : (
         <div style={{ background: 'var(--admin-card)', borderRadius: '12px', border: '1px solid var(--admin-border)', padding: '48px', textAlign: 'center' }}>

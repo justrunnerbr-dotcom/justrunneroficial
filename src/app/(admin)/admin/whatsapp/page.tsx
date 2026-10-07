@@ -2,7 +2,7 @@ import { getAdminSupabase } from '@/lib/admin-client'
 import { STORE_ID } from '@/lib/yampi/sync'
 import { ConversationView } from './_components/conversation-view'
 
-export const metadata = { title: 'Conversas · JHF Admin' }
+export const metadata = { title: 'Conversas · Just Runner Admin' }
 
 export interface ConversationRow {
   id:                    string

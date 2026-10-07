@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminSupabase } from '@/lib/admin-client'
-import { checkAuth } from '@/lib/admin/auth'
+import { checkAuth, unauthorized } from '@/lib/admin/auth'
+
 
 type DraftItem = {
   supplierId: string
@@ -12,7 +13,7 @@ type DraftItem = {
 }
 
 export async function POST(req: Request) {
-  if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!(await checkAuth())) return unauthorized()
 
   const { items } = await req.json() as { items?: DraftItem[] }
   if (!Array.isArray(items) || items.length === 0) {
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!(await checkAuth())) return unauthorized()
 
   const { id, quantityReceived, modelName, quantityOrdered, unitCost, notes } = await req.json() as {
     id?: string; quantityReceived?: number | null; modelName?: string
@@ -63,7 +64,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!(await checkAuth())) return unauthorized()
 
   const { id } = await req.json() as { id?: string }
   if (!id) return NextResponse.json({ error: 'id é obrigatório.' }, { status: 400 })

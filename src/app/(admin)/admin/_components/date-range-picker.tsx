@@ -214,6 +214,18 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
   const router       = useRouter()
   const overlayRef   = useRef<HTMLDivElement>(null)
 
+  // No mobile: 1 calendário só (não dois lado a lado), sidebar de atalhos vira
+  // uma faixa horizontal com scroll no topo, sem largura mínima fixa — o modal
+  // original (minWidth 600px + 2 meses) nunca coube numa tela de celular.
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
   const urlFrom  = searchParams.get('from') ?? ''
   const urlTo    = searchParams.get('to')   ?? ''
   const urlRange = searchParams.get('range') ?? ''
@@ -320,10 +332,14 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
     if (!from) return
     // Auto-correct inverted range
     if (to && from > to) { [from, to] = [to, from] }
-    const params = new URLSearchParams()
+    // Preserva outros parâmetros da URL (ex: view=pedidos de uma aba) — só
+    // sobrescreve o período, não zera a navegação da página atual.
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('range')
     params.set('from', from!)
     params.set('to', to!)
     if (compare) params.set('compare', compareMode)
+    else params.delete('compare')
     router.push(`${pathname}?${params.toString()}`)
     onClose()
   }
@@ -371,12 +387,37 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
           borderRadius: '16px',
           boxShadow: '0 32px 80px rgba(0,0,0,0.7)',
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           maxHeight: 'calc(100vh - 88px)',
+          maxWidth: isMobile ? 'calc(100vw - 16px)' : undefined,
           overflow: 'hidden',
-          margin: '0 16px 24px',
+          margin: isMobile ? '0 8px 16px' : '0 16px 24px',
         }}
       >
-        {/* ── Sidebar ── */}
+        {/* ── Sidebar (desktop: lista vertical) / Select compacto (mobile) ── */}
+        {isMobile ? (
+          <div style={{ padding: '12px', borderBottom: `1px solid ${C.border}` }}>
+            <select
+              value={activePreset ?? '__custom__'}
+              onChange={e => {
+                if (e.target.value === '__custom__') {
+                  setDraftStart(null); setDraftEnd(null); setPhase('start'); setActivePreset(null)
+                } else {
+                  handlePreset(e.target.value as DateRangePreset)
+                }
+              }}
+              style={{ ...INPUT_STYLE, width: '100%', padding: '10px 12px' }}
+            >
+              <optgroup label="Usados recentemente">
+                {RECENT.map(p => <option key={`r-${p.key}`} value={p.key}>{p.label}</option>)}
+              </optgroup>
+              <optgroup label="Períodos rápidos">
+                {QUICK.map(p => <option key={`q-${p.key}`} value={p.key}>{p.label}</option>)}
+              </optgroup>
+              <option value="__custom__">Escolher no calendário</option>
+            </select>
+          </div>
+        ) : (
         <div style={{
           width: '210px', flexShrink: 0,
           background: C.sidebar,
@@ -406,12 +447,18 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
             Escolher no calendário
           </button>
         </div>
+        )}
 
         {/* ── Main area ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '24px 28px', minWidth: '600px' }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column',
+          padding: isMobile ? '16px' : '24px 28px',
+          minWidth: isMobile ? undefined : '600px',
+          overflowY: isMobile ? 'auto' : undefined,
+        }}>
 
           {/* Date inputs row */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end', marginBottom: isMobile ? '16px' : '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <span style={{ fontSize: '10px', fontWeight: 600, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>De</span>
               <input
@@ -441,8 +488,8 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* Dual calendars */}
-          <div style={{ display: 'flex', gap: '0', marginBottom: '20px' }}>
+          {/* Calendário(s) — 1 mês no mobile, 2 lado a lado no desktop */}
+          <div style={{ display: 'flex', gap: '0', marginBottom: '20px', justifyContent: isMobile ? 'center' : undefined }}>
             <CalendarMonth
               year={leftYear} month={leftMonth}
               start={draftStart} end={draftEnd}
@@ -450,7 +497,9 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
               onDayClick={handleDayClick}
               onDayHover={setHoverDate}
               onPrev={() => { const p = shiftMonths(leftYear, leftMonth, -1); setLeftYear(p.year); setLeftMonth(p.month) }}
+              onNext={isMobile ? () => { const n = shiftMonths(leftYear, leftMonth, 1); setLeftYear(n.year); setLeftMonth(n.month) } : undefined}
             />
+            {!isMobile && <>
             <div style={{ width: '1px', background: C.border, margin: '0 24px' }} />
             <CalendarMonth
               year={right.year} month={right.month}
@@ -460,6 +509,7 @@ export function DateRangePicker({ onClose }: { onClose: () => void }) {
               onDayHover={setHoverDate}
               onNext={() => { const n = shiftMonths(leftYear, leftMonth, 1); setLeftYear(n.year); setLeftMonth(n.month) }}
             />
+            </>}
           </div>
 
           {/* Footer: timezone + compare + buttons */}

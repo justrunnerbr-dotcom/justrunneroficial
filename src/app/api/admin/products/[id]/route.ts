@@ -2,19 +2,18 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getYampiCredentialsFromEnv, syncVariantNamesForProduct, logYampiCatalogSync } from '@/lib/yampi/catalog'
-import { checkAuth } from '@/lib/admin/auth'
+import { checkAuth, unauthorized } from '@/lib/admin/auth'
 
 // Worst case is 20 variants on one product, each needing a GET+PUT round trip
 // to Yampi (see syncVariantNamesForProduct) — give that room to finish.
 export const maxDuration = 30
 
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await checkAuth())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!(await checkAuth())) return unauthorized()
 
   const { id } = await params
   const body   = await request.json()
@@ -115,9 +114,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await checkAuth())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!(await checkAuth())) return unauthorized()
 
   const { id } = await params
   const db = getAdminSupabase()

@@ -25,7 +25,7 @@ export default async function CreativoDetailPage({ params }: { params: Promise<{
   if (!creative) notFound()
 
   return (
-    <div style={{ padding: '32px', maxWidth: '720px' }}>
+    <div style={{ padding: '32px', maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
           <Link href="/admin/criativos" style={{ color: 'var(--admin-text-muted)', textDecoration: 'none' }}>Criativos</Link>

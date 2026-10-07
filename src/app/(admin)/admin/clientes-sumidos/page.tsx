@@ -7,7 +7,7 @@ import { DormantList } from './_components/dormant-list'
 import { SyncCustomersButton } from './_components/sync-customers-button'
 import { KanbanBoard, type KanbanCustomer } from './_components/kanban-board'
 
-export const metadata = { title: 'Clientes Sumidos · JHF Admin' }
+export const metadata = { title: 'Clientes Sumidos · Just Runner Admin' }
 
 const DORMANT_THRESHOLD_DAYS = 45
 const PER_PAGE = 50
@@ -194,7 +194,7 @@ export default async function ClientesSumidosPage({
   }))
 
   return (
-    <div style={{ padding: '32px', maxWidth: view === 'kanban' ? '100%' : '1000px' }}>
+    <div style={{ padding: '32px', maxWidth: view === 'kanban' ? '100%' : '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Clientes Sumidos</h1>

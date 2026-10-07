@@ -87,17 +87,19 @@ export function getDateRangePreset(preset: DateRangePreset): DateRange {
     case 'today_and_yesterday':
       return makeRange(yesterday, tomorrow, 'Hoje e ontem', preset)
 
+    // Janelas de N dias usam só dias completos e não incluem hoje — hoje
+    // parcial contra dias cheios puxava as médias e as comparações para baixo.
     case 'last_7_days':
-      return makeRange(addDays(today, -6), tomorrow, 'Últimos 7 dias', preset)
+      return makeRange(addDays(today, -7), today, 'Últimos 7 dias', preset)
 
     case 'last_14_days':
-      return makeRange(addDays(today, -13), tomorrow, 'Últimos 14 dias', preset)
+      return makeRange(addDays(today, -14), today, 'Últimos 14 dias', preset)
 
     case 'last_28_days':
-      return makeRange(addDays(today, -27), tomorrow, 'Últimos 28 dias', preset)
+      return makeRange(addDays(today, -28), today, 'Últimos 28 dias', preset)
 
     case 'last_30_days':
-      return makeRange(addDays(today, -29), tomorrow, 'Últimos 30 dias', preset)
+      return makeRange(addDays(today, -30), today, 'Últimos 30 dias', preset)
 
     case 'this_week': {
       return makeRange(startOfWeek(today), tomorrow, 'Esta semana', preset)

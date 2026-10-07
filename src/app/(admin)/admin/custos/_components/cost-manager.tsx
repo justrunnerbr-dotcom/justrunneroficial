@@ -1,9 +1,19 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Search, AlertTriangle } from 'lucide-react'
 import type { Supplier, ProductCost } from '@/lib/admin/product-costs'
+
+export type MissingCostItem = {
+  title: string
+  legacy: boolean
+  quantity: number
+  orders: string[]
+  suggestedSupplierId: string | null
+  nearestModel: { name: string; cost: number } | null
+}
 
 const fmtBrl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -78,8 +88,60 @@ function EditableCostRow({
   )
 }
 
-export function CostManager({ suppliers, costs }: { suppliers: Supplier[]; costs: ProductCost[] }) {
+function MissingCostPanel({ items, rangeLabel, legacyHref, onPick }: {
+  items: MissingCostItem[]
+  rangeLabel: string
+  legacyHref: string
+  onPick: (item: MissingCostItem) => void
+}) {
+  const orderCount = new Set(items.flatMap(i => i.orders)).size
+  return (
+    <div id="sem-custo" style={{
+      marginBottom: '20px', background: 'var(--admin-card)', border: '1px solid var(--admin-alert)',
+      borderRadius: '12px', overflow: 'hidden',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', borderBottom: '1px solid var(--admin-border)' }}>
+        <AlertTriangle size={15} color="var(--admin-alert)" />
+        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--admin-text-main)' }}>
+          Sem custo no período — {orderCount} pedido(s)
+        </span>
+        <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{rangeLabel}</span>
+      </div>
+      {items.map(it => (
+        <div key={it.title} style={{
+          display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap',
+          padding: '10px 16px', borderBottom: '1px solid var(--admin-border)',
+        }}>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--admin-text-main)' }}>{it.title}</div>
+            <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', marginTop: '2px' }}>
+              {it.quantity} un · pedido(s) {it.orders.map(o => `#${o}`).join(', ')}
+              {it.nearestModel && <> · mais parecido: {it.nearestModel.name} ({fmtBrl.format(it.nearestModel.cost)})</>}
+            </div>
+          </div>
+          {it.legacy ? (
+            <Link href={legacyHref} style={{ ...btnStyle, textDecoration: 'none' }}>Mapear (catálogo antigo)</Link>
+          ) : (
+            <button style={btnStyle} onClick={() => onPick(it)}>
+              <Plus size={14} /> Cadastrar custo
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function CostManager({ suppliers, costs, missing = [], rangeLabel = '', legacyHref = '?view=legado' }: {
+  suppliers: Supplier[]
+  costs: ProductCost[]
+  missing?: MissingCostItem[]
+  rangeLabel?: string
+  legacyHref?: string
+}) {
   const router = useRouter()
+  const formRef = useRef<HTMLDivElement>(null)
+  const costInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -109,6 +171,18 @@ export function CostManager({ suppliers, costs }: { suppliers: Supplier[]; costs
     for (const c of costs) map.set(c.supplier_id, (map.get(c.supplier_id) ?? 0) + 1)
     return map
   }, [costs])
+
+  // Vem do quadro "Sem custo": preenche o modelo com o título do pedido (o
+  // matcher casa exato) e o fornecedor do modelo mais parecido; o custo fica
+  // vazio de propósito — o valor é ele quem diz.
+  function pickMissing(item: MissingCostItem) {
+    setModelName(item.title)
+    if (item.suggestedSupplierId && suppliers.some(s => s.id === item.suggestedSupplierId)) setSupplierId(item.suggestedSupplierId)
+    setCost('')
+    setError(null)
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => costInputRef.current?.focus(), 300)
+  }
 
   async function handleAddSupplier() {
     if (!newSupplierName.trim()) return
@@ -167,6 +241,10 @@ export function CostManager({ suppliers, costs }: { suppliers: Supplier[]; costs
 
   return (
     <div>
+      {missing.length > 0 && (
+        <MissingCostPanel items={missing} rangeLabel={rangeLabel} legacyHref={legacyHref} onPick={pickMissing} />
+      )}
+
       {/* Novo fornecedor */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <input style={{ ...inputStyle, minWidth: '220px' }} placeholder="Novo fornecedor (ex: Zhang)"
@@ -187,14 +265,15 @@ export function CostManager({ suppliers, costs }: { suppliers: Supplier[]; costs
       </div>
 
       {/* Novo custo */}
-      <div style={{
+      <div ref={formRef} style={{
         display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center',
         background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '12px', padding: '16px',
       }}>
         <input style={{ ...inputStyle, minWidth: '260px', flex: 1 }} placeholder="Modelo (ex: Dartboard Preta Lente Preta)"
           value={modelName} onChange={e => setModelName(e.target.value)} />
-        <input style={{ ...inputStyle, width: '110px' }} placeholder="Custo R$" inputMode="decimal"
-          value={cost} onChange={e => setCost(e.target.value)} />
+        <input ref={costInputRef} style={{ ...inputStyle, width: '110px' }} placeholder="Custo R$" inputMode="decimal"
+          value={cost} onChange={e => setCost(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleAddCost() }} />
         <button style={btnStyle} disabled={loading} onClick={handleAddCost}>
           <Plus size={14} /> Adicionar custo pra {suppliers.find(s => s.id === supplierId)?.name ?? '—'}
         </button>

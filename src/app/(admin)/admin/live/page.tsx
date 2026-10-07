@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { LiveRefresh } from './_components/live-refresh'
 import { LiveTileMapLoader } from './_components/live-tile-map-loader'
 import type { LiveMapPoint } from './_components/live-tile-map'
+import { BRAZIL_STATE_NAMES } from '../_components/brazil-state-names'
+import { getDateRangeFromSearchParams, type DateRange } from '@/lib/admin/date-range'
 import { checkAuth } from '@/lib/admin/auth'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
@@ -41,20 +43,19 @@ function statusLabel(s: string): string {
   return map[s] ?? s
 }
 
-async function getLiveData() {
+async function getLiveData(range: DateRange) {
   const db  = getDb()
   const now = new Date()
 
   const tenMinAgo    = new Date(now.getTime() - 10 * 60 * 1000).toISOString()
   const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString()
 
-  const todayBRL    = now.toLocaleDateString('en-CA', { timeZone: TZ })
-  const [y, m, d]   = todayBRL.split('-').map(Number)
-  const tomorrowBRL = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10)
-  const startISO    = `${todayBRL}T00:00:00-03:00`
-  const endISO      = `${tomorrowBRL}T00:00:00-03:00`
+  // "Ao vivo" de verdade (visitantes agora, comportamento 30 min) não segue o
+  // período escolhido — só as métricas do período (pedidos, sessões, receita,
+  // novos clientes, localização) usam o range do seletor global.
+  const { startISO, endISO } = range
 
-  const [liveR, ordersR, sessR, cartR, checkR, cartOpenR, newCustR, recentR] = await Promise.all([
+  const [liveR, ordersR, sessR, cartR, checkR, cartOpenR, newCustR, recentR, sessGeoR] = await Promise.all([
     db.from('live_visitors')
       .select('page, product_slug, device, geo_state, geo_city, geo_lat, geo_lon')
       .eq('store_id', STORE_ID)
@@ -103,6 +104,13 @@ async function getLiveData() {
       .eq('store_id', STORE_ID)
       .order('created_at', { ascending: false })
       .limit(8),
+
+    db.from('sessions')
+      .select('geo_state, geo_city')
+      .eq('store_id', STORE_ID)
+      .gte('started_at', startISO)
+      .lt('started_at', endISO)
+      .not('geo_state', 'is', null),
   ])
 
   const live   = liveR.data ?? []
@@ -137,10 +145,19 @@ async function getLiveData() {
   }
   const liveMapPoints: LiveMapPoint[] = Object.values(pointGroups)
 
+  const sessionsGeo = sessGeoR.data ?? []
+  const locationMap: Record<string, { state: string; city: string | null; count: number }> = {}
+  for (const s of sessionsGeo) {
+    if (!s.geo_state) continue
+    const key = `${s.geo_state}|${s.geo_city ?? ''}`
+    if (!locationMap[key]) locationMap[key] = { state: s.geo_state, city: s.geo_city, count: 0 }
+    locationMap[key].count++
+  }
+  const topLocations = Object.values(locationMap).sort((a, b) => b.count - a.count).slice(0, 6)
+
   return {
     updatedAt:    now.toLocaleTimeString('pt-BR', { timeZone: TZ }),
     liveCount:    live.length,
-    liveMapPoints,
     topPages,
     devMap,
     ordersToday:  orders.length,
@@ -154,13 +171,21 @@ async function getLiveData() {
     paidLast30:     paid30.length,
     newCustToday: newCustR.count ?? 0,
     recentOrders: recentR.data ?? [],
+    liveMapPoints,
+    topLocations,
   }
 }
 
-export default async function LivePage() {
+export default async function LivePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string; from?: string; to?: string }>
+}) {
   if (!(await checkAuth())) return null
 
-  const d = await getLiveData()
+  const sp    = await searchParams
+  const range = getDateRangeFromSearchParams(sp)
+  const d     = await getLiveData(range)
 
   const devColors: Record<string, string> = {
     mobile: '#3B82F6', desktop: '#8B5CF6', tablet: '#F59E0B',
@@ -175,19 +200,19 @@ export default async function LivePage() {
       accent: true,
     },
     {
-      label: 'Pedidos hoje',
+      label: `Pedidos · ${range.label}`,
       value: String(d.ordersToday),
       sub:   `${d.paidToday} pago${d.paidToday !== 1 ? 's' : ''} · ${d.pendingToday} pendente${d.pendingToday !== 1 ? 's' : ''}`,
       accent: false,
     },
     {
-      label: 'Receita paga hoje',
+      label: `Receita paga · ${range.label}`,
       value: fmtBRL(d.revenueToday),
       sub:   `${d.paidToday} confirmado${d.paidToday !== 1 ? 's' : ''}`,
       accent: false,
     },
     {
-      label: 'Sessões hoje',
+      label: `Sessões (visitantes) · ${range.label}`,
       value: d.sessionsToday.toLocaleString('pt-BR'),
       sub:   `${d.newCustToday} novo${d.newCustToday !== 1 ? 's' : ''} cliente${d.newCustToday !== 1 ? 's' : ''}`,
       accent: false,
@@ -195,7 +220,7 @@ export default async function LivePage() {
   ]
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '1400px', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+    <div style={{ padding: '32px 40px', maxWidth: '1400px', margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
       <LiveRefresh intervalMs={15000} />
 
       {/* ── Header ── */}
@@ -403,7 +428,7 @@ export default async function LivePage() {
         {/* Novos x Recorrentes */}
         <div style={{ background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '16px', padding: '20px 24px' }}>
           <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '16px' }}>
-            Novos x Recorrentes · hoje
+            Novos x Recorrentes · {range.label}
           </div>
           {([
             { label: 'Novos clientes',   value: d.newCustToday, color: '#3B82F6' },
@@ -424,14 +449,24 @@ export default async function LivePage() {
         {/* Sessões por local */}
         <div style={{ background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '16px', padding: '20px 24px' }}>
           <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '16px' }}>
-            Sessões por localização
+            Sessões por localização · {range.label}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '88px', gap: '6px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>Sem dados de geolocalização</div>
-            <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', opacity: 0.55, textAlign: 'center', maxWidth: '280px', lineHeight: 1.55 }}>
-              Ative captura de IP/geo no middleware para ver dados por cidade e estado
+          {d.topLocations.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '88px', gap: '6px' }}>
+              <div style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>Sem dados de geolocalização no período</div>
             </div>
-          </div>
+          ) : d.topLocations.map((loc, i) => (
+            <div key={`${loc.state}-${loc.city}`} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '9px 0',
+              borderBottom: i < d.topLocations.length - 1 ? '1px solid var(--admin-border)' : 'none',
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--admin-text-sec)' }}>
+                {loc.city ? `${loc.city} · ` : ''}{BRAZIL_STATE_NAMES[loc.state] ?? loc.state}
+              </span>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--admin-text-main)' }}>{loc.count}</span>
+            </div>
+          ))}
         </div>
 
       </div>

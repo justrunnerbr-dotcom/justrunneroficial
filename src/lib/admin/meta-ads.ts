@@ -449,10 +449,14 @@ async function fetchInsightsFromMeta(
   since: string,
   until: string,
   level: 'campaign' | 'adset' | 'ad' = 'campaign',
-  accountId: string,
+  accountId?: string,
 ): Promise<MetaInsightRow[]> {
   const token = process.env.META_ACCESS_TOKEN
-  if (!token || !accountId) return []
+  // A conta vem por parâmetro (META_ACCOUNTS). O fallback pra META_AD_ACCOUNT_ID
+  // existe só por compatibilidade — essa variável não é definida em produção,
+  // onde as contas são META_AD_ACCOUNT_ID_1/_2/_3.
+  const account = accountId || process.env.META_AD_ACCOUNT_ID
+  if (!token || !account) return []
 
   const fields = [
     'campaign_id', 'campaign_name',
@@ -476,7 +480,7 @@ async function fetchInsightsFromMeta(
 
   try {
     const res = await fetch(
-      `https://graph.facebook.com/${META_API_VER}/act_${accountId}/insights?${params}`,
+      `https://graph.facebook.com/${META_API_VER}/act_${account}/insights?${params}`,
       {
         headers: { Authorization: `Bearer ${token}` },
         signal:  controller.signal,
@@ -488,7 +492,7 @@ async function fetchInsightsFromMeta(
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}))
       const errMsg  = (errBody as {error?: {message?: string}})?.error?.message ?? `HTTP ${res.status}`
-      console.error(`[MetaAds] API error (${level}): ${errMsg}`)
+      console.error(`[MetaAds] API error (${level}, conta ${account}): ${errMsg}`)
       return []
     }
 
@@ -540,7 +544,7 @@ async function saveInsightsToDB(
   db: SupabaseClient,
   rows: MetaInsightRow[],
   level: string,
-  accountId: string,
+  accountId = process.env.META_AD_ACCOUNT_ID ?? '',
 ): Promise<number> {
   if (!rows.length) return 0
 
@@ -599,22 +603,40 @@ export async function syncMetaInsights(
   const accountIds = META_ACCOUNTS.map((a) => a.id).filter(Boolean)
 
   try {
+    // Sincroniza as 3 contas. Antes isto lia META_AD_ACCOUNT_ID (singular), que
+    // não existe em produção — a busca saía vazia e o sync gravava 0 registros
+    // sem sinalizar erro. Ver META_ACCOUNTS (_1/_2/_3).
+    const contas = META_ACCOUNTS.filter(a => a.id)
     let count = 0
-    for (const accountId of accountIds) {
-      const rows = await fetchInsightsFromMeta(since, until, 'campaign', accountId)
-      count += await saveInsightsToDB(db, rows, 'campaign', accountId)
+    const falhas: string[] = []
+
+    for (const conta of contas) {
+      const rows = await fetchInsightsFromMeta(since, until, 'campaign', conta.id)
+      if (!rows.length) {
+        falhas.push(conta.name)
+        continue
+      }
+      count += await saveInsightsToDB(db, rows, 'campaign', conta.id)
     }
+
+    const status = count > 0 && falhas.length === 0 ? 'success'
+                 : count > 0                        ? 'partial'
+                 : 'error'
 
     try {
       await db.from('meta_sync_logs').insert({
         store_id:       STORE_ID,
-        status:         count > 0 ? 'success' : 'partial',
+        status,
         started_at:     startedAt,
         finished_at:    new Date().toISOString(),
         records_synced: count,
+        error_message:  falhas.length ? `Sem dados para: ${falhas.join(', ')}` : null,
       })
     } catch { /* log table may not exist yet */ }
 
+    if (count === 0) {
+      return { ok: false, count: 0, error: `Nenhum registro retornado (contas: ${contas.map(c => c.name).join(', ') || 'nenhuma configurada'})` }
+    }
     return { ok: true, count }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erro desconhecido'

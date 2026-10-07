@@ -56,6 +56,7 @@ export function IntegrationsManager({ settings }: { settings: CostSettings }) {
   const [installmentPct, setInstallmentPct]     = useState(String(settings.appmax_installment_pct))
   const [defaultInstallments, setDefaultInstallments] = useState(String(settings.default_installments))
   const [freteGratisCusto, setFreteGratisCusto] = useState(String(settings.frete_gratis_custo))
+  const [custoLogistica, setCustoLogistica]     = useState(String(settings.custo_logistica_pedido))
 
   async function handleSave() {
     setLoading(true); setError(null); setSaved(false)
@@ -73,6 +74,7 @@ export function IntegrationsManager({ settings }: { settings: CostSettings }) {
           appmax_installment_pct: parse(installmentPct),
           default_installments: parseInt(defaultInstallments, 10),
           frete_gratis_custo: parse(freteGratisCusto),
+          custo_logistica_pedido: parse(custoLogistica),
         }),
       })
       const data = await res.json()
@@ -104,8 +106,9 @@ export function IntegrationsManager({ settings }: { settings: CostSettings }) {
         <Field label="Parcelas oferecidas sem juros" hint="Usado pra estimar a taxa dos pedidos sincronizados da Yampi (não sabemos quantas parcelas o cliente escolheu)" value={defaultInstallments} onChange={setDefaultInstallments} suffix="x" />
       </Card>
 
-      <Card title="Frete">
+      <Card title="Frete e logística">
         <Field label="Custo do frete grátis" hint="Quando o cliente não paga frete, esse é o custo real assumido pela loja" value={freteGratisCusto} onChange={setFreteGratisCusto} suffix="R$" />
+        <Field label="Logística por pedido" hint="Valor fixo cobrado pela logística por pedido PAGO, além do frete. Um por pedido, não por item — vale para todo o período consultado, inclusive meses já fechados" value={custoLogistica} onChange={setCustoLogistica} suffix="R$" />
       </Card>
 
       {error && <div style={{ color: 'var(--admin-red)', fontSize: '13px', marginBottom: '12px' }}>{error}</div>}

@@ -37,6 +37,7 @@ export type OrderCostRow = {
   gatewayFee: number
   yampiFee: number
   freightCost: number
+  logisticsCost: number
   paymentMethod: string | null
   isManual: boolean
   customerName?: string | null
@@ -199,9 +200,10 @@ export function OrdersCostTable({ orders, suppliers }: { orders: OrderCostRow[];
     acc.custo += custo
     acc.taxas += o.gatewayFee + o.yampiFee
     acc.frete += o.freightCost
+    acc.logistica += o.logisticsCost
     return acc
-  }, { valor: 0, custo: 0, taxas: 0, frete: 0 })
-  const margem = totals.valor - totals.custo - totals.taxas - totals.frete
+  }, { valor: 0, custo: 0, taxas: 0, frete: 0, logistica: 0 })
+  const margem = totals.valor - totals.custo - totals.taxas - totals.frete - totals.logistica
 
   return (
     <div>
@@ -225,6 +227,7 @@ export function OrdersCostTable({ orders, suppliers }: { orders: OrderCostRow[];
                 <th style={{ textAlign: 'right', padding: '10px 14px', color: 'var(--admin-text-muted)', fontWeight: 600 }}>Custo de Produto</th>
                 <th style={{ textAlign: 'right', padding: '10px 14px', color: 'var(--admin-text-muted)', fontWeight: 600 }}>Taxas</th>
                 <th style={{ textAlign: 'right', padding: '10px 14px', color: 'var(--admin-text-muted)', fontWeight: 600 }}>Frete</th>
+                <th style={{ textAlign: 'right', padding: '10px 14px', color: 'var(--admin-text-muted)', fontWeight: 600 }}>Logística</th>
                 <th style={{ textAlign: 'right', padding: '10px 14px', color: 'var(--admin-text-muted)', fontWeight: 600 }}>Margem</th>
                 <th style={{ width: '32px' }} />
               </tr>
@@ -234,7 +237,7 @@ export function OrdersCostTable({ orders, suppliers }: { orders: OrderCostRow[];
                 const s = statusInfo(o.status)
                 const custo = o.overrideCusto ?? o.autoCusto
                 const taxas = o.gatewayFee + o.yampiFee
-                const margemLinha = custo !== null ? o.total - custo - taxas - o.freightCost : null
+                const margemLinha = custo !== null ? o.total - custo - taxas - o.freightCost - o.logisticsCost : null
                 return (
                   <tr key={o.id} style={{ borderBottom: '1px solid var(--admin-border)' }}>
                     <td style={{ padding: '8px 14px', color: 'var(--admin-text-main)', fontWeight: 600 }}>#{o.externalId}</td>
@@ -270,6 +273,9 @@ export function OrdersCostTable({ orders, suppliers }: { orders: OrderCostRow[];
                     </td>
                     <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--admin-text-muted)' }}>
                       {fmtBrl.format(o.freightCost)}
+                    </td>
+                    <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--admin-text-muted)' }} title="Valor fixo cobrado pela logística por pedido">
+                      {fmtBrl.format(o.logisticsCost)}
                     </td>
                     <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: 'monospace', color: margemLinha === null ? 'var(--admin-text-muted)' : margemLinha >= 0 ? '#16a34a' : 'var(--admin-red)' }}>
                       {margemLinha === null ? '—' : fmtBrl.format(margemLinha)}

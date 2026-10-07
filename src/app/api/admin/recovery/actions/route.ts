@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { STORE_ID } from '@/lib/yampi/sync'
-import { checkAuth } from '@/lib/admin/auth'
+import { checkAuth, unauthorized } from '@/lib/admin/auth'
+
 
 export async function GET() {
-  if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!(await checkAuth('recuperacao'))) return unauthorized()
 
   const db = getAdminSupabase()
   const { data } = await db
@@ -16,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!(await checkAuth('recuperacao'))) return unauthorized()
 
   const { yampiCartId, status } = await req.json() as { yampiCartId?: string; status?: string }
   if (!yampiCartId || !['contacted', 'ignored', 'recovered_manual'].includes(status ?? '')) {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
 // Desfaz uma marcação manual (ex: cliente desistiu ou pediu estorno depois de marcado
 // como recuperado) — some a linha, voltando pro estado padrão "Abandonado".
 export async function DELETE(req: Request) {
-  if (!await checkAuth()) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!(await checkAuth('recuperacao'))) return unauthorized()
 
   const { yampiCartId } = await req.json() as { yampiCartId?: string }
   if (!yampiCartId) {

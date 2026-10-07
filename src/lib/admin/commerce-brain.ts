@@ -4,10 +4,12 @@ import { fetchAllRows } from './supabase-pagination'
 
 const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
 
-const PAID_STATUSES = [
+export const PAID_STATUSES = [
   'paid', 'invoiced', 'on_carriage', 'payment_confirmed',
   'preparing_shipping', 'in_separation', 'in_transit', 'delivered',
 ]
+
+export { STORE_ID }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

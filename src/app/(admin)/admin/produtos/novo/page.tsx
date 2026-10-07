@@ -12,7 +12,7 @@ export default async function NewProductPage() {
   const collections = await getCollections()
 
   return (
-    <div style={{ padding: '32px', maxWidth: '720px' }}>
+    <div style={{ padding: '32px', maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
         <Link href="/admin/produtos" style={{ color: 'var(--admin-text-muted)', textDecoration: 'none' }}>Produtos</Link>
         <span>/</span>

@@ -100,7 +100,7 @@ export function CampaignWizard({ pages = [], accounts = [] }: { pages?: Page[]; 
   const card = { background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '16px', padding: '28px', marginBottom: '20px' }
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '780px', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+    <div style={{ padding: '32px 40px', maxWidth: '780px', margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
 
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>

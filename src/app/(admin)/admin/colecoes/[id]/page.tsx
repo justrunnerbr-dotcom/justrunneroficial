@@ -21,7 +21,7 @@ export default async function CollectionDetailPage({ params }: PageProps) {
   if (!collection) notFound()
 
   return (
-    <div style={{ padding: '32px', maxWidth: '800px' }}>
+    <div style={{ padding: '32px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
         <Link href="/admin/colecoes" style={{ color: 'var(--admin-text-muted)', textDecoration: 'none' }}>Coleções</Link>
         <span>/</span>

@@ -88,7 +88,7 @@ export default async function PedidosPage({
   const ticketMedio   = paidOrders.length > 0 ? revenue / paidOrders.length : 0
 
   return (
-    <div style={{ padding: '32px', maxWidth: '960px' }}>
+    <div className="px-4 py-6 md:p-8" style={{ maxWidth: '960px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Pedidos</h1>
         <p style={{ fontSize: '14px', color: 'var(--admin-text-muted)' }}>
@@ -99,7 +99,7 @@ export default async function PedidosPage({
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '12px', marginBottom: '24px' }}>
         {[
           { label: 'Pedidos pagos',  value: paidOrders.length.toString(),  color: '#16a34a', bg: 'rgba(22,163,74,0.08)' },
           { label: 'Pendentes',      value: pendingOrders.length.toString(), color: '#d97706', bg: 'rgba(217,119,6,0.08)' },
@@ -186,7 +186,7 @@ export default async function PedidosPage({
 
                 {/* Totals breakdown */}
                 {(order.discount_amount > 0 || order.shipping_amount > 0) && (
-                  <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: '11px', color: 'var(--admin-text-muted)' }}>
                     <span>Subtotal: {fmt(order.subtotal)}</span>
                     {order.discount_amount > 0 && <span style={{ color: '#16a34a' }}>Desconto: -{fmt(order.discount_amount)}</span>}
                     {order.shipping_amount > 0 && <span>Frete: {fmt(order.shipping_amount)}</span>}

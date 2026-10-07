@@ -14,7 +14,7 @@ export default async function SeoPage() {
   const settings = await getSeoSettings()
 
   return (
-    <div style={{ padding: '32px', maxWidth: '800px' }}>
+    <div style={{ padding: '32px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>SEO Global</h1>
         <p style={{ fontSize: '14px', color: 'var(--admin-text-muted)' }}>

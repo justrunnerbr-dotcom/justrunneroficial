@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { SESSION_COOKIE, verifySession } from '@/lib/admin/session'
+import { canAccess, getUserArea, type AdminArea } from '@/lib/admin/roles'
 
 // Guarda única de autenticação do admin.
 //
@@ -18,6 +19,10 @@ export { SESSION_COOKIE }
 export interface AdminSession {
   /** Quem está autenticado. Vem do token assinado, não de um valor fixo. */
   user: string
+  /** O que essa pessoa pode acessar. Lido do ambiente a cada chamada, não do
+   *  token — assim tirar ou mudar o acesso de alguém vale na hora, sem esperar
+   *  a sessão de 7 dias expirar. */
+  area: AdminArea
 }
 
 export async function getAdminSession(): Promise<AdminSession | null> {
@@ -27,11 +32,20 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     process.env.ADMIN_SECRET,
   )
 
-  return payload ? { user: payload.u } : null
+  return payload ? { user: payload.u, area: getUserArea(payload.u) } : null
 }
 
-export async function checkAuth(): Promise<boolean> {
-  return (await getAdminSession()) !== null
+/**
+ * Tem sessão válida E permissão para esta área?
+ *
+ * `required` vale `full` quando não é informado — de propósito. Isso faz toda
+ * rota existente e toda rota futura nascerem fechadas para usuário restrito;
+ * abrir uma delas exige passar a área explicitamente, o que é uma decisão
+ * visível na revisão em vez de um esquecimento silencioso.
+ */
+export async function checkAuth(required: AdminArea = 'full'): Promise<boolean> {
+  const session = await getAdminSession()
+  return session !== null && canAccess(session.area, required)
 }
 
 /** Nome de quem está agindo, pra gravar no log de auditoria. */

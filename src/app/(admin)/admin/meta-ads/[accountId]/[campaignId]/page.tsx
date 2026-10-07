@@ -121,7 +121,7 @@ export default async function CampaignAdsetsPage({
   }
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1400px' }}>
+    <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', fontSize: '12px', color: 'var(--admin-text-muted)' }}>

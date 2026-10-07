@@ -6,7 +6,7 @@ import { STORE_ID } from '@/lib/yampi/sync'
 import { RecoveryList } from './_components/recovery-list'
 import { RefreshButton } from './_components/refresh-button'
 
-export const metadata = { title: 'Recuperar Vendas · JHF Admin' }
+export const metadata = { title: 'Recuperar Vendas · Just Runner Admin' }
 
 // Cruza pelo yampi_product_id (id numérico do SKU na Yampi) — o texto do SKU da Yampi
 // (ex: "JHFSO-...") não bate com o nosso variants.sku (ex: "JHF-..."), são convenções diferentes.
@@ -136,7 +136,7 @@ export default async function RecuperarVendasPage({
   }
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1000px' }}>
+    <div className="px-4 py-6 md:p-8" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Recuperar Vendas</h1>
@@ -147,7 +147,7 @@ export default async function RecuperarVendasPage({
         <RefreshButton />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '12px', marginBottom: '24px' }}>
         <KpiCard icon={Flame}        label="Prontos pra contato agora" value={String(readyNowCount)}              sub="30min–6h desde o abandono" color={readyNowCount > 0 ? '#f97316' : undefined} />
         <KpiCard icon={DollarSign}    label="Em carrinhos abandonados" value={fmtBrl.format(totalAbandonedValue)} sub={`${notRecovered.length} carrinho(s)`} />
         <KpiCard icon={ShoppingCart}  label="Carrinhos abandonados"    value={String(enrichedCarts.length)}       sub={range.label} />
@@ -167,7 +167,7 @@ export default async function RecuperarVendasPage({
               <div
                 key={o.orderId}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 20px',
+                  display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px 14px', padding: '12px 20px',
                   borderBottom: idx < recoveredOrders.length - 1 ? '1px solid var(--admin-border)' : 'none',
                 }}
               >

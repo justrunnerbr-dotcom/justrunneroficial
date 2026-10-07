@@ -33,7 +33,7 @@ function jaccard(a: Set<string>, b: Set<string>) {
  *  confiável que "menor custo cadastrado" porque vem do que você de fato
  *  pediu, não de uma suposição de preço. */
 function matchSupplierMapping(productTitle: string, mapping: SupplierMappingRow[]): SupplierMappingRow | null {
-  const clean = productTitle.replace(/^\[JR\]\s*/, '').replace(/\s+/g, ' ').trim()
+  const clean = productTitle.replace(/^\[[^\]]*\]\s*/, '').replace(/\s+/g, ' ').trim()
   const titleTokens = tokenSet(clean)
   let bestScore = 0
   let best: SupplierMappingRow | null = null
@@ -96,7 +96,7 @@ export async function getDailyRestockReport(
   const needsReview: DailyRestockUnmatched[] = []
 
   for (const item of items ?? []) {
-    const title = item.product_title.replace(/^\[JR\]\s*/, '')
+    const title = item.product_title.replace(/^\[[^\]]*\]\s*/, '')
     const mapped = matchSupplierMapping(item.product_title, mapping)
 
     if (mapped) {

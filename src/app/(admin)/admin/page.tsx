@@ -1,784 +1,596 @@
-import type { ComponentType, ReactNode } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import type { ReactNode } from 'react'
+import Link from 'next/link'
+import { Bell, DollarSign, Package, Receipt, Megaphone } from 'lucide-react'
 import { CeoRefreshButton } from './_components/ceo-refresh-button'
 import { CeoSyncButton } from './_components/ceo-sync-button'
-import { BrainPanel } from './_components/brain-panel'
 import { DashboardEditableLayout, type DashboardWidget } from './_components/dashboard-editable-layout'
 import { ReorderableRow } from './_components/reorderable-row'
-import { MetaTaxProvider, MetaTaxToggle, MarketingSpendAmount } from './_components/meta-tax-toggle'
-import type { RecommendationCardData } from './_components/brain-card'
-import { DollarSign, ShoppingBag, Users, Percent, Target, CheckCircle2, AlertCircle, Tag, BrainCircuit, TrendingUp, Megaphone, CreditCard, MousePointerClick, Package, Receipt } from 'lucide-react'
-import Link from 'next/link'
-import { getDateRangeFromSearchParams, getPreviousPeriodRange, type DateRange } from '@/lib/admin/date-range'
-import { getBrainQuickStats } from '@/lib/admin/commerce-brain'
-import { getMetaDashboardStats, getMetaLiveSpend } from '@/lib/admin/meta-ads'
-import { isUsable, statusLabel } from '@/lib/admin/source-status'
-import { getFinancialBreakdown } from '@/lib/admin/financial-breakdown'
-import { RoasRoiCard } from './_components/roas-roi-card'
 import { HoverBreakdownCard } from './_components/hover-breakdown-card'
-import { getSalesBreakdown } from '@/lib/admin/sales-breakdown'
-import { ConversionFunnelVisual } from './_components/conversion-funnel-visual'
+import { LucroLiquidoCard } from './_components/lucro-liquido-card'
+import { InvestmentBarChart } from './_components/investment-bar-chart'
 import { HourlySalesChart } from './_components/hourly-sales-chart'
 import { PaymentMethodDonut } from './_components/payment-method-donut'
 import { ApprovalRateRings } from './_components/approval-rate-rings'
 import { RegionalAnalysis } from './_components/regional-analysis'
-import { InvestmentBarChart } from './_components/investment-bar-chart'
+import { HelpTip } from './_components/dashboard/help-tip'
+import { PeriodBar } from './_components/dashboard/period-bar'
+import { EvolutionChart } from './_components/dashboard/evolution-chart'
+import { ProductRank } from './_components/dashboard/product-rank'
+import { KpiValue } from './_components/dashboard/kpi-value'
+import { MetaTaxToggleButton, MetaTaxValue, MetaTaxBase } from './_components/dashboard/meta-tax'
+import { ExportCsvButton } from './_components/dashboard/export-csv'
+import { formatKind, type ValueKind } from './_components/dashboard/format'
+import './_components/dashboard/dashboard.css'
+import { getDateRangeFromSearchParams } from '@/lib/admin/date-range'
+import { getDashboardData, type DashboardData } from '@/lib/admin/dashboard-data'
+import { METRICS, type MetricKey } from '@/lib/admin/metric-contract'
+import { getMetaLiveSpend } from '@/lib/admin/meta-ads'
+import { getSalesBreakdown } from '@/lib/admin/sales-breakdown'
 import { checkAuth } from '@/lib/admin/auth'
 
-const STORE_ID = 'b0000000-0000-0000-0000-000000000001'
-const TZ = 'America/Sao_Paulo'
+// ── formatação ───────────────────────────────────────────────────────────────
 
-const COLORS = {
-  bg: 'var(--admin-bg)',
-  card: 'var(--admin-card)',
-  cardHover: 'var(--admin-card-hover)',
-  border: 'var(--admin-border)',
-  textMain: 'var(--admin-text-main)',
-  textSec: 'var(--admin-text-sec)',
-  textMuted: 'var(--admin-text-muted)',
-  green: 'var(--admin-accent)',
-  red: 'var(--admin-red)',
-  alert: 'var(--admin-alert)',
-  info: 'var(--admin-info)',
+const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const int = (v: number) => Math.round(v).toLocaleString('pt-BR')
+const brlShort = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+const pct = (v: number, d = 1) => `${(v * 100).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`
+const dec = (v: number) => `${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}×`
+
+function ago(iso: string | null): string {
+  if (!iso) return 'sem registro'
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60_000)
+  if (min < 1) return 'agora'
+  if (min < 60) return `há ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 48) return `há ${h} h${min % 60 ? ` ${min % 60} min` : ''}`
+  return `há ${Math.floor(h / 24)} dias`
 }
 
-function getDb() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
+// ── KPI ──────────────────────────────────────────────────────────────────────
+
+type Tone = 'up' | 'down' | 'neutral'
+type State = 'ok' | 'partial' | 'na'
+
+interface Kpi {
+  id:     MetricKey
+  value:  number | null
+  base:   number | null
+  kind:   ValueKind
+  /** 'up' = subir é bom; 'down' = subir é ruim; 'neutral' = depende do contexto. */
+  tone:   Tone
+  state?: State
+  why?:   string
+  sub?:   string
+  /** Sem comparação quando a referência não é equivalente (ex.: mídia de hoje por hora). */
+  noCmp?: boolean
+}
+
+function Delta({ cur, base, tone }: { cur: number; base: number; tone: Tone }) {
+  if (base === 0) return <span className="dsh-dl dsh-dl-neu">{cur === 0 ? 'igual' : 'sem base %'}</span>
+  const d = (cur - base) / Math.abs(base)
+  if (Math.abs(d) < 0.0005) return <span className="dsh-dl dsh-dl-neu">igual</span>
+  const good = tone === 'neutral' ? null : tone === 'up' ? d > 0 : d < 0
+  const cls = good === null ? 'dsh-dl-neu' : good ? 'dsh-dl-good' : 'dsh-dl-bad'
+  return <span className={`dsh-dl ${cls}`}><span className="dsh-dl-a">{d > 0 ? '▲' : '▼'}</span>{Math.abs(d * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</span>
+}
+
+/** Para onde cada card leva. O período escolhido vai junto na URL. */
+const DRILL: Partial<Record<MetricKey, { href: string; label: string }>> = {
+  receita:     { href: '/admin/pedidos', label: 'Pedidos' },
+  pagos:       { href: '/admin/pedidos', label: 'Pedidos' },
+  ticket:      { href: '/admin/pedidos', label: 'Pedidos' },
+  pendentes:   { href: '/admin/pedidos', label: 'Pedidos' },
+  lucro:       { href: '/admin/financeiro/agente', label: 'Financeiro' },
+  margem:      { href: '/admin/financeiro/agente', label: 'Financeiro' },
+  midia:       { href: '/admin/gestor-trafego', label: 'Tráfego' },
+  meta:        { href: '/admin/gestor-trafego', label: 'Tráfego' },
+  google:      { href: '/admin/gestor-trafego', label: 'Tráfego' },
+  mer:         { href: '/admin/gestor-trafego', label: 'Tráfego' },
+  roi:         { href: '/admin/gestor-trafego', label: 'Tráfego' },
+  cpa:         { href: '/admin/gestor-trafego', label: 'Tráfego' },
+  conversao:   { href: '/admin/brain', label: 'Commerce Brain' },
+  carrinhos:   { href: '/admin/brain', label: 'Commerce Brain' },
+  checkouts:   { href: '/admin/brain', label: 'Commerce Brain' },
+  recorrentes: { href: '/admin/clientes', label: 'Clientes' },
+  custos:      { href: '/admin/custos', label: 'Custos' },
+  atribuicao:  { href: '/admin/analise-suprema', label: 'Análise Suprema' },
+}
+
+function Spark({ vals, color }: { vals: (number | null)[]; color: string }) {
+  const nums = vals.filter((v): v is number => v !== null)
+  if (nums.length < 2) return null
+  const min = Math.min(...nums), max = Math.max(...nums)
+  const W = 100, H = 24
+  const x = (i: number) => (i / (vals.length - 1)) * W
+  const y = (v: number) => H - 2 - ((v - min) / (max - min || 1)) * (H - 4)
+  let d = '', pen = false
+  vals.forEach((v, i) => {
+    if (v === null) { pen = false; return }
+    d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`
+    pen = true
+  })
+  const gid = `sp-${color.replace(/\W/g, '')}`
+  return (
+    <svg className="dsh-spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor={color} stopOpacity=".35" />
+          <stop offset="1" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <g className="dsh-rv">
+        {!d.slice(1).includes('M') && <path d={`${d}L${x(vals.length - 1)},${H}L${x(0)},${H}Z`} fill={`url(#${gid})`} />}
+        <path d={d} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </g>
+    </svg>
   )
 }
 
-function fmt(value: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-}
+const SPARK_COLOR: Partial<Record<MetricKey, string>> = { receita: 'var(--c1)', lucro: 'var(--c2)', pagos: 'var(--c3)', midia: 'var(--c4)' }
 
-function delta(cur: number, prev: number): { pct: number; up: boolean } {
-  if (prev === 0) return { pct: cur > 0 ? 100 : 0, up: cur >= 0 }
-  const pct = ((cur - prev) / prev) * 100
-  return { pct: Math.round(Math.abs(pct)), up: pct >= 0 }
-}
-
-function sumRows(rows: Record<string, number>[], key: string): number {
-  return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0)
-}
-
-async function getDashboardData(range: DateRange) {
-  const db   = getDb()
-  const prev = getPreviousPeriodRange(range)
-
-  const [curRows, prevRows, recentOrders, liveCount, topProducts, healthRow, brainRecs, pendingCount, paidCount, manualPaidCount] = await Promise.all([
-    db.from('daily_analytics').select('*').eq('store_id', STORE_ID).gte('date', range.start).lt('date', range.endExclusive),
-    db.from('daily_analytics').select('*').eq('store_id', STORE_ID).gte('date', prev.start).lt('date', prev.endExclusive),
-    db.from('orders').select('external_id, total, status, payment_method, created_at, customer_snapshot').eq('store_id', STORE_ID).gte('created_at', range.startISO).lt('created_at', range.endISO).order('created_at', { ascending: false }).limit(6),
-    db.from('live_visitors').select('session_id', { count: 'exact', head: true }).eq('store_id', STORE_ID).gte('last_seen', new Date(Date.now() - 10 * 60 * 1000).toISOString()),
-    db.from('events').select('product_slug').eq('store_id', STORE_ID).eq('event_type', 'view_content').gte('created_at', range.startISO).lt('created_at', range.endISO),
-    db.from('health_scores').select('*').eq('store_id', STORE_ID).order('calculated_at', { ascending: false }).limit(1).maybeSingle(),
-    db.from('brain_recommendations').select(`*, signal:brain_signals(signal_type, severity, metric_name, current_value, baseline_value, delta_pct, detected_at)`).eq('store_id', STORE_ID).in('status', ['open', 'acknowledged']).order('created_at', { ascending: false }).limit(5),
-    db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID).eq('status', 'pending').gte('created_at', range.startISO).lt('created_at', range.endISO),
-    db.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID).eq('status', 'paid').gte('created_at', range.startISO).lt('created_at', range.endISO),
-    db.from('manual_orders').select('id', { count: 'exact', head: true }).gte('created_at', range.startISO).lt('created_at', range.endISO),
-  ])
-
-  const curData  = (curRows.data  ?? []) as Record<string, number>[]
-  const prevData = (prevRows.data ?? []) as Record<string, number>[]
-
-  const productCounts: Record<string, number> = {}
-  for (const e of topProducts.data ?? []) {
-    if (e.product_slug) productCounts[e.product_slug] = (productCounts[e.product_slug] ?? 0) + 1
-  }
-  const topProductList = Object.entries(productCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-
-  return {
-    cur: {
-      revenue:         sumRows(curData, 'revenue'),
-      orders:          sumRows(curData, 'orders'),
-      sessions:        sumRows(curData, 'sessions'),
-      page_views:      sumRows(curData, 'page_views'),
-      product_views:   sumRows(curData, 'product_views'),
-      add_to_carts:    sumRows(curData, 'add_to_carts'),
-      checkout_starts: sumRows(curData, 'checkout_starts'),
-      conversion_rate: curData.length ? sumRows(curData, 'conversion_rate') / curData.length : 0,
-    },
-    prev: {
-      revenue:  sumRows(prevData, 'revenue'),
-      orders:   sumRows(prevData, 'orders'),
-      sessions: sumRows(prevData, 'sessions'),
-    },
-    recentOrders: recentOrders.data ?? [],
-    liveNow:      liveCount.count ?? 0,
-    topProducts:  topProductList,
-    healthScore:  healthRow.data as Record<string, unknown> | null,
-    brainRecs:    (brainRecs.data ?? []) as RecommendationCardData[],
-    pendingCount: pendingCount.count ?? 0,
-    // Pedidos manuais (venda por link direto, fora do catálogo/Yampi) contam
-    // como pagos também — mesma lógica do refreshDailyAnalytics.
-    paidCount:    (paidCount.count ?? 0) + (manualPaidCount.count ?? 0),
-    hasData:      curData.length > 0,
-    hasOrders:    (recentOrders.data?.length ?? 0) > 0,
-  }
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  paid:      'Pago',
-  pending:   'Aguardando',
-  cancelled: 'Cancelado',
-  refunded:  'Reembolsado',
-  shipped:   'Enviado',
-  delivered: 'Entregue',
-}
-const STATUS_COLOR: Record<string, string> = {
-  paid:      '#10B981',
-  pending:   '#F59E0B',
-  cancelled: '#EF4444',
-  refunded:  '#A855F7',
-  shipped:   '#38BDF8',
-  delivered: '#10B981',
-}
-
-function TrendBadge({ up, pct }: { up: boolean; pct: number }) {
-  const color = up ? COLORS.green : COLORS.red
-  const bg = up ? 'rgba(var(--admin-accent-rgb), 0.1)' : 'rgba(var(--admin-red-rgb), 0.1)'
+function KpiCard({ k, refLabel, qs, spark }: { k: Kpi; refLabel: string; qs: string; spark?: (number | null)[] }) {
+  const def = METRICS[k.id]
+  const state: State = k.value === null ? 'na' : (k.state ?? 'ok')
+  const drill = DRILL[k.id]
+  // o gasto Meta tem o botão de somar os 13,8% de imposto, como no layout antigo
+  const isMeta = k.id === 'meta'
   return (
-    <span style={{
-      fontSize: '11px', fontWeight: 600, color, background: bg,
-      padding: '2px 6px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px'
-    }}>
-      {up ? '↑' : '↓'} {pct}%
-    </span>
-  )
-}
-
-interface MetricCardProps {
-  title: string
-  value: ReactNode
-  sub:   string
-  up:    boolean
-  pct:   number
-  icon:  ComponentType<{ size?: number; color?: string }>
-}
-
-function MetricCard({ title, value, sub, up, pct, icon: Icon }: MetricCardProps) {
-  return (
-    <div style={{
-      background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '14px',
-      padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '12px', fontWeight: 600, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</span>
-        {Icon && <Icon size={16} color={COLORS.textMuted} />}
+    <div className={`dsh-kpi${drill ? ' dsh-kpi-go' : ''}${state === 'partial' ? ' dsh-kpi-partial' : ''}`}>
+      {/* link esticado sobre o card; o "?" fica por cima e não navega */}
+      {drill && <Link className="dsh-kpi-link" href={`${drill.href}${qs}`} aria-label={`${def.label}: ver detalhe em ${drill.label}`} />}
+      <div className="dsh-kpi-l">
+        <span>{def.label}</span>
+        <span className="dsh-kpi-tools">
+          {isMeta && <MetaTaxToggleButton />}
+          <HelpTip def={def} />
+        </span>
       </div>
-      <div style={{ fontSize: '24px', fontWeight: 700, color: COLORS.textMain, fontFamily: 'monospace' }}>{value}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <TrendBadge up={up} pct={pct} />
-        <span style={{ fontSize: '12px', color: COLORS.textMuted }}>{sub}</span>
+      <div className="dsh-kpi-v num">
+        {k.value === null
+          ? <span className="dsh-kpi-na">indisponível</span>
+          : isMeta ? <MetaTaxValue value={k.value} /> : <KpiValue value={k.value} kind={k.kind} />}
       </div>
+      {drill && <span className="dsh-kpi-arrow" aria-hidden="true">→</span>}
+      <div className="dsh-kpi-f">
+        {k.value !== null && (k.base !== null && !k.noCmp
+          ? <Delta cur={k.value} base={k.base} tone={k.tone} />
+          : <span className="dsh-dl dsh-dl-neu" title={k.noCmp ? 'Mídia e lucro não têm leitura por hora, então hoje ficam sem comparação' : undefined}>sem comparação</span>)}
+        {state === 'partial' && <span className="dsh-badge dsh-badge-partial">parcial</span>}
+        {!k.sub && k.value !== null && k.base !== null && !k.noCmp && (isMeta
+          ? <MetaTaxBase base={k.base} title={refLabel} />
+          : <span className="dsh-kpi-sub" title={refLabel}>ant. {formatKind(k.base, k.kind)}</span>)}
+      </div>
+      {state !== 'ok' && k.why && <div className="dsh-kpi-why" title={k.why}>{k.why}</div>}
+      {k.sub && <div className="dsh-kpi-sub">{k.sub}</div>}
+      {spark && <Spark vals={spark} color={SPARK_COLOR[k.id] ?? 'var(--c1)'} />}
     </div>
   )
 }
 
-function SectionHeader({ title }: { title: string }) {
+function Card({ title, help, right, cls, children }: { title: string; help?: MetricKey; right?: ReactNode; cls: string; children: ReactNode }) {
   return (
-    <h2 style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textMain, margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-      {title}
-    </h2>
+    <section className={`dsh-card ${cls}`}>
+      <div className="dsh-card-h">
+        <h2 className="dsh-card-t">{title}{help && <HelpTip def={METRICS[help]} />}</h2>
+        {right}
+      </div>
+      {children}
+    </section>
   )
 }
+
+// ── blocos ───────────────────────────────────────────────────────────────────
+
+function kpis(d: DashboardData): { title: string; items: Kpi[] }[] {
+  const { cur, base: ref, curD, baseD: refD } = d
+  const hourCut = d.compareNote !== null && d.singleDay
+  const pm = d.partialMedia.join('; ')
+  const pp = d.partialProfit.join('; ')
+  const mediaState: State = pm ? 'partial' : 'ok'
+  const profitState: State = pp ? 'partial' : 'ok'
+  const missingCost = cur.paid - cur.costOk
+  const noOrigin = cur.yampiPaid - cur.attributed
+
+  return [
+    {
+      title: 'Resultado',
+      items: [
+        { id: 'receita', value: cur.revenue, base: ref.revenue, kind: 'brl', tone: 'up' },
+        { id: 'lucro', value: cur.profit, base: ref.profit, kind: 'brl', tone: 'up', state: profitState, why: pp, noCmp: hourCut },
+        { id: 'margem', value: curD.margin, base: refD.margin, kind: 'pct1', tone: 'up', state: profitState, why: pp ? 'herda o lucro parcial' : undefined, noCmp: hourCut },
+        { id: 'pagos', value: cur.paid, base: ref.paid, kind: 'int', tone: 'up' },
+        { id: 'ticket', value: curD.ticket, base: refD.ticket, kind: 'brl', tone: 'up' },
+        { id: 'conversao', value: curD.conv, base: refD.conv, kind: 'pct2', tone: 'up', why: d.funnelReason ?? undefined },
+      ],
+    },
+    {
+      title: 'Mídia e eficiência',
+      items: [
+        { id: 'midia', value: cur.media, base: ref.media, kind: 'brl', tone: 'neutral', state: mediaState, why: pm, noCmp: hourCut },
+        { id: 'meta', value: cur.meta, base: ref.meta, kind: 'brl', tone: 'neutral', state: d.financials.metaTrusted ? 'ok' : 'partial', why: d.financials.metaTrusted ? undefined : 'API ao vivo falhou — usando o último sync', noCmp: hourCut },
+        { id: 'google', value: cur.google, base: ref.google, kind: 'brl', tone: 'neutral', state: d.financials.googleAdsTrusted ? 'ok' : 'partial', why: d.financials.googleAdsTrusted ? undefined : 'API ao vivo falhou — usando o último sync', noCmp: hourCut },
+        { id: 'mer', value: curD.mer, base: refD.mer, kind: 'x', tone: 'up', state: mediaState, why: pm ? 'mídia incompleta: valor superestimado' : undefined, noCmp: hourCut },
+        { id: 'roi', value: curD.roi, base: refD.roi, kind: 'pct0', tone: 'up', state: profitState, why: pp ? 'depende do lucro parcial' : undefined, noCmp: hourCut },
+        { id: 'cpa', value: curD.cpa, base: refD.cpa, kind: 'brl', tone: 'down', state: mediaState, why: pm ? 'mídia incompleta: valor subestimado' : undefined, noCmp: hourCut },
+      ],
+    },
+    {
+      title: 'Operação e qualidade dos dados',
+      items: [
+        { id: 'pendentes', value: d.pendingNow, base: null, kind: 'int', tone: 'neutral', sub: `${int(d.pendingInPeriod)} criados no período ainda pendentes` },
+        { id: 'carrinhos', value: cur.cartSessions, base: ref.cartSessions, kind: 'int', tone: 'up', why: d.funnelReason ?? undefined },
+        { id: 'checkouts', value: cur.checkoutSessions, base: ref.checkoutSessions, kind: 'int', tone: 'up', why: d.funnelReason ?? undefined },
+        { id: 'recorrentes', value: curD.recShare, base: refD.recShare, kind: 'pct1', tone: 'up' },
+        { id: 'custos', value: curD.costCov, base: null, kind: 'pct1', tone: 'up', state: missingCost > 0 ? 'partial' : 'ok', sub: missingCost > 0 ? `${int(missingCost)} pedido(s) sem custo` : 'todos os pedidos com custo' },
+        { id: 'atribuicao', value: curD.attrCov, base: null, kind: 'pct1', tone: 'up', sub: `${int(noOrigin)} pedido(s) sem origem` },
+      ],
+    },
+  ]
+}
+
+function Summary({ d }: { d: DashboardData }) {
+  const { cur, curD, base: ref } = d
+  const chg = ref.revenue > 0 ? (cur.revenue - ref.revenue) / ref.revenue : null
+  const neg = d.alerts?.[0]
+  return (
+    <section className="dsh-card dsh-sum">
+      <span className="dsh-eyebrow">Em resumo · {d.curLabel}</span>
+      <p>
+        Receita paga de <b className="num">{brl(cur.revenue)}</b>
+        {chg !== null && <> ({chg >= 0 ? '+' : '−'}{pct(Math.abs(chg))} contra {d.refLabel})</>} em <b className="num">{int(cur.paid)} pedidos</b>
+        {curD.ticket !== null && <>, ticket de {brl(curD.ticket)}</>}.{' '}
+        {cur.profit !== null && <>Lucro gerencial de <b className="num">{brl(cur.profit)}</b>{d.partialProfit.length > 0 && <> <span className="dsh-badge dsh-badge-partial">parcial</span></>}{curD.margin !== null && <> e margem de {pct(curD.margin)}</>}. </>}
+        {cur.media !== null && <>Mídia de {brl(cur.media + (cur.mediaTax ?? 0))} com o tributo do Meta{d.partialMedia.length > 0 && <> <span className="dsh-badge dsh-badge-partial">parcial</span></>}{curD.mer !== null && <>, com ROAS combinado de {dec(curD.mer)}</>}.</>}
+      </p>
+      {neg && (
+        <div className="dsh-sum-a">
+          <Link href="/admin/alertas" className="dsh-sum-i">
+            <span className={`dsh-sg ${neg.severidade === 'critico' ? 'dsh-sg-bad' : 'dsh-sg-warn'}`} />
+            <span><small>Atenção</small><b>{neg.titulo}</b></span>
+            <em>→</em>
+          </Link>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function MetaSim({ d }: { d: DashboardData }) {
+  const { profit, meta, mediaTax } = d.cur
+  if (profit === null || meta === null || mediaTax === null) return <p className="dsh-empty">Sem lucro calculado neste período.</p>
+  return (
+    <>
+      <div className="dsh-sim">
+        <div><span>Resultado antes do gasto Meta</span><b className="num">{brl(profit + meta + mediaTax)}</b></div>
+        <div><span>Gasto Meta + tributo de 13,8%</span><b className="num neg">− {brl(meta + mediaTax)}</b></div>
+        <div className="dsh-sim-t"><span>Lucro gerencial (com Meta)</span><b className="num">{brl(profit)}</b></div>
+      </div>
+      <p className="dsh-note">
+        Simulação com os mesmos pedidos e a mesma receita. Não quer dizer que a receita existiria sem anúncio.
+        {d.partialProfit.length > 0 && <> <b>Parcial:</b> {d.partialProfit.join('; ')}.</>}
+      </p>
+    </>
+  )
+}
+
+function Funnel({ d }: { d: DashboardData }) {
+  const c = d.cur
+  if (c.sessions === null || c.productSessions === null || c.cartSessions === null || c.checkoutSessions === null) {
+    return <p className="dsh-empty">Funil indisponível: {d.funnelReason ?? 'sem dados do tracking'}.</p>
+  }
+  const steps: [string, number][] = [
+    ['Sessões', c.sessions],
+    ['Viram produto', c.productSessions],
+    ['Adicionaram ao carrinho', c.cartSessions],
+    ['Iniciaram checkout', c.checkoutSessions],
+    ['Compraram (pago)', c.purchaseSessions],
+  ]
+  const top = steps[0][1] || 1
+  let worst = 1, worstRate = Infinity
+  for (let i = 1; i < steps.length; i++) {
+    const r = steps[i - 1][1] > 0 ? steps[i][1] / steps[i - 1][1] : Infinity
+    if (r < worstRate) { worstRate = r; worst = i }
+  }
+  return (
+    <>
+      <div className="dsh-fun">
+        {steps.map(([label, v], i) => (
+          <div className={`dsh-fun-r${i === worst && Number.isFinite(worstRate) ? ' worst' : ''}`} key={label}>
+            <span className="dsh-fun-l">{label}</span>
+            {/* raiz quadrada: sem ela as etapas finais somem numa barra de 1px.
+                70% deixa espaço para o número ao lado da barra. */}
+            <div className="dsh-fun-b"><i style={{ width: `${Math.max(3, Math.sqrt(v / top) * 70)}%` }} /><b className="num">{int(v)}</b></div>
+            <span className="dsh-fun-c num">{i && steps[i - 1][1] > 0 ? pct(v / steps[i - 1][1]) : ''}</span>
+            <span className="dsh-fun-a num">{i ? pct(v / top, 2) : ''}</span>
+          </div>
+        ))}
+      </div>
+      <div className="dsh-fun-foot">
+        {Number.isFinite(worstRate) && <span>Maior abandono: <b>{steps[worst - 1][0].toLowerCase()} → {steps[worst][0].toLowerCase()} ({pct(1 - worstRate)} saem)</b></span>}
+        <span><b className="num">{int(c.noSessionPaid)}</b> compra(s) sem sessão identificada — entram na receita, não no funil.</span>
+        <span>Largura das barras em escala de raiz quadrada. <Link className="dsh-link" href="/admin/brain">Análise completa do funil →</Link></span>
+      </div>
+    </>
+  )
+}
+
+function States({ d }: { d: DashboardData }) {
+  const top = d.states.slice(0, 8)
+  if (top.length === 0) return <p className="dsh-empty">Nenhum pedido pago no período.</p>
+  const max = top[0].revenue || 1
+  return (
+    <>
+      <div className="dsh-hb">
+        {top.map((s, i) => (
+          <div className="dsh-hb-r" key={s.uf}>
+            <span className="dsh-hb-l">{s.uf}</span>
+            <span className="dsh-hb-v">{brlShort(s.revenue)} · {int(s.paid)} ped. · ticket {brlShort(s.ticket)}</span>
+            <div className="dsh-hb-t"><i style={{ width: `${(s.revenue / max) * 100}%`, ['--i' as string]: i }} /></div>
+          </div>
+        ))}
+      </div>
+      <p className="dsh-note">Estado de entrega dos pedidos pagos. Vendas manuais ficam fora (sem endereço no admin).</p>
+    </>
+  )
+}
+
+function Alerts({ d }: { d: DashboardData }) {
+  if (d.alerts === null) return <p className="dsh-empty">A verificação de alertas falhou agora — ver a página de Alertas.</p>
+  if (d.alerts.length === 0) return <p className="dsh-empty">Nenhum alerta aberto neste momento.</p>
+  return (
+    <div className="dsh-al">
+      {d.alerts.slice(0, 5).map(a => (
+        <Link key={a.chave} href="/admin/alertas">
+          <span className={`dsh-sg ${a.severidade === 'critico' ? 'dsh-sg-bad' : 'dsh-sg-warn'}`} />
+          <span><b>{a.titulo}</b><small>{a.detalhe}</small></span>
+          <span className={`dsh-badge ${a.severidade === 'critico' ? 'dsh-badge-bad' : 'dsh-badge-warn'}`}>{a.severidade === 'critico' ? 'alta' : 'média'}</span>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+// ── página ───────────────────────────────────────────────────────────────────
 
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; from?: string; to?: string }>
+  searchParams: Promise<{ range?: string; from?: string; to?: string; cmp?: string }>
 }) {
   if (!(await checkAuth())) return null
 
   const sp    = await searchParams
   const range = getDateRangeFromSearchParams(sp)
-  const db    = getDb()
-  const [d, brainQ, metaStats, liveSpend, salesBreakdown, financials] = await Promise.all([
-    getDashboardData(range),
-    getBrainQuickStats(db, range),
-    getMetaDashboardStats(db, range),
+  const [d, liveSpend, salesBreakdown] = await Promise.all([
+    getDashboardData(range, sp.cmp),
     getMetaLiveSpend(range.start, range.endExclusive),
     getSalesBreakdown(range),
-    getFinancialBreakdown(range),
   ])
+  const f = d.financials
+  const meta = liveSpend.data
 
-  // Só o dado marcado como confiável vira número na tela. Quando a consulta ao
-  // Meta falha, a UI mostra "indisponível" em vez de R$ 0,00 — zero silencioso
-  // aqui infla ROAS e Lucro Líquido sem deixar rastro.
-  const metaLive     = isUsable(liveSpend) ? liveSpend.data : null
-  const metaEstado   = statusLabel(liveSpend)
-  const metaParcial  = (metaLive?.failedAccounts.length ?? 0) > 0
+  const groups = kpis(d)
+  // Mantém o período ao descer para o detalhe.
+  const qsParams = new URLSearchParams()
+  for (const key of ['range', 'from', 'to'] as const) { const v = sp[key]; if (v) qsParams.set(key, v) }
+  const qs = qsParams.size ? `?${qsParams.toString()}` : ''
+  const sparks: Partial<Record<MetricKey, (number | null)[]>> = d.series.hourly ? {} : {
+    receita: d.series.cur.map(p => p.revenue),
+    lucro:   d.series.cur.map(p => p.profit),
+    pagos:   d.series.cur.map(p => p.paid),
+    midia:   d.series.cur.map(p => p.media),
+  }
+  const sourcesBad = [
+    ...d.partialMedia.map(s => `${s.replace(' (usando o último sync)', '')} parcial`),
+    ...(d.funnelReason ? ['Tracking: funil indisponível'] : []),
+  ]
+  const csvPeriod =`${d.curLabel} (comparação: ${d.refLabel})`
+  const refLabel = d.refLabel
+  const anteriorLabel = d.singleDay ? (d.curLabel.startsWith('Hoje') ? 'Ontem até esta hora' : 'Dia anterior') : 'Período anterior'
 
-  const totalAdClicks = metaLive?.total.clicks ?? 0
-
-  const revCur  = d.cur.revenue
-  const revPrev = d.prev.revenue
-  const { pct: revPct, up: revUp } = delta(revCur, revPrev)
-
-  const ticketMedioCur  = d.cur.orders  ? revCur  / d.cur.orders  : 0
-  const ticketMedioPrev = d.prev.orders ? revPrev / d.prev.orders : 0
-
-  const widgets: DashboardWidget[] = [
+  const more: DashboardWidget[] = [
     {
-      id: 'overview',
-      label: 'Visão Geral (Receita, Investimento, Métricas)',
+      id: 'composicao',
+      label: 'Composição do lucro e investimento por conta',
       node: (
-      <MetaTaxProvider>
-      <ReorderableRow
-        storageKey="overview"
-        gridTemplateColumns="1fr 1fr 2fr"
-        items={[
-          {
-            id: 'receita',
-            node: (
-              <div style={{
-                background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px',
-                padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.3)', height: '100%',
-              }}>
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Lucro Líquido</div>
-                  <div style={{ fontSize: '36px', fontWeight: 800, color: financials.netProfit >= 0 ? COLORS.textMain : COLORS.red, fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {fmt(financials.netProfit)}
-                    {financials.missingCostSources.length > 0 && (
-                      <span style={{ fontSize: '18px', color: '#f59e0b', marginLeft: '8px' }}>*</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: financials.margin >= 0 ? COLORS.green : COLORS.red, background: financials.margin >= 0 ? 'rgba(var(--admin-accent-rgb), 0.1)' : 'rgba(var(--admin-red-rgb), 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
-                      {(financials.margin * 100).toFixed(1)}% margem
-                    </span>
-                    <span style={{ fontSize: '13px', color: COLORS.textMuted }}>Receita {fmt(revCur)}</span>
-                    <TrendBadge up={revUp} pct={revPct} />
-                  </div>
-                  {financials.missingCostSources.length > 0 && (
-                    <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '8px', lineHeight: 1.5 }}>
-                      Sem {financials.missingCostSources.join(' e ')} — o lucro real é menor que este.
-                    </div>
-                  )}
-                </div>
-                <div style={{ height: '60px', marginTop: '24px', display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
-                  {[30, 45, 20, 60, 40, 80, 50, 90, 70, 100].map((h, i) => (
-                    <div key={i} style={{ flex: 1, background: `linear-gradient(to top, rgba(var(--admin-accent-rgb), 0.05), rgba(var(--admin-accent-rgb), 0.4))`, height: `${h}%`, borderRadius: '2px 2px 0 0', borderTop: `1px solid ${COLORS.green}` }} />
-                  ))}
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'investimento',
-            node: (
-              <div style={{
-                background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px',
-                padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.3)', height: '100%',
-              }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Investimento Meta</span>
-                    {metaLive && !metaParcial && (
-                      <span style={{ background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px' }}>LIVE</span>
-                    )}
-                    {metaLive && metaParcial && (
-                      <span style={{ background: 'rgba(245,158,11,0.12)', color: '#b45309', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px' }}>PARCIAL</span>
-                    )}
-                    {!metaLive && (
-                      <span style={{ background: 'rgba(239,68,68,0.12)', color: '#dc2626', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '99px', textTransform: 'uppercase' }}>{metaEstado}</span>
-                    )}
-                    <MetaTaxToggle />
-                  </div>
-                  <div style={{ fontSize: '36px', fontWeight: 800, color: COLORS.textMain, fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {metaLive ? <MarketingSpendAmount metaRaw={metaLive.total.spend} googleRaw={0} /> : '—'}
-                  </div>
-                  {metaLive && (
-                    <div style={{ fontSize: '13px', color: metaParcial ? '#b45309' : COLORS.textMuted }}>
-                      {metaLive.total.impressions.toLocaleString('pt-BR')} imp · {metaLive.total.clicks.toLocaleString('pt-BR')} cliques
-                      {metaParcial && ` · sem ${metaLive.failedAccounts.join(', ')}`}
-                    </div>
-                  )}
-                  {!metaLive && (
-                    <div style={{ fontSize: '13px', color: '#dc2626' }}>
-                      Não foi possível ler o gasto — o número não é zero, é desconhecido.
-                    </div>
-                  )}
-                </div>
-
-                {metaLive && (
-                  <InvestmentBarChart
-                    sources={metaLive.accounts.map(acc => ({ name: acc.name, spend: acc.period.spend, isMeta: true }))}
+        <div style={{ display: 'grid', gap: 16 }}>
+          <ReorderableRow
+            storageKey="composicao"
+            gridTemplateColumns="1fr 1fr"
+            items={[
+              {
+                id: 'lucro-liquido',
+                node: (
+                  <LucroLiquidoCard
+                    revenue={f.revenue} productCost={f.productCost} freightCost={f.freightCost} freightPassThrough={f.freightPassThrough}
+                    logisticsCost={f.logisticsCost} gatewayFee={f.gatewayFee} yampiFee={f.yampiFee}
+                    yampiMonthly={f.yampiMonthly} mediaTax={f.mediaTax} salesTax={f.salesTax}
+                    metaSpend={f.metaSpend} googleAdsSpend={f.googleAdsSpend} netProfit={f.netProfit}
+                    margin={f.margin} missingCostSources={f.missingCostSources}
                   />
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'metrics-grid',
-            node: (
-              <ReorderableRow
-                storageKey="overview-metrics"
-                gridTemplateColumns="repeat(3, 1fr)"
-                mobileColumns={2}
-                items={[
-                  { id: 'pedidos', node: <MetricCard title="Pedidos" value={d.cur.orders} sub={`Ant: ${d.prev.orders}`} icon={ShoppingBag} {...delta(d.cur.orders, d.prev.orders)} /> },
-                  { id: 'ticket-medio', node: <MetricCard title="Ticket Médio" value={fmt(ticketMedioCur)} sub={`Ant: ${fmt(ticketMedioPrev)}`} icon={DollarSign} {...delta(ticketMedioCur, ticketMedioPrev)} /> },
-                  { id: 'conversao', node: <MetricCard title="Conversão" value={`${(d.cur.conversion_rate * 100).toFixed(2)}%`} sub={`Sessões: ${d.cur.sessions}`} icon={Percent} {...delta(d.cur.conversion_rate, 0)} /> },
-                  // ROAS/ROI ocupa o lugar do antigo card de Sessões — a contagem
-                  // de sessões já aparece no subtítulo do card de Conversão.
-                  { id: 'roas-roi', node: <RoasRoiCard revenue={revCur} netProfit={financials.netProfit} metaRaw={metaLive?.total.spend ?? 0} googleRaw={0} partial={!financials.metaTrusted} /> },
-                  // ROAS e CPA dividem pelo investimento — com a fonte muda o
-                  // denominador encolhe e os dois ficam otimistas. O rótulo diz isso.
-                  { id: 'cpa', node: <MetricCard title="CPA" value={metaLive && d.paidCount > 0 ? <MarketingSpendAmount metaRaw={metaLive.total.spend} googleRaw={0} divideBy={d.paidCount} /> : '—'} sub={financials.metaTrusted ? 'Custo por Aquisição' : 'Parcial — CPA real é maior'} icon={Target} up={true} pct={0} /> },
-                  { id: 'pagos', node: <MetricCard title="Pagos" value={d.paidCount} sub="Confirmados" icon={CheckCircle2} up={true} pct={0} /> },
-                ]}
-              />
-            ),
-          },
-        ]}
-      />
-
-      {/* Composição do Lucro Líquido: cada card abre o detalhe no hover, pra que
-          o número do topo nunca seja uma caixa-preta. */}
-      <div className="grid grid-cols-2 md:grid-cols-5" style={{ gap: '12px', marginTop: '16px' }}>
-        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '16px 18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-            <DollarSign size={13} color={COLORS.textMuted} />
-            <span style={{ fontSize: '11px', fontWeight: 600, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Receita Aprovada</span>
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: COLORS.textMain, fontFamily: 'monospace', lineHeight: 1.1 }}>{fmt(financials.revenue)}</div>
-        </div>
-
-        <HoverBreakdownCard
-          icon={<Percent size={13} color={COLORS.textMuted} />}
-          label="Margem Líquida"
-          value={
-            <span>
-              {`${(financials.margin * 100).toFixed(1)}%`}
-              {financials.missingCostSources.length > 0 && (
-                <span style={{ fontSize: '13px', color: '#f59e0b', marginLeft: '5px' }}>*</span>
-              )}
-            </span>
-          }
-          rows={[
-            { label: 'Receita',       value: fmt(financials.revenue) },
-            { label: 'Custo total',   value: fmt(financials.revenue - financials.netProfit) },
-            { label: 'Lucro Líquido', value: fmt(financials.netProfit) },
-          ]}
-          footerLabel={financials.missingCostSources.length > 0 ? 'Atenção' : undefined}
-          footerValue={
-            financials.missingCostSources.length > 0
-              ? `Sem ${financials.missingCostSources.join(' e ')} — lucro real é menor`
-              : undefined
-          }
-        />
-
-        <HoverBreakdownCard
-          icon={<Package size={13} color={COLORS.textMuted} />}
-          label="Custo de Produtos"
-          value={fmt(financials.productCost + financials.freightCost)}
-          rows={[
-            { label: 'Custo de Produto', value: fmt(financials.productCost) },
-            { label: 'Frete',            value: fmt(financials.freightCost) },
-          ]}
-          footerLabel="Produtos / Receita"
-          footerValue={financials.revenue > 0 ? `${((financials.productCost / financials.revenue) * 100).toFixed(2)}%` : '—'}
-        />
-
-        <HoverBreakdownCard
-          icon={<Receipt size={13} color={COLORS.textMuted} />}
-          label="Taxas e Impostos"
-          value={fmt(financials.gatewayFee + financials.yampiFee)}
-          rows={[
-            { label: 'Gateway (AppMax)', value: fmt(financials.gatewayFee) },
-            { label: 'Checkout (Yampi)', value: fmt(financials.yampiFee) },
-          ]}
-          footerLabel="Taxas / Receita"
-          footerValue={financials.revenue > 0 ? `${(((financials.gatewayFee + financials.yampiFee) / financials.revenue) * 100).toFixed(2)}%` : '—'}
-        />
-
-        <HoverBreakdownCard
-          icon={<Megaphone size={13} color={COLORS.textMuted} />}
-          label="Custo Marketing"
-          value={
-            <span>
-              {fmt(financials.metaSpend)}
-              {financials.missingCostSources.length > 0 && (
-                <span style={{ fontSize: '13px', color: '#f59e0b', marginLeft: '5px' }}>*</span>
-              )}
-            </span>
-          }
-          // Só Meta aqui de propósito: a Just Runner não tem integração com o
-          // Google Ads. Listar uma linha "Google Ads R$ 0,00" daria a entender
-          // que houve leitura e o gasto foi zero.
-          rows={[
-            {
-              label: 'Meta (Facebook/Instagram)',
-              value: financials.metaTrusted
-                ? fmt(financials.metaSpend)
-                : <span style={{ color: '#f59e0b' }}>indisponível</span>,
-            },
-          ]}
-          footerLabel="Ads / Receita"
-          footerValue={financials.revenue > 0 ? `${((financials.metaSpend / financials.revenue) * 100).toFixed(2)}%` : '—'}
-        />
-      </div>
-      </MetaTaxProvider>
-      ),
-    },
-    {
-      id: 'funnel',
-      label: 'Funil de Conversão',
-      node: (
-        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px' }}>
-          <SectionHeader title="Funil de Conversão" />
-          <ConversionFunnelVisual
-            steps={[
-              { label: 'Cliques',    value: totalAdClicks,         icon: MousePointerClick },
-              { label: 'Visitantes', value: d.cur.page_views,      icon: Users },
-              { label: 'Carrinho',   value: d.cur.add_to_carts,    icon: ShoppingBag },
-              { label: 'Checkout',   value: d.cur.checkout_starts, icon: CreditCard },
-              { label: 'Pedido',     value: d.cur.orders,          icon: CheckCircle2 },
+                ),
+              },
+              {
+                id: 'investimento-contas',
+                node: (
+                  <section className="dsh-card" style={{ height: '100%' }}>
+                    <div className="dsh-card-h"><h2 className="dsh-card-t">Investimento por conta</h2></div>
+                    <InvestmentBarChart
+                      sources={[
+                        ...(meta?.accounts.map(acc => ({ name: acc.name, spend: acc.period.spend, isMeta: true })) ?? []),
+                        ...(f.googleAdsTrusted ? [{ name: 'Google Ads', spend: f.googleAdsSpend, isMeta: false }] : []),
+                      ]}
+                    />
+                  </section>
+                ),
+              },
             ]}
           />
+          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 12 }}>
+            <HoverBreakdownCard
+              icon={<DollarSign size={13} color="var(--admin-text-muted)" />}
+              label="Receita Aprovada"
+              value={brl(f.revenue)}
+              rows={[{ label: 'Pedidos pagos', value: int(d.cur.paid) }]}
+            />
+            <HoverBreakdownCard
+              icon={<Package size={13} color="var(--admin-text-muted)" />}
+              label="Custos Operacionais"
+              value={brl(f.productCost + f.freightCost + f.logisticsCost)}
+              rows={[
+                { label: 'Custo de Produto', value: brl(f.productCost) },
+                { label: 'Frete pago pela loja', value: brl(f.freightCost - f.freightPassThrough) },
+                { label: 'Frete repassado (pago pelo cliente)', value: brl(f.freightPassThrough) },
+                { label: 'Logística (por pedido)', value: brl(f.logisticsCost) },
+              ]}
+              footerLabel="Produtos / Receita"
+              footerValue={f.revenue > 0 ? pct(f.productCost / f.revenue, 2) : '—'}
+            />
+            <HoverBreakdownCard
+              icon={<Receipt size={13} color="var(--admin-text-muted)" />}
+              label="Taxas e Impostos"
+              value={brl(f.gatewayFee + f.yampiFee + f.yampiMonthly + f.mediaTax)}
+              rows={[
+                { label: 'Gateway (AppMax)', value: brl(f.gatewayFee) },
+                { label: 'Checkout (Yampi)', value: brl(f.yampiFee) },
+                { label: 'Mensalidade (Yampi)', value: brl(f.yampiMonthly) },
+                { label: 'Tributo 13,8% s/ mídia', value: brl(f.mediaTax) },
+              ]}
+              footerLabel="Taxas / Receita"
+              footerValue={f.revenue > 0 ? pct((f.gatewayFee + f.yampiFee + f.yampiMonthly + f.mediaTax) / f.revenue, 2) : '—'}
+            />
+            <HoverBreakdownCard
+              icon={<Megaphone size={13} color="var(--admin-text-muted)" />}
+              label="Custo Marketing"
+              value={brl(f.metaSpend + f.googleAdsSpend)}
+              rows={[
+                { label: 'Meta (Facebook/Instagram)', value: f.metaTrusted ? brl(f.metaSpend) : <span style={{ color: 'var(--admin-alert)' }}>parcial</span> },
+                { label: 'Google Ads', value: f.googleAdsTrusted ? brl(f.googleAdsSpend) : <span style={{ color: 'var(--admin-alert)' }}>parcial</span> },
+              ]}
+              footerLabel="Ads / Receita"
+              footerValue={f.revenue > 0 ? pct((f.metaSpend + f.googleAdsSpend) / f.revenue, 2) : '—'}
+            />
+          </div>
         </div>
       ),
     },
     {
       id: 'vendas-detalhe',
-      label: 'Vendas por Horário, Pagamento e Aprovação',
+      label: 'Vendas por horário, pagamento e aprovação',
       node: (
-      <ReorderableRow
-        storageKey="vendas-detalhe"
-        gridTemplateColumns="2fr 1fr 1fr"
-        items={[
-          {
-            id: 'vendas-horario',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Vendas por Horário" />
-                <HourlySalesChart data={salesBreakdown.hourly} />
-              </div>
-            ),
-          },
-          {
-            id: 'vendas-pagamento',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Vendas por Pagamento" />
-                <PaymentMethodDonut data={salesBreakdown.byPayment} />
-              </div>
-            ),
-          },
-          {
-            id: 'taxa-aprovacao',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Taxa de Aprovação" />
-                <ApprovalRateRings data={salesBreakdown.approvalByPayment} />
-              </div>
-            ),
-          },
-        ]}
-      />
+        <ReorderableRow
+          storageKey="vendas-detalhe"
+          gridTemplateColumns="2fr 1fr 1fr"
+          items={[
+            { id: 'vendas-horario', node: <section className="dsh-card" style={{ height: '100%' }}><div className="dsh-card-h"><h2 className="dsh-card-t">Vendas por horário</h2></div><HourlySalesChart data={salesBreakdown.hourly} /></section> },
+            { id: 'vendas-pagamento', node: <section className="dsh-card" style={{ height: '100%' }}><div className="dsh-card-h"><h2 className="dsh-card-t">Vendas por pagamento</h2></div><PaymentMethodDonut data={salesBreakdown.byPayment} /></section> },
+            { id: 'taxa-aprovacao', node: <section className="dsh-card" style={{ height: '100%' }}><div className="dsh-card-h"><h2 className="dsh-card-t">Taxa de aprovação</h2></div><ApprovalRateRings data={salesBreakdown.approvalByPayment} /></section> },
+          ]}
+        />
       ),
     },
-    {
-      id: 'regional-analysis',
-      label: 'Análise Regional',
-      node: <RegionalAnalysis data={salesBreakdown.byState} />,
-    },
-    {
-      id: 'top-status',
-      label: 'Top Produtos e Status de Pedidos',
-      node: (
-      <ReorderableRow
-        storageKey="top-status"
-        gridTemplateColumns="1fr 1fr"
-        items={[
-          {
-            id: 'top-produtos',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Top Produtos (7D)" />
-                {d.topProducts.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: COLORS.textMuted, margin: 0 }}>Sem dados de visualização ainda.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {d.topProducts.map(([slug, count], i) => (
-                      <div key={slug} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: `1px solid ${COLORS.border}` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span style={{ fontSize: '12px', color: COLORS.textMuted, width: '16px' }}>{i + 1}.</span>
-                          <span style={{ fontSize: '13px', color: COLORS.textMain }}>{slug}</span>
-                        </div>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: COLORS.info, background: 'rgba(56, 189, 248, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                          {count} views
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'status-diario',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <SectionHeader title="Status de Pedidos (Hoje)" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, justifyContent: 'center' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS.green }}></div><span style={{ fontSize: '13px', color: COLORS.textSec }}>Pagos</span></div>
-                     <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textMain }}>{d.paidCount}</span>
-                   </div>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS.alert }}></div><span style={{ fontSize: '13px', color: COLORS.textSec }}>Pendentes</span></div>
-                     <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textMain }}>{d.pendingCount}</span>
-                   </div>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS.textMuted }}></div><span style={{ fontSize: '13px', color: COLORS.textSec }}>Outros</span></div>
-                     <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textMain }}>{d.cur.orders - d.paidCount - d.pendingCount}</span>
-                   </div>
-                </div>
-              </div>
-            ),
-          },
-        ]}
-      />
-      ),
-    },
-    {
-      id: 'orders-alerts',
-      label: 'Pedidos Recentes e Alertas Operacionais',
-      node: (
-      <ReorderableRow
-        storageKey="orders-alerts"
-        gridTemplateColumns="2fr 1fr"
-        items={[
-          {
-            id: 'pedidos-recentes',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Pedidos Recentes" />
-                {d.recentOrders.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: COLORS.textMuted }}>Nenhum pedido recente registrado.</p>
-                ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: `1px solid ${COLORS.border}` }}>
-                        {['Pedido', 'Cliente', 'Valor', 'Status', 'Data'].map((h) => (
-                          <th key={h} style={{ textAlign: 'left', padding: '12px 0', color: COLORS.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '11px' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {d.recentOrders.map((order) => {
-                        const snap = order.customer_snapshot as Record<string, string> | null
-                        const name = snap ? [snap.first_name, snap.last_name].filter(Boolean).join(' ') || snap.email || '—' : '—'
-                        const color = STATUS_COLOR[order.status] ?? COLORS.textMuted
-                        const label = STATUS_LABEL[order.status] ?? order.status
-                        return (
-                          <tr key={order.external_id} style={{ borderBottom: `1px solid var(--admin-border)` }}>
-                            <td style={{ padding: '14px 0', color: COLORS.textMain, fontFamily: 'monospace' }}>#{order.external_id}</td>
-                            <td style={{ padding: '14px 0', color: COLORS.textSec }}>{name}</td>
-                            <td style={{ padding: '14px 0', fontWeight: 600, color: COLORS.textMain }}>{fmt(parseFloat(String(order.total)))}</td>
-                            <td style={{ padding: '14px 0' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 600, color, background: `${color}15`, padding: '4px 8px', borderRadius: '4px', border: `1px solid ${color}30` }}>
-                                {label}
-                              </span>
-                            </td>
-                            <td style={{ padding: '14px 0', color: COLORS.textMuted, fontSize: '12px' }}>
-                              {new Date(order.created_at).toLocaleDateString('pt-BR', { timeZone: TZ })}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'alertas',
-            node: (
-              <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px', height: '100%' }}>
-                <SectionHeader title="Alertas Operacionais" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                   {d.pendingCount > 5 && (
-                     <div style={{ display: 'flex', gap: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '12px', borderRadius: '8px' }}>
-                       <AlertCircle size={16} color={COLORS.alert} style={{ flexShrink: 0, marginTop: '2px' }} />
-                       <div>
-                         <div style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textMain, marginBottom: '2px' }}>Pico de Boletos/Pix Pendentes</div>
-                         <div style={{ fontSize: '12px', color: COLORS.textSec }}>Existem {d.pendingCount} pedidos pendentes. Considere ativar recuperação.</div>
-                       </div>
-                     </div>
-                   )}
-                   <div style={{ display: 'flex', gap: '12px', background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '12px', borderRadius: '8px' }}>
-                       <Tag size={16} color={COLORS.info} style={{ flexShrink: 0, marginTop: '2px' }} />
-                       <div>
-                         <div style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textMain, marginBottom: '2px' }}>Produtos Esgotados</div>
-                         <div style={{ fontSize: '12px', color: COLORS.textSec }}>Verifique o catálogo, alguns top sellers estão sem estoque na Yampi.</div>
-                       </div>
-                     </div>
-                </div>
-              </div>
-            ),
-          },
-        ]}
-      />
-      ),
-    },
-    {
-      id: 'commerce-brain',
-      label: 'Commerce Brain',
-      node: (
-      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BrainCircuit size={18} color="var(--admin-accent)" />
-            <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: COLORS.textMain, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Commerce Brain</h2>
-            <span style={{ background: 'rgba(var(--admin-accent-rgb),0.12)', color: 'var(--admin-accent)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', letterSpacing: '0.4px' }}>
-              TEMPO REAL
-            </span>
-          </div>
-          <Link href="/admin/brain" style={{ fontSize: '12px', color: 'var(--admin-accent)', textDecoration: 'none', fontWeight: 500 }}>
-            Análise completa →
-          </Link>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '14px' }}>
-          {[
-            { label: 'Add to Cart', value: brainQ.atc },
-            { label: 'Checkouts',   value: brainQ.checkout },
-            { label: 'Pedidos pagos', value: brainQ.paid },
-            { label: 'Gargalo principal', value: brainQ.biggestGap },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'var(--admin-bg)', borderRadius: '10px', padding: '12px 14px', border: `1px solid ${COLORS.border}` }}>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '6px' }}>{label}</div>
-              <div style={{ fontSize: typeof value === 'number' ? '20px' : '13px', fontWeight: 700, color: COLORS.textMain, fontFamily: typeof value === 'number' ? 'monospace' : 'inherit', lineHeight: 1.2 }}>
-                {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {brainQ.topInsight ? (
-          <div style={{ display: 'flex', gap: '12px', background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px', padding: '12px 14px' }}>
-            <AlertCircle size={15} color={COLORS.alert} style={{ flexShrink: 0, marginTop: '1px' }} />
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: COLORS.textMain, marginBottom: '2px' }}>{brainQ.biggestGap}</div>
-              <div style={{ fontSize: '12px', color: COLORS.textSec, marginBottom: '4px' }}>{brainQ.topInsight}</div>
-              <div style={{ fontSize: '11px', color: COLORS.textMuted, fontStyle: 'italic' }}>→ {brainQ.topInsightAction}</div>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '10px', padding: '12px 14px' }}>
-            <CheckCircle2 size={15} color={COLORS.green} />
-            <span style={{ fontSize: '13px', color: COLORS.textSec }}>
-              {brainQ.atc >= 5 ? 'Funil dentro dos parâmetros esperados no período selecionado.' : 'Volume ainda baixo para diagnóstico completo — dados crescendo.'}
-            </span>
-          </div>
-        )}
-      </div>
-      ),
-    },
-    {
-      id: 'meta-ads',
-      label: 'Meta Ads',
-      node: (
-      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <TrendingUp size={18} color="var(--admin-accent)" />
-            <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: COLORS.textMain, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Meta Ads</h2>
-            {metaStats ? (
-              <span style={{ background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', letterSpacing: '0.4px' }}>CONECTADO</span>
-            ) : (
-              <span style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', letterSpacing: '0.4px' }}>NÃO CONECTADO</span>
-            )}
-          </div>
-          <Link href="/admin/meta-ads" style={{ fontSize: '12px', color: 'var(--admin-accent)', textDecoration: 'none', fontWeight: 500 }}>
-            Ver Meta Ads →
-          </Link>
-        </div>
-
-        {metaStats && metaStats.totalSpend > 0 ? (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '14px' }}>
-              {[
-                { label: 'Investimento', value: `R$ ${metaStats.totalSpend.toFixed(2)}` },
-                { label: 'ROAS Meta',    value: `${metaStats.metaRoas.toFixed(2)}×` },
-                { label: 'Melhor campanha', value: metaStats.topCampaign ?? '—' },
-                { label: 'Em alerta',    value: metaStats.alertCampaign ?? 'Nenhuma' },
-              ].map(({ label, value }) => (
-                <div key={label} style={{ background: 'var(--admin-bg)', borderRadius: '10px', padding: '12px 14px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ fontSize: '10px', fontWeight: 600, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '6px' }}>{label}</div>
-                  <div style={{ fontSize: typeof value === 'number' ? '20px' : '13px', fontWeight: 700, color: COLORS.textMain, lineHeight: 1.2 }}>{value}</div>
-                </div>
-              ))}
-            </div>
-            {metaStats.alertCampaign && (
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: COLORS.textSec }}>
-                <AlertCircle size={14} color="#ef4444" />
-                <span>Campanha <strong>&quot;{metaStats.alertCampaign}&quot;</strong> com gasto sem retorno. Revisar segmentação.</span>
-              </div>
-            )}
-          </>
-        ) : metaStats ? (
-          <div style={{ fontSize: '13px', color: COLORS.textMuted, padding: '8px 0' }}>
-            Meta Ads conectado mas sem dados para este período.{' '}
-            <Link href="/admin/meta-ads" style={{ color: 'var(--admin-accent)', fontWeight: 500, textDecoration: 'none' }}>Sincronizar →</Link>
-          </div>
-        ) : (
-          <div style={{ fontSize: '13px', color: COLORS.textMuted, padding: '8px 0' }}>
-            Meta Ads não conectado. Configure <code style={{ fontFamily: 'monospace', fontSize: '12px' }}>META_ACCESS_TOKEN</code> e <code style={{ fontFamily: 'monospace', fontSize: '12px' }}>META_AD_ACCOUNT_ID</code> para ver dados de campanhas.{' '}
-            <Link href="/admin/meta-ads" style={{ color: 'var(--admin-accent)', fontWeight: 500, textDecoration: 'none' }}>Como conectar →</Link>
-          </div>
-        )}
-      </div>
-      ),
-    },
-    {
-      id: 'brain-panel',
-      label: 'Recomendações do Commerce Brain',
-      node: <BrainPanel recommendations={d.brainRecs} />,
-    },
+    { id: 'regional-analysis', label: 'Mapa de vendas por estado', node: <RegionalAnalysis data={salesBreakdown.byState} /> },
   ]
 
   return (
-    <div className="px-4 py-6 md:px-10 md:py-8" style={{ maxWidth: '1600px', margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', background: COLORS.bg, minHeight: '100vh' }}>
-
-      {/* Top Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: COLORS.textMain }}>Dashboard</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: COLORS.textSec }}>
-            Visão geral do novo site oficial · <span style={{ color: d.liveNow > 0 ? COLORS.green : COLORS.textMuted }}>{d.liveNow > 0 ? `● ${d.liveNow} online` : '○ offline'}</span>
-          </p>
+    <div className="dsh">
+      <header className="dsh-top">
+        <div className="dsh-top-r1">
+          <div className="dsh-ttl">
+            <span>Visão geral</span>
+            <h1>Dashboard</h1>
+          </div>
+          <Link href="/admin/saude" className={`dsh-src ${sourcesBad.length ? 'dsh-src-bad' : 'dsh-src-ok'}`} title={sourcesBad.join('; ') || undefined}>
+            <i />{sourcesBad.length ? sourcesBad[0] : 'Fontes em dia'}
+          </Link>
+          <Link href="/admin/alertas" className="dsh-bell" aria-label={`Alertas: ${d.alerts?.length ?? 0} abertos`}>
+            <Bell size={16} />
+            {(d.alerts?.length ?? 0) > 0 && <em>{d.alerts?.length}</em>}
+          </Link>
+          <div className="dsh-actions">
+            <CeoRefreshButton />
+            <CeoSyncButton />
+          </div>
         </div>
+        <PeriodBar
+          compare={d.compare}
+          singleDay={d.singleDay}
+          anteriorLabel={anteriorLabel}
+          note={<><b>{d.curLabel}</b> · comparado com {refLabel}</>}
+        />
+      </header>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <CeoRefreshButton />
-          <CeoSyncButton />
+      {/* Informação de contexto, fechada por padrão para não empurrar os números
+          para baixo. Alerta de dado incompleto fica fora, sempre visível. */}
+      <details className="dsh-info">
+        <summary>Sobre este painel <span>· fontes, atualização e comparação</span></summary>
+        <div className="dsh-info-body">
+          <p className="dsh-desc">Leitura executiva do período: resultado, investimento, eficiência e funil. Clique em um indicador para ver o detalhe; o “?” explica a conta.</p>
+          <div className="dsh-meta">
+            <span>Fontes: pedidos Yampi, tracking da loja, Meta Ads, Google Ads, custos</span>
+            <span>Pedidos {ago(d.freshness.lastOrder)} · Tracking {ago(d.freshness.lastSession)} · Mídia {f.metaTrusted && f.googleAdsTrusted ? 'ao vivo' : `sync ${ago(d.freshness.lastMediaSync)}`}</span>
+          </div>
+          {d.compareNote && <div className="dsh-banner dsh-banner-info">{d.compareNote}</div>}
         </div>
-      </div>
+      </details>
 
-      {!d.hasData && (
-        <div style={{
-          background: 'rgba(245, 158, 11, 0.1)', border: `1px solid rgba(245, 158, 11, 0.2)`, borderRadius: '12px',
-          padding: '16px 20px', marginBottom: '24px', fontSize: '14px', color: COLORS.alert,
-        }}>
-          <strong>Aguardando dados.</strong> Nenhum pedido ou visitante computado neste período ainda. Os dados aparecerão após as primeiras interações.
+      {d.partialMedia.length > 0 && (
+        <div className="dsh-banner">
+          <b>Gasto de mídia incompleto.</b> {d.partialMedia.join('; ')}. Investimento, lucro, margem, MER, ROI e custo por pedido aparecem como <b>parciais</b>. <Link className="dsh-link" href="/admin/saude">Ver na Saúde do sistema →</Link>
         </div>
       )}
 
-      <DashboardEditableLayout widgets={widgets} />
+      <Summary d={d} />
 
+      {groups.map((g, gi) => (
+        <details className={`dsh-grp${gi === 0 ? ' dsh-grp-main' : ''}`} key={g.title} open>
+          <summary>{g.title}</summary>
+          <div className="dsh-kpis">
+            {g.items.map(k => <KpiCard key={k.id} k={k} refLabel={refLabel} qs={qs} spark={sparks[k.id]} />)}
+          </div>
+        </details>
+      ))}
+
+      <div className="dsh-g12">
+        <Card title="Evolução" help="evolucao" cls="dsh-c8" right={
+          <ExportCsvButton
+            meta={{ table: 'Evolução', period: csvPeriod, sources: METRICS.evolucao.sources }}
+            header={[d.series.hourly ? 'Hora (acumulado)' : 'Dia', 'Receita', 'Pedidos pagos', 'Lucro', 'Mídia', 'Comparação: dia', 'Comparação: receita', 'Comparação: pedidos', 'Comparação: lucro', 'Comparação: mídia']}
+            rows={d.series.cur.map((p, i) => {
+              const b = d.series.base[i]
+              return [p.label, p.revenue, p.paid, p.profit, p.media, b?.label ?? null, b?.revenue ?? null, b?.paid ?? null, b?.profit ?? null, b?.media ?? null]
+            })}
+          />
+        }>
+          <EvolutionChart cur={d.series.cur} base={d.series.base} hourly={d.series.hourly} curLabel={d.curLabel} refLabel={refLabel} />
+        </Card>
+        <Card title="Com e sem o gasto Meta" help="simMeta" cls="dsh-c4">
+          <MetaSim d={d} />
+        </Card>
+        <Card title="Funil de conversão" help="funil" cls="dsh-c6" right={<small style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>etapa · acumulada</small>}>
+          <Funnel d={d} />
+        </Card>
+        <Card title="Produtos em destaque" help="rank" cls="dsh-c6">
+          <ProductRank rows={d.products} unmatchedUnits={d.unmatchedUnits} csvPeriod={csvPeriod} />
+        </Card>
+        <Card title="Estados com mais vendas" help="estados" cls="dsh-c6" right={
+          <ExportCsvButton
+            meta={{ table: 'Vendas por estado', period: csvPeriod, sources: METRICS.estados.sources }}
+            header={['Estado', 'Receita', 'Pedidos pagos', 'Ticket médio']}
+            rows={d.states.map(s => [s.uf, s.revenue, s.paid, s.ticket])}
+          />
+        }>
+          <States d={d} />
+        </Card>
+        <Card title="Alertas abertos" cls="dsh-c6" right={<Link className="dsh-link" href="/admin/alertas">Ver todos →</Link>}>
+          <Alerts d={d} />
+        </Card>
+      </div>
+
+      <details className="dsh-more">
+        <summary>Mais análises</summary>
+        <DashboardEditableLayout widgets={more} />
+      </details>
     </div>
   )
 }

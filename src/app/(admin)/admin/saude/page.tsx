@@ -1,5 +1,5 @@
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Database } from 'lucide-react'
-import { getSystemHealth, type SourceHealth } from '@/lib/admin/health'
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Database, Clock } from 'lucide-react'
+import { getSystemHealth, type SourceHealth, type SyncHealth } from '@/lib/admin/health'
 import { getDateRangeFromSearchParams } from '@/lib/admin/date-range'
 import { checkAuth } from '@/lib/admin/auth'
 
@@ -78,6 +78,52 @@ function SourceCard({ s }: { s: SourceHealth }) {
   )
 }
 
+// Rotina de sincronização: "quando foi a última vez que isto gravou?".
+// `empty` (nunca gravou) e `stale` (parou de gravar) são problemas diferentes e
+// têm conserto diferente — não podem cair no mesmo rótulo.
+const SYNC_TONE = { ok: TONE.ok, stale: TONE.error, empty: TONE.not_configured } as const
+const SYNC_TEXT = { ok: 'Em dia', stale: 'Parado', empty: 'Vazio' } as const
+
+function SyncCard({ s }: { s: SyncHealth }) {
+  const tone = SYNC_TONE[s.status]
+  const Icon = s.status === 'ok' ? CheckCircle2 : s.status === 'stale' ? XCircle : AlertTriangle
+
+  return (
+    <div style={{
+      background: COLORS.card, border: `1px solid ${tone.br}`, borderRadius: '14px',
+      padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+        <span style={{ fontSize: '14px', fontWeight: 700, color: COLORS.textMain }}>{s.label}</span>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 700,
+          padding: '4px 10px', borderRadius: '99px', background: tone.bg, color: tone.fg,
+          border: `1px solid ${tone.br}`, textTransform: 'uppercase', letterSpacing: '0.4px',
+        }}>
+          <Icon size={12} /> {SYNC_TEXT[s.status]}
+        </span>
+      </div>
+
+      <div style={{ fontSize: '13px', color: COLORS.textSec, fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Clock size={12} /> {s.lastAt ? fmtHora(s.lastAt) : '—'}
+      </div>
+
+      <div style={{
+        fontSize: '12px', lineHeight: 1.5,
+        color: s.status === 'ok' ? COLORS.textMuted : tone.fg,
+        ...(s.status === 'ok' ? {} : {
+          background: tone.bg, border: `1px solid ${tone.br}`, borderRadius: '8px', padding: '8px 10px',
+        }),
+      }}>
+        {s.detail}
+        {s.status !== 'ok' && (
+          <> Rodar <code>/api/cron/media-backfill?days=90</code> reconstrói o histórico.</>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default async function SaudePage({
   searchParams,
 }: {
@@ -89,8 +135,9 @@ export default async function SaudePage({
   const range  = getDateRangeFromSearchParams(sp)
   const health = await getSystemHealth(range.start, range.endExclusive)
 
-  const broken = health.sources.filter(s => s.status !== 'ok' || s.partial)
-  const tudoOk = broken.length === 0 && health.missingTables.length === 0
+  const broken     = health.sources.filter(s => s.status !== 'ok' || s.partial)
+  const syncParado = health.syncs.filter(s => s.status !== 'ok')
+  const tudoOk     = broken.length === 0 && health.missingTables.length === 0 && syncParado.length === 0
 
   return (
     <div style={{ padding: '32px', maxWidth: '1100px', margin: '0 auto' }}>
@@ -123,6 +170,10 @@ export default async function SaudePage({
               <>{health.missingTables.length} tabela(s) esperada(s) não existem no banco: a tela que depende
               delas falha em silêncio.</>
             )}
+            {syncParado.length > 0 && (
+              <> {syncParado.length} rotina(s) de sincronização sem gravar dado recente: as janelas de 30 e 60
+              dias ficam com custo de mídia incompleto, e o lucro do período aparece maior do que foi.</>
+            )}
           </>
         )}
       </div>
@@ -132,6 +183,17 @@ export default async function SaudePage({
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '14px', marginBottom: '32px' }}>
         {health.sources.map(s => <SourceCard key={s.key} s={s} />)}
+      </div>
+
+      <h2 style={{ fontSize: '13px', fontWeight: 700, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+        Frescor do dado gravado
+      </h2>
+      <p style={{ fontSize: '12.5px', color: COLORS.textMuted, marginBottom: '12px', lineHeight: 1.5 }}>
+        As fontes acima dizem se a API responde agora. Isto diz se o que está no banco é recente — foi o que
+        faltou quando o sync da Meta ficou semanas parado sem ninguém perceber.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '14px', marginBottom: '32px' }}>
+        {health.syncs.map(s => <SyncCard key={s.key} s={s} />)}
       </div>
 
       <h2 style={{ fontSize: '13px', fontWeight: 700, color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -321,7 +321,7 @@ export function GerenciadorClient({ data, rangeLabel }: { data: GerenciadorData;
   const searchPh = tab === 'campanhas' ? 'Pesquisar campanha...' : tab === 'conjuntos' ? 'Pesquisar conjunto...' : 'Pesquisar anúncio...'
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '1500px' }}>
+    <div style={{ padding: '32px 40px', maxWidth: '1500px', margin: '0 auto' }}>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--admin-text-main)', marginBottom: '4px' }}>Gerenciador</h1>
         <div style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>{rangeLabel} · Meta Ads</div>
