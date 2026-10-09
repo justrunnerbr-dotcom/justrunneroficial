@@ -23,11 +23,16 @@ async function main() {
   const { data: opCollection } = await supabase.from('collections').select('id').eq('slug', 'oferta-progressiva').single()
   if (!opCollection) throw new Error('Coleção oferta-progressiva não existe — rode a criação da coleção primeiro.')
 
-  const { data: products } = await supabase
+  // --slug=a,b limita a esses produtos. Sem ele, duplica TODO produto ativo sem
+  // gêmeo -op — inclusive os que ficaram fora da oferta de propósito (lote de 06/10).
+  const only = process.argv.find((a) => a.startsWith('--slug='))?.slice(7).split(',').filter(Boolean)
+  let query = supabase
     .from('products')
     .select('id,slug,name,description,featured,variants(*),images(*)')
     .eq('status', 'active')
     .neq('collection_id', opCollection.id)
+  if (only?.length) query = query.in('slug', only)
+  const { data: products } = await query
 
   let createdProducts = 0
   let createdVariants = 0
