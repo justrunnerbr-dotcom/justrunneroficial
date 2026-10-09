@@ -21,6 +21,7 @@ export const LANCAMENTOS: { collectionSlug: string; productSlug: string; variant
   { collectionSlug: 'radar', productSlug: 'radar-ev-neon', variantId: '895ca13f-f8e2-4898-9e9e-9e7630636fcb' }, // Lente Torch
   { collectionSlug: 'radar', productSlug: 'radar-ev-piet', variantId: 'c94016a6-25dd-4d5a-89bd-5a71791f05c6' }, // Lente Gold
   { collectionSlug: 'radar', productSlug: 'radar-ev-thieves', variantId: '85ff12f8-cc90-4b09-9bde-f89b3d4e8399' }, // Lente Ruby + Kit Vermelho (09/10)
+  { collectionSlug: 'radar', productSlug: 'radar-ev-thieves-branca', variantId: '52341214-b2a3-48e2-bcb2-18cdf021da65' }, // Lente Ruby + Kit Vermelho (09/10)
   { collectionSlug: 'soto', productSlug: 'soto-carbon', variantId: 'cd9f8e56-82ec-4c9a-b604-9aa4e0f917f9' }, // Lente Preta
 ]
 
