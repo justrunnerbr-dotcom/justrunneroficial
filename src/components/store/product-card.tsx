@@ -29,7 +29,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const variantParam = product.variants.length > 0 ? `?v=${product.variants[0].id}` : ''
 
   return (
-    <Link href={`/produto/${product.slug}${variantParam}`} className="product-card" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+    <Link href={`/produto/${product.slug}${variantParam}`} className={secondaryImage ? 'product-card has-secondary' : 'product-card'}style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
       <div className="product-card-body" style={{ cursor: 'pointer' }}>
         {/* Image container */}
         <div

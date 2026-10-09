@@ -11,8 +11,20 @@ export default function SobrePage() {
             marginBottom: '32px',
           }}
         >
-          Sobre a Just Runner
+          JUST RUNNER.
         </h1>
+        <p
+          style={{
+            fontFamily: 'var(--font-poppins), sans-serif',
+            fontWeight: 600,
+            fontSize: '18px',
+            color: 'var(--color-heading)',
+            marginTop: '-20px',
+            marginBottom: '32px',
+          }}
+        >
+          Performance para quem vive o esporte.
+        </p>
 
         <div
           style={{
@@ -26,21 +38,17 @@ export default function SobrePage() {
           }}
         >
           <p>
-            A Just Runner nasceu da paixão por óculos de alta performance. Somos especialistas
-            em Oakley, trazendo os modelos mais desejados do mundo diretamente para você.
+            Cada treino pede foco, conforto e confiança em cada movimento. A Just Runner reúne
+            óculos que combinam funcionalidade e estilo para acompanhar diferentes modalidades
+            esportivas — e também a rotina de quem está sempre em movimento.
           </p>
           <p>
-            Nossa missão é simples: oferecer os melhores óculos do mercado com a melhor
-            experiência de compra — entrega rápida, produtos originais e atendimento de
-            verdade.
+            Acreditamos que equipamento esportivo precisa acompanhar a sua performance sem
+            deixar o estilo de lado nem se tornar inacessível. Por isso, buscamos oferecer
+            modelos versáteis para usar no treino, na prática esportiva e além dela.
           </p>
-          <p>
-            Cada modelo em nosso catálogo é selecionado com cuidado. De clássicos como
-            o Juliet ao Flak 2.0 XL de última geração, você encontra aqui o que há de
-            melhor em proteção e estilo.
-          </p>
-          <p>
-            Compre com confiança. Entrega para todo o Brasil.
+          <p style={{ fontWeight: 700, color: 'var(--color-heading)' }}>
+            No seu ritmo, em movimento.
           </p>
         </div>
       </div>

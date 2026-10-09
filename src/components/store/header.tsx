@@ -276,7 +276,7 @@ export const Header = memo(function Header({
           <div className="header-right">
             {/* Instagram — desktop only */}
             <a
-              href="https://instagram.com/justhavefun.store"
+              href="https://www.instagram.com/justrunner.br1"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"

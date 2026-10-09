@@ -34,7 +34,6 @@ const FAQ_DATA: Record<TabKey, { q: string, a: string }[]> = {
     { q: 'Os óculos possuem proteção UV?', a: 'Sim! Nossas lentes possuem proteção UV400, bloqueando 100% dos raios ultravioleta nocivos (UVA e UVB).' },
     { q: 'Qual o material dos óculos?', a: 'Trabalhamos com materiais premium, como acetato de alta resistência e ligas metálicas leves, garantindo durabilidade e conforto.' },
     { q: 'Como consultar as medidas antes de comprar?', a: 'Na página de cada produto você encontra a aba "Especificações técnicas" com todas as medidas detalhadas.' },
-    { q: 'Os óculos possuem os emblemas e marcações?', a: 'Sim! Todos acompanham os emblemas das marcas. Ocultamos nas fotos por diretrizes comerciais, mas você recebe o produto oficial.' }
   ],
   'Envios': [
     { q: 'Qual o prazo de envio e entrega?', a: 'Despachamos em até 24h úteis. O prazo de entrega varia de 7 a 15 dias úteis, dependendo da sua região.' },

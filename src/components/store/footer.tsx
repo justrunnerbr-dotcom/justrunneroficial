@@ -131,7 +131,7 @@ export function Footer() {
           </p>
           <div style={{ display: 'flex', gap: '14px' }}>
             <a
-              href="https://instagram.com/justhavefun.store"
+              href="https://www.instagram.com/justrunner.br1"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
