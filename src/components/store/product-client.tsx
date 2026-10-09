@@ -496,6 +496,14 @@ export function ProductClient({ product, initialVariantId }: Props) {
           )}
         </div>
 
+        {/* ── Selo de estoque ── */}
+        {!outOfStock && (
+          <div className="pdp-stock">
+            <span className="pdp-stock-dot" aria-hidden="true" />
+            Em estoque e pronto para envio
+          </div>
+        )}
+
         {/* ── Circular variant swatches ── */}
         {sortedVariants.length > 1 && (
           <div>
