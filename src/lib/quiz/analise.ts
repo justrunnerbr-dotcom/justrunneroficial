@@ -232,17 +232,12 @@ export function sampleRows(n = 240): QuizRow[] {
     for (const [k, v] of Object.entries(w)) { x -= v; if (x <= 0) return k }
     return Object.keys(w)[0]
   }
-  const pickN = (w: Record<string, number>, k: number) => {
-    const out = new Set<string>(); let guard = 0
-    while (out.size < k && guard++ < 50) out.add(pick(w))
-    return [...out]
-  }
   const UFS: Record<string, number> = { SP: 34, RJ: 12, MG: 10, PR: 7, SC: 7, RS: 6, DF: 5, GO: 4, BA: 4, PE: 3, ES: 3, CE: 3 }
   const rows: QuizRow[] = []
   for (let i = 0; i < n; i++) {
     const esporte = pick({ corrida: 34, ciclismo: 24, mtb: 16, trail: 9, triatlo: 6, beach_tennis: 7, outro: 4 })
     const pedal = esporte === 'ciclismo' || esporte === 'mtb'
-    const impedimentos = pickN({ preco: 28, prazo: 9, confianca: 15, firmeza: pedal ? 8 : 18, lente: 12, rosto: 8, modelo: 5, fotos: 3, info: 6, qualidade: 12, troca: 6, marketplace: 3, ja_tenho: 6, curioso: 6 }, 1 + Math.floor(rand() * 3))
+    const impedimentos = pick({ preco: 28, prazo: 9, confianca: 15, firmeza: pedal ? 8 : 18, lente: 12, rosto: 8, modelo: 5, fotos: 3, info: 6, qualidade: 12, troca: 6, marketplace: 3, ja_tenho: 6, curioso: 6 })
     const r: Answers = {
       status_cliente: pick({ cliente: 30, nunca_comprou: 50, abandonou_carrinho: 20 }),
       origem: pick({ instagram: 40, tiktok: 8, anuncio: 24, grupo_treino: 14, indicacao: 8, google: 4, outro: 2 }),
@@ -256,8 +251,8 @@ export function sampleRows(n = 240): QuizRow[] {
       segundo_oculos: pick({ outra_lente: 22, reserva: 18, parceiro_treino: 30, presente: 16, nao: 14 }),
       lente_preferida: pick(pedal ? { escura: 20, espelhada: 26, fotocromatica: 34, clara: 12, nao_sei: 8 } : { escura: 30, espelhada: 34, fotocromatica: 20, clara: 6, nao_sei: 10 }),
     }
-    if (impedimentos.some(x => SEGURANCA_GATILHOS.includes(x))) {
-      r.seguranca = pickN({ avaliacoes: 26, videos: 24, whatsapp: 12, garantia: 18, ficha: 14, cnpj: 6 }, 1 + Math.floor(rand() * 2))
+    if (SEGURANCA_GATILHOS.includes(impedimentos)) {
+      r.seguranca = pick({ avaliacoes: 26, videos: 24, whatsapp: 12, garantia: 18, ficha: 14, cnpj: 6 })
     }
     const completo = rand() < 0.82
     const bonus = completo && rand() < 0.85 ? QUIZ_BONUS[Math.floor(rand() * QUIZ_BONUS.length)].id : null

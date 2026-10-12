@@ -180,7 +180,7 @@ export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: 
           </Section>
 
           <Section title="Por que não compram">
-            <BarList title="O que impediu (ou quase impediu)" data={b('impedimentos')} note="Até 3 por pessoa." />
+            <BarList title="O que impediu (ou quase impediu)" data={b('impedimentos')} note="Uma por pessoa desde 12/10 (antes eram até 3)." />
             <BarList title="O que daria segurança" data={b('seguranca')} note="Só aparece pra quem marcou confiança, qualidade, troca, firmeza ou lente." />
           </Section>
 

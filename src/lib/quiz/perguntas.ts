@@ -31,16 +31,16 @@ export const QUESTIONS: Question[] = [
     ['1_2','1 a 2 vezes'],['3_4','3 a 4 vezes'],['5_mais','5 vezes ou mais'],['eventual','Só de vez em quando'] ]},
   { id:'freq_anuncios', type:'single', title:'Com que frequência nossos anúncios aparecem pra você?', options:[
     ['quase_todo_dia','Quase todo dia'],['semana','Algumas vezes por semana'],['raramente','Raramente'],['nunca','Nunca vi'] ]},
-  { id:'impedimentos', type:'multi', min:1, max:3,
+  { id:'impedimentos', type:'single',
     title: a => a.status_cliente==='cliente' ? 'O que quase te impediu de comprar?' : 'O que mais te impediu de comprar?',
-    hint:'Escolha até 3', options:[
+    hint:'Escolha só o principal', options:[
     ['preco','Preço'],['prazo','Prazo de entrega'],['confianca','Confiança na loja'],
     ['firmeza','Dúvida se fica firme no treino'],['lente','Dúvida sobre a lente e a proteção'],['rosto','Não sabia como ficaria no rosto'],
     ['modelo','Não achei o modelo que queria'],['fotos','Fotos do site'],['info','Faltou informação técnica'],
     ['qualidade','Dúvida sobre qualidade e durabilidade'],['troca','Troca e garantia'],['marketplace','Prefiro comprar em marketplace'],
     ['ja_tenho','Já tenho óculos pra treinar'],['curioso','Só estava olhando'] ]},
-  { id:'seguranca', type:'multi', min:1, max:2, title:'O que te daria mais segurança pra comprar?', hint:'Escolha até 2',
-    show: a => ((a.impedimentos as string[] | undefined) ?? []).some(x => SEGURANCA_GATILHOS.includes(x)), options:[
+  { id:'seguranca', type:'single', title:'O que te daria mais segurança pra comprar?', hint:'Escolha só o principal',
+    show: a => ([] as string[]).concat(a.impedimentos ?? []).some(x => SEGURANCA_GATILHOS.includes(x)), options:[
     ['avaliacoes','Avaliações de clientes'],['videos','Vídeos de atletas usando no treino'],['whatsapp','Atendimento no WhatsApp'],
     ['garantia','Garantia de troca'],['ficha','Ficha técnica completa (peso, lente, UV400)'],['cnpj','CNPJ e contato visíveis'] ]},
   { id:'percepcao_preco', type:'single', title:'Na promoção, cada óculos sai por R$ 148,50. Esse valor pra você é:', options:[
