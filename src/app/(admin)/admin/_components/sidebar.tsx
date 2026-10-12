@@ -6,7 +6,7 @@ import { canOpenPage, type AdminArea } from '@/lib/admin/roles'
 import {
   LayoutDashboard, Package, FolderOpen, Home, Image,
   Search, BarChart3, Settings, Megaphone, ExternalLink,
-  LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Activity, ScrollText, Sparkles, ClipboardCheck,
+  LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Activity, ScrollText, Sparkles, ClipboardCheck, ListChecks,
 } from 'lucide-react'
 
 type AdminStyle = 'prizm' | 'max' | 'carbon'
@@ -69,6 +69,7 @@ const NAV_GROUPS = [
       { label: 'Meta Ads',          href: '/admin/meta-ads',          icon: Megaphone },
       { label: 'Agente Meta Ads',   href: '/admin/meta-ads/agente',   icon: Bot },
       { label: 'Analytics',         href: '/admin/analytics',         icon: BarChart3 },
+      { label: 'Quiz do cliente',   href: '/admin/quiz',              icon: ListChecks },
     ],
   },
   {
