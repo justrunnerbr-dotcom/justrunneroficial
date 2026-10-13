@@ -1675,3 +1675,15 @@ section { position: relative; }
   .brand .inner { min-height: 0; padding-top: 220px; }
 }
 .dd-panel a.dd-hot, .mobile-nav .m-cats a.dd-hot { color: #fff; font-weight: 700; }
+
+/* ---------- Lentes Mais Vendidas (13/10): cabeçalho da página e atalhos entre as cores ---------- */
+.lente-hero .lente-inclui { margin: 10px 0 0; font-size: 13px; opacity: .7; }
+.lente-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.lente-chips a { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 40px; border: 1px solid rgba(255,255,255,.22); font-size: 13px; font-weight: 600; color: #e4e4e7; }
+.lente-chips a:hover { border-color: #fff; color: #fff; }
+.lente-chips a[aria-current] { background: #fff; color: #0b0b0c; border-color: #fff; }
+@media (max-width: 749px) {
+  .lente-chips { flex-wrap: nowrap; overflow-x: auto; margin: 16px -16px 0; padding: 0 16px; scrollbar-width: none; }
+  .lente-chips::-webkit-scrollbar { display: none; }
+  .lente-chips a { flex: none; }
+}

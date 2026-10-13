@@ -96,10 +96,62 @@
   const idx = ([slug, cor, lente]) => { const p = JR.bySlug(slug); if (!p) return null; const i = p.variants.findIndex(v => v.name === cor); return i < 0 ? null : [slug, i, lente]; };
   const destaque = (REAL.vitrines.leve2Destaque || []).map(idx).filter(Boolean);
   const naoCombo = JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio");
+  /* Posição da armação no ranking de vendas (src/lib/best-sellers.ts); quem não vendeu vai pro fim. */
+  const RANK = REAL.ranking || [];
+  const rankDe = ([slug, i]) => { const v = JR.bySlug(slug).variants[i]; const r = RANK.indexOf(JR.REAL_LENS[slug][v.name].productSlug); return r < 0 ? 999 : r; };
+  /* Tira vizinhos do mesmo modelo: troca com o próximo de outro modelo (a partir de `de`, o começo fica fixo). */
+  const semVizinho = (lista, de = 0) => {
+    for (let k = Math.max(1, de); k < lista.length; k++) {
+      if (lista[k][0] !== lista[k - 1][0]) continue;
+      const j = lista.findIndex((x, n) => n > k && x[0] !== lista[k - 1][0] && (n + 1 >= lista.length || lista[n + 1][0] !== lista[k][0]) && lista[n - 1][0] !== lista[k][0]);
+      if (j > 0) [lista[k], lista[j]] = [lista[j], lista[k]];
+    }
+    return lista;
+  };
+  /* Espalha cada modelo por igual na lista (Radar com 13 cores não forma bloco), mais vendido primeiro dentro do modelo. */
+  const espalhar = itens => {
+    const grupos = {}; itens.forEach(x => (grupos[x[0]] ||= []).push(x));
+    const ordem = Object.keys(grupos).map(g => grupos[g].sort((a, b) => rankDe(a) - rankDe(b)));
+    ordem.sort((a, b) => rankDe(a[0]) - rankDe(b[0]));
+    return semVizinho(ordem.flatMap((g, gi) => g.map((x, j) => ({ x, k: (j + .5) / g.length + gi * 1e-4 }))).sort((a, b) => a.k - b.k).map(o => o.x));
+  };
+  /* Primeiro a cor mais vendida de cada modelo (mais vendidos primeiro, como "Lentes Mais Vendidas" da JHF), depois o resto espalhado. */
+  const rodizio = itens => {
+    const grupos = {}; itens.forEach(x => (grupos[x[0]] ||= []).push(x));
+    const g = Object.values(grupos).map(l => l.sort((a, b) => rankDe(a) - rankDe(b))).sort((a, b) => rankDe(a[0]) - rankDe(b[0]));
+    const topo = g.map(l => l[0]);
+    return semVizinho([...topo, ...espalhar(g.flatMap(l => l.slice(1)))], topo.length);
+  };
+
+  /* ---------- Lentes Mais Vendidas (13/10, mesma ideia da JHF): uma página por cor de lente ----------
+     A cor sai do nome da lente no catálogo ("Ruby + Kit Vermelho" → vermelha; "Roxa · Ruby" → roxa, a 1ª).
+     Lente que o nome não diz a cor (Único, Prizm, Degrade, Low Light…) não entra. */
+  JR.LENTES = [
+    { slug: "preta", emoji: "⚫", nome: "Lente Preta", inclui: "Preta e Full Black", termos: /\b(preta|preto|black)\b/,
+      texto: "A mais versátil: segura o sol forte no treino e combina com qualquer roupa no dia a dia. A escolha que nunca erra." },
+    { slug: "vermelha", emoji: "🔴", nome: "Lente Vermelha", inclui: "Ruby, Dark Ruby, Prizm Ruby e Torch", termos: /\b(ruby|rubi|torch|vermelh[ao])\b/,
+      texto: "Reflexo vermelho que aparece de longe. Contraste alto no asfalto e na trilha, com cara de dia de prova." },
+    { slug: "azul", emoji: "🔵", nome: "Lente Azul", inclui: "Tanzanite, Sapphire, Neon Blue e Azul", termos: /\b(tanzanite|sapphire|safira|azul|blue)\b/,
+      texto: "Reflexo azul gelado, o clássico dos óculos esportivos. Ideal para sol aberto, praia e pedal." },
+    { slug: "espelhada", emoji: "🪞", nome: "Lente Espelhada", inclui: "Espelhada e Silver", termos: /\b(espelhad[ao]|silver|mirror)\b/,
+      texto: "Efeito espelho prata que reflete tudo. Moderna, discreta para os olhos e forte nas fotos." },
+    { slug: "dourada", emoji: "🟡", nome: "Lente Dourada", inclui: "Gold, Gold Café e Dourada", termos: /\b(gold|24k|dourad[ao])\b/,
+      texto: "Reflexo dourado com presença. Fica bonita em armação preta, cinza ou transparente." },
+    { slug: "roxa", emoji: "🟣", nome: "Lente Roxa", inclui: "Roxa", termos: /\b(roxa|roxo|violet|violeta)\b/,
+      texto: "Um tom que foge do óbvio. Estilo com personalidade, do treino ao rolê." },
+    { slug: "vr28", emoji: "🟤", nome: "Lente VR28", inclui: "VR28 e Marrom", termos: /\b(vr2[89]|marrom|bronze)\b/,
+      texto: "Tom marrom quente que realça o contraste. Boa em dia nublado, fim de tarde e trilha com sombra." }
+  ];
+  const norm = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  JR.lenteDe = nome => { const l = norm(nome.split(/\s*[+·]\s*/)[0]); return JR.LENTES.find(x => x.termos.test(l)) || null; };
+  JR.lenteLista = slug => rodizio(JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio")
+    .flatMap(p => p.variants.flatMap((v, i) => v.lenses.filter(l => (JR.lenteDe(l) || {}).slug === slug).map(l => [p.slug, i, l]))));
+
   JR.SHOWCASE = {
     offer: destaque,
-    leve2: [...destaque, ...naoCombo.flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]))
-      .filter(([s, i]) => !destaque.some(d => d[0] === s && d[1] === i))],
+    /* 13/10: depois dos destaques, os modelos espalhados (antes vinham todas as cores do Radar juntas, depois as do Minute…) */
+    leve2: semVizinho([...destaque, ...espalhar(naoCombo.flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]))
+      .filter(([s, i]) => !destaque.some(d => d[0] === s && d[1] === i)))], destaque.length),
     lancamentos: (REAL.vitrines.lancamentos || []).map(idx).filter(Boolean),
     combos: (JR.bySlug("combo") || { variants: [] }).variants.map((v, i) => ["combo", i, v.lenses[0]]),
     /* Oferta Progressiva: cada cor que tem versão JROP, na 1ª lente com JROP */

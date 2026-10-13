@@ -22,12 +22,18 @@ window.JR = window.JR || {};
     ["Compre 1 Leve 2", "colecao.html?cat=leve2", "hot"],
     ["Combos", "colecao.html?cat=leve3"],
     ["Categorias", "colecao.html", "cats"],
+    ["Lentes Mais Vendidas 🔥", "colecao.html?lente=preta", "lentes"],
     ["Oferta Progressiva", "colecao.html?cat=oferta"]
   ];
   const cats = () => `<a href="colecao.html?cat=mais-vendidos" class="dd-hot">Mais vendidos</a>` + (JR.CATEGORIAS || []).map(c => `<a href="colecao.html?cat=${c.slug}">${c.nome}</a>`).join("");
+  /* Lentes Mais Vendidas (13/10, igual à JHF): uma página por cor de lente (JR.LENTES em catalogo-real.js) */
+  const lentes = () => (JR.LENTES || []).map(l => `<a href="colecao.html?lente=${l.slug}"><span aria-hidden="true">${l.emoji}</span> ${l.nome}</a>`).join("");
   const navItem = ([t, h, c]) => c === "cats"
     ? `<div class="nav-dd"><button type="button" class="nav-dd-btn" aria-expanded="false" aria-controls="dd-cats">${t}<span class="dd-seta" aria-hidden="true"></span></button>
         <div class="dd-panel" id="dd-cats" role="region" aria-label="Categorias">${cats()}<span class="dd-sep"></span><a href="colecao.html" class="dd-all">Ver todas as coleções →</a></div></div>`
+    : c === "lentes"
+    ? `<div class="nav-dd"><button type="button" class="nav-dd-btn" aria-expanded="false" aria-controls="dd-lentes">${t}<span class="dd-seta" aria-hidden="true"></span></button>
+        <div class="dd-panel" id="dd-lentes" role="region" aria-label="Lentes Mais Vendidas">${lentes()}</div></div>`
     : `<a href="${h}" class="${c || ""}">${t}</a>`;
   const logo = `<a href="index.html" class="logo" aria-label="Just Runner — início"><img src="fotos/logo.png" alt="Just Runner" width="96" height="38"></a>`;
 
@@ -55,6 +61,8 @@ window.JR = window.JR || {};
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">${logo}<button class="icon-btn" data-close-menu aria-label="Fechar">${JR.icon.close}</button></div>
         ${navLinks.map(([t, h, c]) => c === "cats"
           ? `<details class="m-cats"><summary>${t}<span class="dd-seta" aria-hidden="true"></span></summary>${cats()}<a href="colecao.html" class="dd-all">Ver todas as coleções →</a></details>`
+          : c === "lentes"
+          ? `<details class="m-cats"><summary>${t}<span class="dd-seta" aria-hidden="true"></span></summary>${lentes()}</details>`
           : `<a href="${h}" data-close-menu>${t}</a>`).join("")}
       </div></div>`;
   }

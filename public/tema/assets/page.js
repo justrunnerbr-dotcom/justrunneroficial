@@ -122,11 +122,16 @@
     };
     (JR.CATEGORIAS || []).forEach(c => { CATS[c.slug] = { nome: c.nome, lista: () => corDe(c.modelos),
       banner: BANNER_CAT[c.slug] && `fotos/cat-${BANNER_CAT[c.slug]}.jpg`, bannerMob: BANNER_CAT[c.slug] && `fotos/cat-${BANNER_CAT[c.slug]}-mobile.jpg`, alt: c.nome }; });
-    const cat = CATS[qs.get("cat")];
+    /* Lentes Mais Vendidas: colecao.html?lente=preta (lista em JR.lenteLista, mais vendidos primeiro) */
+    (JR.LENTES || []).forEach(l => { CATS["lente-" + l.slug] = { nome: l.nome, emoji: l.emoji, texto: l.texto, inclui: l.inclui, lente: l.slug, lista: () => JR.lenteLista(l.slug) }; });
+    const cat = qs.get("lente") ? CATS["lente-" + qs.get("lente")] : CATS[qs.get("cat")];
     if (cat) {
       document.title = `${cat.nome} | Just Runner`;
       $(".page-hero").outerHTML = cat.banner
         ? `<section class="cat-banner"><a href="#col-grid" aria-label="Ver os óculos de ${cat.nome}"><picture>${cat.bannerMob ? `<source media="(max-width: 749px)" srcset="${cat.bannerMob}">` : ""}<img src="${cat.banner}" alt="${cat.alt}" fetchpriority="high"></picture></a></section>`
+        : cat.lente
+        ? `<section class="page-hero lente-hero"><div class="wrap"><span class="kicker">Lentes Mais Vendidas 🔥</span><h1 class="display h-lg">${cat.emoji} ${cat.nome}</h1><p class="lead">${cat.texto}</p><p class="lente-inclui">Inclui as lentes ${cat.inclui}.</p>
+            <nav class="lente-chips" aria-label="Outras cores de lente">${JR.LENTES.map(l => `<a href="colecao.html?lente=${l.slug}"${l.slug === cat.lente ? ' aria-current="page"' : ""}><span aria-hidden="true">${l.emoji}</span>${l.nome.replace("Lente ", "")}</a>`).join("")}</nav></div></section>`
         : `<section class="page-hero"><div class="wrap"><h1 class="display h-lg">${cat.nome}</h1>${cat.texto ? `<p class="lead">${cat.texto}</p>` : ""}</div></section>`;
       $(".filters").insertAdjacentHTML("beforebegin", `<nav class="crumbs cat-crumbs" aria-label="Você está em"><a href="index.html">Início</a><span>›</span><span>${cat.nome}</span></nav>`);
     }
@@ -137,7 +142,7 @@
       let list = lista();
       if (sort === "az") list = [...list].sort((a, b) => JR.bySlug(a[0]).name.localeCompare(JR.bySlug(b[0]).name));
       if (sort === "lens") list = [...list].sort((a, b) => lensCount(b[0]) - lensCount(a[0]));
-      $("#f-count").textContent = `${list.length} óculos`;
+      $("#f-count").textContent = cat && cat.lente ? `${list.length} óculos com ${cat.nome.toLowerCase()} · mais vendidos primeiro` : `${list.length} óculos`;
       $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, cat && cat.op ? { op: true } : {})).join("");
       JR.bindCards($("#col-grid"));
     };

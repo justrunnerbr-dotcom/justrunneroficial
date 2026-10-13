@@ -136,7 +136,11 @@ for (const [k, v] of Object.entries(CAT_DA_COLECAO)) redirColecoes[k] ||= `colec
 writeFileSync(join(ROOT, 'src/lib/tema-redirects.json'), JSON.stringify({ produtos: redirProdutos, colecoes: redirColecoes }, null, 1) + '\n')
 console.log('redirects: produtos', Object.keys(redirProdutos).length, '| coleções', Object.keys(redirColecoes).length)
 
-const out = { models, vitrines, categorias, checkoutDomain: `seguro.${new URL(env.NEXT_PUBLIC_SITE_URL).hostname.replace(/^www\./, '')}` }
+// Ranking de vendas por armação (src/lib/best-sellers.ts): ordena "Lentes Mais Vendidas" e intercala o Compre 1 Leve 2.
+const ranking = [...readFileSync(join(ROOT, 'src/lib/best-sellers.ts'), 'utf8').matchAll(/^\s*'([a-z0-9-]+)',/gm)].map(x => x[1])
+console.log('ranking de vendas:', ranking.length, 'armações')
+
+const out = { models, vitrines, categorias, ranking, checkoutDomain: `seguro.${new URL(env.NEXT_PUBLIC_SITE_URL).hostname.replace(/^www\./, '')}` }
 writeFileSync(join(ROOT, 'prototipo-tema/assets/catalogo-real.json.js'),
   `/* Gerado por scripts/_prototipo-catalogo.mjs em ${new Date().toISOString()} — não editar à mão. */\nwindow.JR_REAL = ${JSON.stringify(out)};\n`)
 
