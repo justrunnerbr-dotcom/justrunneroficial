@@ -49,7 +49,7 @@ export function FooterTema({ logoUrl }: { logoUrl?: string | null }) {
               <li><a href="mailto:suportejustrunner@gmail.com">suportejustrunner@gmail.com</a></li>
             </ul>
             <div className="pay">{['Cartão de crédito', 'Pix', 'Boleto'].map(p => <span key={p}>{p}</span>)}</div>
-            <p style={{ margin: '10px 0 0', fontSize: 12 }}>Checkout seguro Yampi · 6x sem juros</p>
+            <p style={{ margin: '10px 0 0', fontSize: 12 }}>Checkout seguro Yampi · parcele em até 12x</p>
           </div>
         </div>
         <div className="legal"><span>© 2026 Just Runner · CNPJ 62.880.024/0001-30 · justrunner.com.br</span></div>

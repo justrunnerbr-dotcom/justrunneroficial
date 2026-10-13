@@ -241,7 +241,7 @@ export function CartDrawer() {
                   <div style={{ fontSize: '18px', fontWeight: 800, color: '#18181b', fontFamily: 'var(--font-poppins), sans-serif', lineHeight: 1.1 }}>
                     {formatPrice(total())}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#71717a' }}>6x {formatPrice(total() / 6)} sem juros</div>
+                  <div style={{ fontSize: '10px', color: '#71717a' }}>Parcele em até 12x</div>
                 </div>
               </div>
             </div>

@@ -24,7 +24,7 @@
   $("#p-sub").textContent = `Óculos de sol esportivo polarizado para ${USE}`;
 
   /* (b) confiança junto do botão: só sinais reais */
-  $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "6x sem juros"], ["truck", "Frete grátis acima de R$ 200"]]
+  $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 12x"], ["truck", "Frete grátis acima de R$ 200"]]
     .map(([i, t]) => `<li>${icon[i]}${t}</li>`).join("");
 
   /* (c) prazo por CEP: mostra a política oficial; valor exato do frete fica no checkout */
@@ -42,7 +42,7 @@
   function renderPreco() {
     const l = JR.realLens(product.slug, state.v, state.lens) || {}, pr = l.price || JR.PRICE.one;
     $("#p-price").innerHTML = `${l.de ? `<s class="de">${brl(l.de)}</s> ` : ""}${brl(pr)}`;
-    $("#p-inst").innerHTML = `ou 6x de ${JR.installment(pr)} sem juros`;
+    $("#p-inst").innerHTML = "Parcele em até 12x";
     const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong><span>${product.combo ? "kit com 3 óculos" : "Leve 2 pelo preço de 1"}</span>`;
     $("#add").textContent = `Adicionar · ${brl(product.combo ? pr * state.qty : Math.ceil(state.qty / 2) * pr)}`;
     $("#add-pair").hidden = $(".pair-box").hidden = !!product.combo;

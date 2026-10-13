@@ -87,7 +87,7 @@ export function VariantSelector({ productId, productName, variants, images }: Va
         </div>
         {installment !== null && (
           <p style={{ fontSize: '13px', color: 'var(--color-muted)', fontFamily: 'var(--font-montserrat), sans-serif' }}>
-            6x de {formatPrice(installment)} sem juros
+            Parcele em até 12x
           </p>
         )}
       </div>

@@ -29,7 +29,7 @@ window.JR = window.JR || {};
     const el = $("#header");
     if (!el) return;
     el.outerHTML = `
-      <div class="topbar"><b>Compre 1, Leve 2 por R$ 297</b><span class="sep hide-sm">|</span><span class="hide-sm">Frete grátis acima de R$ 200</span><span class="sep hide-sm">|</span><span class="hide-sm">6x sem juros</span></div>
+      <div class="topbar"><b>Compre 1, Leve 2 por R$ 297</b><span class="sep hide-sm">|</span><span class="hide-sm">Frete grátis acima de R$ 200</span><span class="sep hide-sm">|</span><span class="hide-sm">Parcele em até 12x</span></div>
       <header class="header" id="site-header">
         <div class="wrap">
           <button class="icon-btn menu-btn" data-open-menu aria-label="Abrir menu">${JR.icon.menu}</button>
@@ -42,7 +42,7 @@ window.JR = window.JR || {};
         </div>
       </header>
       <div class="marquee" aria-label="Benefícios"><div class="marquee-track">${Array(2).fill([
-        ["truck", "Frete grátis acima de R$ 200"], ["card", "6x sem juros"], ["swap", "Troca em até 7 dias"],
+        ["truck", "Frete grátis acima de R$ 200"], ["card", "Parcele em até 12x"], ["swap", "Troca em até 7 dias"],
         ["polar", "Lentes polarizadas UV400"], ["lock", "Checkout seguro Yampi"]
       ].map(([i, t]) => `<span>${JR.icon[i]}${t}</span>`).join("")).join("")}</div></div>
       <div class="mobile-nav" id="mobile-nav"><div class="panel">
@@ -77,7 +77,7 @@ window.JR = window.JR || {};
               <li><a href="${JR.waLink()}" target="_blank" rel="noopener">WhatsApp ${JR.CONTACT.phone}</a></li>
               <li>${JR.CONTACT.hours}</li><li><a href="mailto:${JR.CONTACT.email}">${JR.CONTACT.email}</a></li></ul>
               <div class="pay">${JR.CONTACT.payments.map(p => `<span>${p}</span>`).join("")}</div>
-              <p style="margin:10px 0 0;font-size:12px">Checkout seguro Yampi · 6x sem juros</p></div>
+              <p style="margin:10px 0 0;font-size:12px">Checkout seguro Yampi · Parcele em até 12x</p></div>
           </div>
           <div class="legal"><span>© 2026 Just Runner · CNPJ ${JR.CONTACT.cnpj} · justrunner.com.br</span>${JR.LOCAL ? "<span>Protótipo de layout — não é a loja em produção</span>" : ""}</div>
         </div>
@@ -166,9 +166,9 @@ window.JR = window.JR || {};
       ${saving ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(saving)}</span></div>` : ""}
       <div class="row"><span>Frete</span><span>${free ? "Grátis" : "calculado no checkout"}</span></div>
       <div class="row total"><span>Total</span><span>${brl(total)}</span></div>
-      <div class="row" style="justify-content:flex-end"><small>ou 6x de ${JR.installment(total)} sem juros</small></div>
+      <div class="row" style="justify-content:flex-end"><small>Parcele em até 12x</small></div>
       <button class="btn btn-green btn-block" data-checkout>Finalizar compra ${JR.icon.lock}</button>
-      <div class="pay-note">Checkout seguro Yampi · 6x sem juros · troca em até 7 dias</div>`;
+      <div class="pay-note">Checkout seguro Yampi · Parcele em até 12x · troca em até 7 dias</div>`;
   }
 
   const overlay = () => $("#overlay");
@@ -207,7 +207,7 @@ window.JR = window.JR || {};
       <div class="info">
         <a class="name" href="${href}">${JR.cardName(p, v)}</a>
         ${o.mini ? "" : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
-          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · 6x sem juros" : "<b>Leve 2 pelo preço de 1</b> · 6x sem juros"}</div>`; })()}
+          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
         <div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>
         ${o.mini ? "" : `<button class="quick" data-add>${o.pick ? "Escolher este" : "Adicionar ao carrinho"}</button>`}
       </div>

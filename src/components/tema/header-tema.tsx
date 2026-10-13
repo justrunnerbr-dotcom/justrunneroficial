@@ -58,7 +58,7 @@ export function HeaderTema({ logoUrl }: { logoUrl?: string | null }) {
       <div className="topbar">
         <b>Compre 1, Leve 2 por R$ 297</b>
         <span className="sep hide-sm">|</span><span className="hide-sm">Frete grátis acima de R$ 200</span>
-        <span className="sep hide-sm">|</span><span className="hide-sm">6x sem juros</span>
+        <span className="sep hide-sm">|</span><span className="hide-sm">Parcele em até 12x</span>
       </div>
       <header className={`header${scrolled ? ' scrolled' : ''}`} id="site-header">
         <div className="wrap">

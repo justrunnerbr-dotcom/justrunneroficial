@@ -50,7 +50,7 @@
 
     /* Arte do hero: ícone da página em anel de lente + 3 sinais reais (desenha uma vez ao abrir) */
     const ART = {
-      faq: ["help", [["lens", "Lentes"], ["card", "6x sem juros"], ["swap", "Trocas"]]],
+      faq: ["help", [["lens", "Lentes"], ["card", "Parcele em até 12x"], ["swap", "Trocas"]]],
       frete: ["truck", [["check", "Grátis acima de R$ 200"], ["search", "Rastreio"], ["pin", "Todo o Brasil"]]],
       trocas: ["swap", [["clock", "7 dias corridos"], ["box", "Sem uso"], ["chat", "WhatsApp"]]],
       contato: ["chat", [["clock", C.hours], ["mail", "E-mail"], ["insta", "@" + C.instagram]]],
@@ -156,7 +156,7 @@
       ],
       "Oferta e pagamento": [
         ["Como funciona o Compre 1 Leve 2?", "Cada óculos custa R$ 297. Coloque 2 no carrinho e o 2º sai grátis: o desconto entra sozinho, e o frete também sai grátis. Os combos do Compre 1 Leve 3 já vêm com 3 óculos por R$ 327."],
-        ["Posso parcelar?", "Sim, em até 6x sem juros no cartão."],
+        ["Posso parcelar?", "Sim, parcele em até 12x no cartão."],
         ["Como funciona o checkout?", "Ao clicar em \"Comprar Agora\" ou \"Finalizar Compra\", você será redirecionado para nossa plataforma de pagamento segura (Yampi), onde poderá pagar com cartão de crédito, boleto ou Pix."]
       ],
       "Frete e entrega": [

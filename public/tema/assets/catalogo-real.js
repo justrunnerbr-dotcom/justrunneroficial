@@ -49,7 +49,7 @@
   /* ---------- Preço: igual ao site no ar ----------
      JR- R$ 297 com "Leve 2 pelo preço de 1": entre os óculos elegíveis, do mais caro pro mais barato, cada 2º sai grátis
      (src/lib/cart-store.ts, discount). Combos JRC- (3 óculos por R$ 327) não entram nessa conta. */
-  JR.PRICE = { one: 297, pair: 297, combo: 327, freeShipping: 200, installments: 6 };
+  JR.PRICE = { one: 297, pair: 297, combo: 327, freeShipping: 200, installments: 12 };
   JR.priceOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l ? l.price : JR.PRICE.one; };
   JR.minPrice = slug => { const p = JR.bySlug(slug); return Math.min(...p.variants.flatMap((v, i) => v.lenses.map(l => JR.priceOf(slug, i, l)))); };
   JR.isCombo = slug => !!(JR.bySlug(slug) || {}).combo;

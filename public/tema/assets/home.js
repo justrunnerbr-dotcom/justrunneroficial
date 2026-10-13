@@ -116,7 +116,7 @@
   $("#risk-grid").innerHTML = [
     ["truck", "Frete grátis acima de R$ 200", "Envio com código de rastreio."],
     ["swap", "Troca em até 7 dias", "Não gostou de como ficou? Dá para trocar em até 7 dias corridos após o recebimento (produto sem uso, na embalagem)."],
-    ["lock", "Checkout seguro Yampi", "6x sem juros no cartão."],
+    ["lock", "Checkout seguro Yampi", "Parcele em até 12x no cartão."],
     ["chat", "Dúvida antes de comprar?", "Fale com a gente no WhatsApp."]
   ].map(([i, t, s], n) => `<div class="risk-item reveal">${icon[i]}<div><strong>${t}</strong><span>${s}</span></div>${n === 3 ? `<a class="btn btn-outline-dark" href="${JR.waLink()}" target="_blank" rel="noopener">Chamar ${icon.arrow}</a>` : ""}</div>`).join("");
 

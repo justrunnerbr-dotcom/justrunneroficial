@@ -491,7 +491,7 @@ export function ProductClient({ product, initialVariantId }: Props) {
           </div>
           {installment !== null && (
             <p style={{ fontSize: '12px', color: '#52525b' }}>
-              6x {formatPrice(installment)} sem juros
+              Parcele em até 12x
             </p>
           )}
         </div>
