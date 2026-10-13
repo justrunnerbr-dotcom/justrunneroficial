@@ -1,0 +1,102 @@
+{
+  "radar-ev": {
+    "url": "/produto/radar-ev-preta",
+    "img": "oculos-loja/radar-ev.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/radar/radar-ev-preta/lente-tanzanite/0.png?width=1200&quality=80&resize=contain"
+  },
+  "flak": {
+    "url": "/produto/flak-preta",
+    "img": "oculos-loja/flak.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/flak/flak-preta/lente-preta/0.png?width=1200&quality=80&resize=contain"
+  },
+  "half-jacket": {
+    "url": "/produto/half-jacket",
+    "img": "oculos-loja/half-jacket.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/half-jacket/half-jacket/full-black/0.png?width=1200&quality=80&resize=contain"
+  },
+  "encoder": {
+    "url": "/produto/encoder",
+    "img": "oculos-loja/encoder.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/encoder/encoder/cooper/0.jpg?width=1200&quality=80&resize=contain"
+  },
+  "m-frame": {
+    "url": "/produto/m-frame-preta",
+    "img": "oculos-loja/m-frame.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/m-frame/m-frame-preta/lente-ruby/0.png?width=1200&quality=80&resize=contain"
+  },
+  "sphaera": {
+    "url": "/produto/sphaera-preta",
+    "img": "oculos-loja/sphaera.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/sphaera/sphaera-preta/unico/0.png?width=1200&quality=80&resize=contain"
+  },
+  "sutro": {
+    "url": "/produto/sutro-preta",
+    "img": "oculos-loja/sutro.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/sutro/sutro-preta/lente-gold/0.png?width=1200&quality=80&resize=contain"
+  },
+  "m1311": {
+    "url": "/produto/1311-cinza",
+    "img": "oculos-loja/m1311.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/1311/1311-cinza/lente-preta/0.png?width=1200&quality=80&resize=contain"
+  },
+  "dartboard": {
+    "url": "/produto/dartboard",
+    "img": "oculos-loja/dartboard.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/casual/dartboard/degrade/0.png?width=1200&quality=80&resize=contain"
+  },
+  "ellipse": {
+    "url": "/produto/ellipse-preta",
+    "img": "oculos-loja/ellipse.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/ellipse/ellipse-preta/lente-azul/0.png?width=1200&quality=80&resize=contain"
+  },
+  "minute": {
+    "url": "/produto/minute-preta",
+    "img": "oculos-loja/minute.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/minute/minute-preta/lente-azul/0.png?width=1200&quality=80&resize=contain"
+  },
+  "eye-jacket": {
+    "url": "/produto/eye-jacket",
+    "img": "oculos-loja/eye-jacket.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/eye-jacket/eye-jacket/cinza-lente-azul/0.png?width=1200&quality=80&resize=contain"
+  },
+  "eye-jacket-redux": {
+    "url": "/produto/eye-jacket-redux",
+    "img": "oculos-loja/eye-jacket-redux.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/eye-jacket/eye-jacket-redux/preta-lente-azul/0.png?width=1200&quality=80&resize=contain"
+  },
+  "plantaris": {
+    "url": "/produto/plantaris-preta",
+    "img": "oculos-loja/plantaris.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/plantaris/plantaris-preta/unico/0.png?width=1200&quality=80&resize=contain"
+  },
+  "plantaris-squared": {
+    "url": "/produto/plantaris-squared-preta",
+    "img": "oculos-loja/plantaris-squared.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/plantaris/plantaris-squared-preta/unico/0.png?width=1200&quality=80&resize=contain"
+  },
+  "hstn": {
+    "url": "/produto/hstn-preta",
+    "img": "oculos-loja/hstn.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/hstn/hstn-preta/lente-azul/0.png?width=1200&quality=80&resize=contain"
+  },
+  "straight-jacket": {
+    "url": "/produto/straight-jacket-cinza",
+    "img": "oculos-loja/straight-jacket.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/straight-jacket/straight-jacket-cinza/lente-azul/0.png?width=1200&quality=80&resize=contain"
+  },
+  "holbrook": {
+    "url": "/produto/holbrook-preta",
+    "img": "oculos-loja/holbrook.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/holbrook/holbrook-preta/lente-espelhada/0.png?width=1200&quality=80&resize=contain"
+  },
+  "monster-dog": {
+    "url": "/produto/monster-dog-marrom",
+    "img": "oculos-loja/monster-dog.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/monster-dog/monster-dog-marrom/lente-vr28/0.jpg?width=1200&quality=80&resize=contain"
+  },
+  "soto": {
+    "url": "/produto/soto-carbon",
+    "img": "oculos-loja/soto.jpg",
+    "src": "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/render/image/public/products/soto/soto-carbon/lente-preta/0.png?width=1200&quality=80&resize=contain"
+  }
+}

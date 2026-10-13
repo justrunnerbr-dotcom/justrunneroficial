@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/tema/">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Just Runner — Sua corrida como você nunca viu</title>
+  <meta name="description" content="Protótipo da nova home da Just Runner.">
+  <script>document.documentElement.classList.add("js")</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css?v=63">
+  <script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/produto.html*"},"eagerness":"moderate"}]}</script>
+</head>
+<body data-page="home">
+  <div id="header"></div>
+
+  <main>
+    <!-- Banners de oferta do site atual -->
+    <section class="real-banners" aria-label="Ofertas">
+      <!-- Banner da home do site atual (src/components/store/hero.tsx → BANNERS 297/banner_01), 12/10 -->
+      <div class="rb-track" id="rb-track">
+        <a href="#leve2"><picture><source media="(max-width: 767px)" srcset="fotos/hero-atual-mobile.jpg"><img src="fotos/hero-atual.jpg" alt="Compre 1 Leve 2: leve 2 óculos pelo preço de 1" fetchpriority="high"></picture></a>
+      </div>
+      <div class="rb-dots" id="rb-dots"></div>
+    </section>
+
+    <!-- 2. Faixa de benefícios igual à do site atual (src/components/store/benefits-bar.tsx), pedido de 12/10.
+         Substituiu "Você pensa no treino. O óculos acompanha." -->
+    <section class="bbar" aria-label="Benefícios">
+      <div class="wrap"><div class="bb-grid"><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><div><p class="bb-t">Frete Grátis</p><p class="bb-s">Em compras acima de R$ 200</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><div><p class="bb-t">Compra Segura</p><p class="bb-s">Checkout 100% protegido</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><div><p class="bb-t">Proteção UV400</p><p class="bb-s">Em todas as lentes</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg><div><p class="bb-t">Entrega Rápida</p><p class="bb-s">Para todo o Brasil</p></div></div></div></div>
+      <div class="bb-marquee" aria-hidden="true"><div class="bb-track"><div class="bb-group"><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><div><p class="bb-t">Frete Grátis</p><p class="bb-s">Em compras acima de R$ 200</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><div><p class="bb-t">Compra Segura</p><p class="bb-s">Checkout 100% protegido</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><div><p class="bb-t">Proteção UV400</p><p class="bb-s">Em todas as lentes</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg><div><p class="bb-t">Entrega Rápida</p><p class="bb-s">Para todo o Brasil</p></div></div></div><div class="bb-group"><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><div><p class="bb-t">Frete Grátis</p><p class="bb-s">Em compras acima de R$ 200</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><div><p class="bb-t">Compra Segura</p><p class="bb-s">Checkout 100% protegido</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><div><p class="bb-t">Proteção UV400</p><p class="bb-s">Em todas as lentes</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg><div><p class="bb-t">Entrega Rápida</p><p class="bb-s">Para todo o Brasil</p></div></div></div><div class="bb-group"><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><div><p class="bb-t">Frete Grátis</p><p class="bb-s">Em compras acima de R$ 200</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><div><p class="bb-t">Compra Segura</p><p class="bb-s">Checkout 100% protegido</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><div><p class="bb-t">Proteção UV400</p><p class="bb-s">Em todas as lentes</p></div></div><div class="bb-item"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg><div><p class="bb-t">Entrega Rápida</p><p class="bb-s">Para todo o Brasil</p></div></div></div></div></div>
+    </section>
+    <!-- 4. ESCOLHA POR USO · "Qual é para mim?" -->
+    <section class="light sec" id="estilos" aria-label="Encontre seu Just Runner">
+      <div class="wrap">
+        <div class="sec-head reveal"><div><h2 class="display h-md">Encontre seu Just Runner</h2><p class="sub">Escolha pelo jeito que você usa.</p></div></div>
+        <div class="tiles scroller" id="tiles"></div>
+      </div>
+    </section>
+    <!-- 5. VITRINES IGUAIS AO SITE ATUAL (12/10): Leve 2 pelo preço de 1 · Compre 1 Leve 3 · Lançamentos -->
+    <span id="oferta" class="anchor-oferta"></span><span id="modelos" class="anchor-oferta"></span>
+    <section class="vit" id="leve2" aria-labelledby="vt-leve2">
+      <div class="wrap">
+        <div class="vit-head"><h2 id="vt-leve2">Leve 2 pelo preço de 1</h2><a href="colecao.html?cat=leve2">Ver todos <span data-i="arrow"></span></a></div>
+        <div class="vit-grid fixed cards-clean" id="vit-leve2"></div>
+      </div>
+    </section>
+    <section class="vit" id="leve3" aria-labelledby="vt-leve3">
+      <a class="vit-banner" href="colecao.html?cat=leve3"><picture><source media="(max-width: 749px)" srcset="fotos/cat-banner-combos-mobile.jpg"><img src="fotos/cat-banner-combos.jpg" alt="Compre 1 Leve 3: 3 óculos por R$ 327" loading="lazy"></picture></a>
+      <div class="wrap">
+        <div class="vit-head"><h2 id="vt-leve3">Compre 1 Leve 3</h2><a href="colecao.html?cat=leve3">Ver todos <span data-i="arrow"></span></a></div>
+        <div class="vit-grid cards-clean" id="vit-leve3"></div>
+      </div>
+    </section>
+    <section class="vit" id="lancamentos" aria-labelledby="vt-lanc">
+      <a class="vit-banner" href="colecao.html?cat=lancamentos"><picture><source media="(max-width: 749px)" srcset="fotos/cat-banner-lancamentos-mobile.jpg"><img src="fotos/cat-banner-lancamentos.jpg" alt="Lançamentos Just Runner" loading="lazy"></picture></a>
+      <div class="wrap">
+        <div class="vit-head"><h2 id="vt-lanc">Lançamentos</h2><a href="colecao.html?cat=lancamentos">Ver todos <span data-i="arrow"></span></a></div>
+        <div class="vit-grid scroll cards-clean" id="vit-lanc"></div>
+      </div>
+    </section>
+    <!-- 6. PROVA SOCIAL · "Funciona na vida real?" -->
+    <section class="social" aria-label="Na rua, no treino, na prova">
+      <div id="social-scene"></div>
+      <div class="wrap">
+        <div class="reveal">
+          <h2 class="display h-md">Na rua, no treino, no dia a dia.</h2>
+          <p class="sub">Seu ritmo. Seu estilo.</p>
+        </div>
+        <div class="strip" id="strip"></div>
+      </div>
+    </section>
+    <!-- 7. EDUCAÇÃO · "Qual lente eu escolho?" -->
+    <section class="edu" id="lentes" aria-label="Qual lente escolher">
+      <div class="wrap">
+        <div class="edu-head reveal">
+          <span class="kicker">Primeira vez com óculos esportivo?</span>
+          <h2 class="display h-md">Escolha a lente pela luz do seu treino.</h2>
+          <p class="sub">Todas as lentes são polarizadas com proteção UV400.</p>
+        </div>
+        <div class="edu-grid" id="edu-grid"></div>
+        <a class="btn btn-dark" href="produto.html?p=radar-ev#guia-lentes">Ver guia de lentes <span data-i="arrow"></span></a>
+      </div>
+    </section>
+
+    <!-- 8. REDUÇÃO DE RISCO · "E se der problema?" -->
+    <section class="light sec risk" aria-label="Compra com confiança">
+      <div class="wrap">
+        <div class="sec-head reveal"><div><h2 class="display h-md">Compre sem complicação.</h2><p class="sub">Frete, troca e pagamento claros desde o início.</p></div></div>
+        <div class="risk-grid" id="risk-grid"></div>
+      </div>
+    </section>
+
+    <!-- 9. INSTITUCIONAL -->
+    <section class="brand" aria-label="Da corrida para a rotina">
+      <div id="brand-scene"></div>
+      <div class="wrap">
+        <div class="inner">
+          <a class="logo" href="index.html"><span>Just</span><span>Runner</span></a>
+          <div class="reveal">
+            <span class="kicker">Você não precisa ser profissional para usar equipamento melhor.</span>
+            <h2 class="display h-md">Feito para<br>acompanhar você.</h2>
+            <p>Óculos de performance para quem está em movimento. No treino, na rua e no resto do dia.</p>
+            <a class="btn btn-white" href="sobre.html">Conheça a Just Runner <span data-i="arrow"></span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. COMUNIDADE -->
+    <section class="news" aria-label="Comunidade">
+      <div class="wrap">
+        <div><h3>Fique por dentro</h3><p>Receba lançamentos e ofertas da Just Runner.</p></div>
+        <form id="news-form" novalidate>
+          <input type="email" name="email" placeholder="Seu e-mail" aria-label="Seu e-mail" autocomplete="email" required>
+          <button class="btn btn-outline-dark" type="submit">Quero entrar <span data-i="arrow"></span></button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="assets/data.js?v=28"></script>
+  <script src="assets/catalogo-real.json.js?v=30"></script>
+  <script src="assets/catalogo-real.js?v=37"></script>
+  <script src="assets/art.js?v=28"></script>
+  <script src="assets/pixel.js?v=1"></script>
+  <script src="assets/app.js?v=49"></script>
+  <script src="assets/home.js?v=47"></script>
+</body>
+</html>

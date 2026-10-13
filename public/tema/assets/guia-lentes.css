@@ -1,0 +1,112 @@
+/* Guia de lentes da PDP — layout do sócio (secao-arquivo-unico.html, 12/10) adaptado ao protótipo:
+   foto = as 4 artes, troca automática com barra de progresso, texto entrando a cada troca. */
+.jrl, .jrl * { box-sizing: border-box; }
+.jrl { --jr-bg: #ffffff; --jr-ink: #141414; --jr-soft: #74736f; --jr-border: #d7d5d0; --lime: #d8f24a;
+  background: var(--jr-bg); color: var(--jr-ink); padding: clamp(52px, 6vw, 96px) clamp(18px, 4.2vw, 72px) clamp(42px, 5vw, 76px); isolation: isolate; }
+.jrl :focus-visible { outline: 2px solid #141414; outline-offset: 5px; }
+.jrl-wrap { max-width: 1240px; margin: 0 auto; }
+.jrl-topline { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; }
+.jrl-top-label { font-size: 11px; font-weight: 800; letter-spacing: .3em; white-space: nowrap; }
+.jrl-rule { flex: 1; height: 1px; background: var(--jr-border); }
+.jrl-count { font-size: 12px; font-weight: 800; letter-spacing: .22em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jrl-heading { display: flex; justify-content: space-between; align-items: end; gap: 36px; padding-bottom: clamp(24px, 3.2vw, 44px); }
+.jrl-heading h2 { margin: 0; font-size: clamp(28px, 3.1vw, 49px); font-weight: 900; letter-spacing: -.05em; line-height: 1.06; text-transform: uppercase; }
+.jrl-heading p { max-width: 430px; margin: 0 0 3px; color: var(--jr-soft); font-size: clamp(12px, 1.2vw, 15px); line-height: 1.55; }
+.jrl-stage { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 76px); align-items: center; }
+
+/* Foto: as artes empilhadas, a ativa aparece com fade e um zoom lento contínuo */
+.jrl-photo { position: relative; width: 100%; aspect-ratio: 1122 / 1402; overflow: hidden; border-radius: 16px; background: #1a1a1a; }
+.jrl-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.06); transition: opacity .7s ease, transform 6.5s ease-out; }
+.jrl-photo img.on { opacity: 1; transform: scale(1.035); z-index: 1; }
+
+.jrl-detail { min-width: 0; display: flex; flex-direction: column; }
+.jrl-detail-top { display: flex; align-items: center; gap: 14px; margin-bottom: 25px; }
+.jrl-current-label { font-size: 11px; font-weight: 800; letter-spacing: .27em; white-space: nowrap; }
+.jrl-detail-line { height: 1px; background: var(--jr-border); flex: 1; }
+.jrl-arrows { display: flex; gap: 9px; }
+.jrl-arrow { display: grid; place-items: center; width: 40px; height: 40px; flex: none; background: transparent; color: var(--jr-ink); border: 1px solid #c8c6c1; border-radius: 50%; padding: 0; cursor: pointer; transition: background .15s, color .15s; }
+.jrl-arrow svg { width: 17px; height: 17px; }
+.jrl-arrow:hover { background: var(--jr-ink); color: #fff; }
+.jrl-title { font-size: clamp(33px, 3.45vw, 58px); text-transform: uppercase; line-height: 1.03; margin: 0 0 18px; font-weight: 900; letter-spacing: -.05em; white-space: pre-line; }
+.jrl-description { color: #64635e; font-size: clamp(14px, 1.32vw, 17px); line-height: 1.65; max-width: 530px; margin: 0 0 31px; }
+.jrl-lenses-head { display: flex; align-items: center; gap: 18px; margin-bottom: 15px; }
+.jrl-lenses-head span { letter-spacing: .24em; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.jrl-lenses-head::after { content: ""; height: 1px; background: var(--jr-border); flex: 1; }
+.jrl-lenses { display: flex; flex-wrap: wrap; gap: 14px; min-height: 96px; margin-bottom: 8px; }
+.jrl-lens { flex: 0 1 112px; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; background: none; border: 0; padding: 6px 4px; border-radius: 10px; cursor: pointer; color: #3c3a37; font: inherit; transition: background .15s, transform .15s; }
+.jrl-lens:hover:not(.na) { background: rgba(0,0,0,.05); transform: translateY(-2px); }
+.jrl-lens span { font-size: 12px; font-weight: 700; }
+.jrl-lens small { font-size: 10px; color: var(--jr-soft); }
+.jrl-lens.na { cursor: default; opacity: .45; }
+/* Formato de lente desenhado com a cor real da lente (JR.lensCss) */
+.jrl-lens-shape { width: 84px; height: 40px; border-radius: 46% 46% 40% 40% / 60% 60% 40% 40%; background: var(--c); box-shadow: inset 0 -8px 14px rgba(0,0,0,.25), inset 0 6px 10px rgba(255,255,255,.35); }
+.jrl-feature { display: flex; align-items: center; gap: 11px; border-top: 1px solid var(--jr-border); padding-top: 23px; margin-top: 12px; }
+.jrl-cta { color: var(--jr-ink); display: inline-flex; gap: 18px; align-items: center; text-decoration: none; font-size: 12px; font-weight: 900; letter-spacing: .15em; border-bottom: 1px solid var(--jr-ink); padding-bottom: 10px; text-transform: uppercase; transition: gap .17s ease; }
+.jrl-cta:hover { gap: 26px; }
+.jrl-cta svg { width: 19px; height: 19px; }
+.jrl-note { font-size: 11px; color: var(--jr-soft); line-height: 1.45; margin: 0 0 0 auto; max-width: 190px; text-align: right; }
+
+/* Texto entrando a cada troca */
+.jrl-anim.in > * { animation: jrl-up .55s cubic-bezier(.2,.8,.2,1) both; }
+.jrl-anim.in > :nth-child(2) { animation-delay: .07s; }
+.jrl-anim.in > :nth-child(3) { animation-delay: .12s; }
+.jrl-anim.in > :nth-child(4) { animation-delay: .16s; }
+@keyframes jrl-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* Abas com miniatura da arte e barra de progresso da troca automática */
+.jrl-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: clamp(26px, 4vw, 54px); border-top: 1px solid var(--jr-border); padding-top: 20px; }
+.jrl-tab { position: relative; display: flex; align-items: center; gap: 15px; background: transparent; border: 0; color: #73716c; text-align: left; padding: 0 15px 20px; cursor: pointer; min-width: 0; transition: color .2s; font: inherit; }
+.jrl-tab:first-child { padding-left: 0; }
+.jrl-tab:not(:last-child) { border-right: 1px solid var(--jr-border); }
+.jrl-tab[aria-selected="true"] { color: var(--jr-ink); }
+.jrl-tab img { display: block; width: 58px; height: 72px; object-fit: cover; flex-shrink: 0; border-radius: 6px; filter: saturate(.6); opacity: .8; transition: filter .2s, opacity .2s; }
+.jrl-tab[aria-selected="true"] img { filter: none; opacity: 1; }
+.jrl-tab-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.jrl-tab-num { font-size: 10px; font-weight: 750; letter-spacing: .18em; opacity: .7; }
+.jrl-tab-title { font-size: clamp(10px, .99vw, 13px); line-height: 1.35; font-weight: 800; letter-spacing: .075em; text-transform: uppercase; }
+.jrl-prog { position: absolute; left: 0; right: 15px; bottom: -1px; height: 2px; background: transparent; overflow: hidden; }
+.jrl-tab:first-child .jrl-prog { left: 0; }
+.jrl-tab[aria-selected="true"] .jrl-prog { background: var(--jr-ink); }
+.jrl.auto .jrl-tab[aria-selected="true"] .jrl-prog { background: rgba(20,20,20,.15); }
+.jrl.auto .jrl-tab[aria-selected="true"] .jrl-prog::after { content: ""; position: absolute; inset: 0; background: var(--jr-ink); transform-origin: left; animation: jrl-prog 6s linear both; }
+@keyframes jrl-prog { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.jrl-mobile-hint { display: none; }
+
+@media (max-width: 1080px) {
+  .jrl-stage { gap: 26px; }
+  .jrl-title { font-size: clamp(30px, 4vw, 46px); }
+  .jrl-description { margin-bottom: 16px; font-size: 14px; }
+  .jrl-note { display: none; }
+}
+@media (max-width: 760px) {
+  .jrl { padding: 45px 18px 47px; }
+  .jrl-topline { gap: 10px; }
+  .jrl-top-label { font-size: 9.5px; letter-spacing: .18em; }
+  .jrl-count { font-size: 10px; letter-spacing: .12em; }
+  .jrl-heading { display: block; padding-bottom: 22px; }
+  .jrl-heading h2 { font-size: clamp(30px, 8vw, 44px); }
+  .jrl-heading p { margin-top: 10px; font-size: 13px; }
+  .jrl-stage { display: flex; flex-direction: column; gap: 22px; }
+  .jrl-photo { max-width: 420px; width: 100%; margin: 0 auto; }
+  .jrl-title { font-size: clamp(31px, 8.3vw, 46px); margin-bottom: 13px; }
+  .jrl-lenses { min-height: 0; gap: 8px; }
+  .jrl-lens { flex: 0 1 calc(25% - 6px); }
+  .jrl-lens-shape { width: 64px; height: 32px; }
+  .jrl-tabs { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-top: 16px; margin-top: 30px; scrollbar-width: thin; }
+  .jrl-tab { min-width: 215px; flex: 0 0 215px; scroll-snap-align: start; padding: 0 12px 14px; }
+  .jrl-mobile-hint { display: block; margin: 9px 0 0; text-align: right; font-size: 10px; color: var(--jr-soft); letter-spacing: .05em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jrl *, .jrl *::before, .jrl *::after { transition: none !important; animation: none !important; }
+}
+
+/* "Opções de lentes" com 3 óculos reais (12/10) */
+.jrl-lenses { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-height: 0; }
+.jrl-oculos { display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; padding: 8px 8px 10px; border-radius: 12px; background: transparent; border: 1px solid transparent; color: var(--jr-ink); text-decoration: none; font: inherit; cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.jrl-oculos:hover { transform: translateY(-3px); border-color: #d7d5d0; }
+.jrl-oculos img, .jrl-oculos svg { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: transparent !important; mix-blend-mode: multiply; transform: scale(1.3); }   /* fundo branco da foto some no bege da seção */
+.jrl-oculos span { font-size: 12px; font-weight: 700; line-height: 1.3; }
+.jrl-oculos small { font-size: 10.5px; color: var(--jr-soft); }
+@media (max-width: 760px) { .jrl-lenses { gap: 8px; } .jrl-oculos span { font-size: 11px; } }
+/* A animação de entrada isola .jrl-lenses: com o bege como fundo próprio o multiply some com o branco da foto. */
+.jrl-lenses { background: var(--jr-bg); }
