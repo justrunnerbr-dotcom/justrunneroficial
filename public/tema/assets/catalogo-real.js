@@ -41,6 +41,7 @@
     };
   });
   JR.bySlug = slug => JR.PRODUCTS.find(p => p.slug === slug);
+  JR.CATEGORIAS = REAL.categorias || [];   // menu "Categorias", na ordem do site antigo
   JR.realLens = (slug, vIdx, lens) => {
     const p = JR.bySlug(slug), v = p && p.variants[vIdx];
     return v && JR.REAL_LENS[slug][v.name].lenses[lens];
@@ -50,15 +51,22 @@
      JR- R$ 297 com "Leve 2 pelo preço de 1": entre os óculos elegíveis, do mais caro pro mais barato, cada 2º sai grátis
      (src/lib/cart-store.ts, discount). Combos JRC- (3 óculos por R$ 327) não entram nessa conta. */
   JR.PRICE = { one: 297, pair: 297, combo: 327, freeShipping: 200, installments: 12 };
-  JR.priceOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l ? l.price : JR.PRICE.one; };
+  /* op = item da Oferta Progressiva (SKU JROP-, R$ 175): mesma cor/lente, outro id na Yampi. */
+  JR.opOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.op; };
+  JR.priceOf = (slug, vIdx, lens, op) => { const l = JR.realLens(slug, vIdx, lens); return l ? (op && l.op ? l.op.price : l.price) : JR.PRICE.one; };
+  JR.skuOf = (slug, vIdx, lens, op) => { const l = JR.realLens(slug, vIdx, lens) || {}; return op && l.op ? l.op.sku : l.sku; };
   JR.minPrice = slug => { const p = JR.bySlug(slug); return Math.min(...p.variants.flatMap((v, i) => v.lenses.map(l => JR.priceOf(slug, i, l)))); };
   JR.isCombo = slug => !!(JR.bySlug(slug) || {}).combo;
+  /* Mesmas contas do src/lib/cart-store.ts: Leve 2 (JR-, cada 2º grátis, do mais caro pro mais barato; combo fora)
+     + Oferta Progressiva (JROP-, desconto fixo de R$ 53 a partir de 2 óculos). */
   JR.cartTotals = items => {
-    const linhas = items.map(i => ({ ...i, price: JR.priceOf(i.slug, i.v, i.lens) }));
+    const linhas = items.map(i => ({ ...i, price: JR.priceOf(i.slug, i.v, i.lens, i.op) }));
     const subtotal = linhas.reduce((a, i) => a + i.price * i.qty, 0);
-    const eleg = linhas.filter(i => !JR.isCombo(i.slug) && i.price >= 90).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
+    const eleg = linhas.filter(i => !i.op && !JR.isCombo(i.slug) && i.price >= 90).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
     let desconto = 0; for (let k = 1; k < eleg.length; k += 2) desconto += eleg[k];
-    return { subtotal, desconto, total: subtotal - desconto, oculos: eleg.length };
+    const opQtd = linhas.filter(i => i.op).reduce((a, i) => a + i.qty, 0);
+    const descontoOp = opQtd >= 2 ? 53 : 0;
+    return { subtotal, desconto, descontoOp, total: subtotal - desconto - descontoOp, oculos: eleg.length, opQtd };
   };
   /* Compatível com o código do tema: n óculos de R$ 297 no Leve 2 (pares pelo preço de 1). */
   JR.total = n => Math.ceil(n / 2) * JR.PRICE.one;
@@ -94,7 +102,17 @@
       .filter(([s, i]) => !destaque.some(d => d[0] === s && d[1] === i))],
     lancamentos: (REAL.vitrines.lancamentos || []).map(idx).filter(Boolean),
     combos: (JR.bySlug("combo") || { variants: [] }).variants.map((v, i) => ["combo", i, v.lenses[0]]),
-    all: naoCombo.map(p => [p.slug, 0, p.variants[0].lenses[0]])
+    /* Oferta Progressiva: cada cor que tem versão JROP, na 1ª lente com JROP */
+    oferta: naoCombo.flatMap(p => p.variants.map((v, i) => { const l = v.lenses.find(x => (JR.REAL_LENS[p.slug][v.name].lenses[x] || {}).op); return l ? [p.slug, i, l] : null; })).filter(Boolean),
+    all: naoCombo.map(p => [p.slug, 0, p.variants[0].lenses[0]]),
+    /* Mais vendidos (13/10): os 4 do banner escolhidos pelo usuário + os 8 seguintes do ranking de vendas
+       da Yampi (src/lib/best-sellers.ts), cada um como armação/produto do site antigo. */
+    maisVendidos: [
+      ["flak", "Preta", "Preta"], ["eye-jacket-redux", "Branca", "Preta"], ["radar-ev", "Preta", "Sapphire"], ["minute", "Preta", "Preta"],
+      ...["minute-cooper", "radar-ev-piet", "eye-jacket", "hstn-preta", "half-jacket", "plantaris-preta", "radar-ev-cooper", "encoder"]
+        .map(ps => { for (const p of naoCombo) { const i = p.variants.findIndex(v => JR.REAL_LENS[p.slug][v.name].productSlug === ps); if (i >= 0) return [p.slug, p.variants[i].name, p.variants[i].lenses[0]]; } return null; })
+        .filter(Boolean)
+    ].map(([sl, cor, l]) => { const p = JR.bySlug(sl); const i = p ? p.variants.findIndex(v => v.name === cor) : -1; return i < 0 ? null : [sl, i, p.variants[i].lenses.includes(l) ? l : p.variants[i].lenses[0]]; }).filter(Boolean)
   };
 
   /* ---------- Checkout real da Yampi ---------- */
@@ -110,7 +128,7 @@
     } catch (e) { return ""; }
   };
   JR.checkoutUrl = items => {
-    const lines = items.map(i => ({ l: JR.realLens(i.slug, i.v, i.lens), q: i.qty })).filter(x => x.l);
+    const lines = items.map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && (i.op && l.op ? l.op : l), q: i.qty }; }).filter(x => x.l);
     if (!lines.length) return null;
     return `https://${REAL.checkoutDomain}/cart/items?` +
       lines.map(x => `product_option_id%5B%5D=${x.l.id}&quantity%5B%5D=${x.q}`).join("&") +

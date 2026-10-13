@@ -21,7 +21,11 @@
   $$("[data-i]").forEach(s => s.outerHTML = icon[s.dataset.i]);
   $("#crumbs").innerHTML = `<a href="index.html">Início</a><span>›</span><a href="index.html#oferta">Compre 1 Leve 2</a><span>›</span><span>${product.name}</span>`;
   $("#p-name").textContent = product.name;
-  $("#p-sub").textContent = `Óculos de sol esportivo polarizado para ${USE}`;
+  $("#p-sub").textContent = product.combo ? "Kit com 3 óculos de sol esportivos"
+    : product.style === "acessorio" ? "Lentes extras para o seu Radar EV"
+    : `Óculos de sol esportivo polarizado para ${USE || "treino e dia a dia"}`;
+  /* Selo do topo conforme a oferta: combo, Oferta Progressiva (?op=1) ou Compre 1 Leve 2 */
+  { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("op") === "1" ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
 
   /* (b) confiança junto do botão: só sinais reais */
   $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 12x"], ["truck", "Frete grátis acima de R$ 200"]]
@@ -38,12 +42,24 @@
     out.className = "";
     out.innerHTML = `<b>${JR.POLICY.delivery}</b> após a confirmação do pagamento. Frete grátis acima de R$ 200; abaixo disso, o valor aparece no checkout.`;
   });
-  /* Preço do site no ar (12/10): o da cor e lente escolhidas, com o "de" riscado; combos são kit de 3 a R$ 327. */
+  /* Preço do site no ar (12/10): o da cor e lente escolhidas, com o "de" riscado; combos são kit de 3 a R$ 327.
+     ?op=1 (Oferta Progressiva, 13/10): usa a versão JROP da lente quando ela existe: 1 por R$ 175, 2 por R$ 297. */
+  const OP_PAGINA = qs.get("op") === "1";
+  const emOp = () => OP_PAGINA && !!JR.opOf(product.slug, state.v, state.lens);
   function renderPreco() {
+    if (emOp()) {
+      const pr = JR.priceOf(product.slug, state.v, state.lens, true);
+      $("#p-price").innerHTML = brl(pr);
+      $("#p-inst").innerHTML = "Oferta Progressiva · 2 óculos por R$ 297";
+      const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong><span>2 por R$ 297</span>`;
+      $("#add").textContent = `Adicionar · ${brl(state.qty >= 2 ? pr * state.qty - 53 : pr * state.qty)}`;
+      $("#add-pair").hidden = $(".pair-box").hidden = true;
+      return;
+    }
     const l = JR.realLens(product.slug, state.v, state.lens) || {}, pr = l.price || JR.PRICE.one;
     $("#p-price").innerHTML = `${l.de ? `<s class="de">${brl(l.de)}</s> ` : ""}${brl(pr)}`;
     $("#p-inst").innerHTML = "Parcele em até 12x";
-    const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong><span>${product.combo ? "kit com 3 óculos" : "Leve 2 pelo preço de 1"}</span>`;
+    const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong>${product.combo ? "<span>kit com 3 óculos</span>" : ""}`;   // sem o "Leve 2" verde (13/10)
     $("#add").textContent = `Adicionar · ${brl(product.combo ? pr * state.qty : Math.ceil(state.qty / 2) * pr)}`;
     $("#add-pair").hidden = $(".pair-box").hidden = !!product.combo;
   }
@@ -104,15 +120,22 @@
     const lensOnly = product.variants.every(x => x.lenses.every(JR.isLens));
     $("#p-meta").innerHTML = `<span>Armação ${v.name}${JR.optLabel(state.lens) ? " · " + JR.optLabel(state.lens) : ""}</span>` +
       (lensOnly ? `<span class="pill">${all} ${all > 1 ? "lentes disponíveis" : "lente"}</span>` : "");
-    $("#lens-label").textContent = v.lenses.every(JR.isLens) ? "Lente" : "Variação";
-    $("#lens-opt").hidden = v.lenses.length === 1 && v.lenses[0] === "Único";
-    $("#colors").innerHTML = product.variants.map((x, i) => `
-      <button class="color-opt ${i === state.v ? "on" : ""}" role="radio" aria-checked="${i === state.v}" aria-label="${x.name}" title="${x.name}" data-v="${i}">
-        ${JR.thumb ? JR.thumb(product.slug, i, x.lenses.includes(state.lens) ? state.lens : x.lenses[0]) : JR.glasses({ shape: product.shape, frame: x.frame, lens: x.lenses.includes(state.lens) ? state.lens : x.lenses[0], shadow: false })}
-      </button>`).join("");
-    $("#lenses").innerHTML = v.lenses.map(l => `
-      <button class="lens-opt ${l === state.lens ? "on" : ""}" role="radio" aria-checked="${l === state.lens}" data-lens="${l}">
-        <i style="background:${JR.lensCss(l)}"></i>${l}</button>`).join("");
+    /* 13/10 (2): cada armação é um produto, igual ao site antigo — a página mostra só as lentes da armação aberta.
+       As outras armações do modelo ficam na categoria (ex.: Categorias › Radar mostra todas as Radar). */
+    $("#lens-opt").hidden = true;
+    const rotulo = l => l === "Único" ? v.name : (JR.isLens(l) ? `Lente ${l}` : l);
+    const nome = JR.cardName ? JR.cardName(product, v) : product.name;
+    $("#p-name").textContent = nome;
+    document.title = `${nome} — Óculos de sol esportivo | Just Runner`;
+    const sbn = $("#sb-name"); if (sbn) sbn.textContent = nome;
+    $("#color-name").textContent = rotulo(state.lens);
+    $(".opt-cor").hidden = v.lenses.length < 2;
+    $("#colors").classList.add("swatches-antigo");
+    $("#colors").innerHTML = v.lenses.map(l => {
+      const on = l === state.lens;
+      return `<button class="sw ${on ? "on" : ""}" role="radio" aria-checked="${on}" aria-label="${rotulo(l)}" title="${rotulo(l)}" data-v="${state.v}" data-lens="${l}">
+        <i style="background:${v.frame}"></i><i style="background:${JR.lensCss(l)}"></i></button>`;
+    }).join("");
   }
   function refresh() { renderOptions(); renderGallery(); renderGuideResult(); renderPreco(); JR.onRefresh && JR.onRefresh(); }
 
@@ -123,13 +146,9 @@
     const b = e.target.closest("[data-v]"); if (!b) return;
     withVT(() => {
       state.v = +b.dataset.v;
-      if (!variant().lenses.includes(state.lens)) state.lens = variant().lenses[0];
+      state.lens = b.dataset.lens && variant().lenses.includes(b.dataset.lens) ? b.dataset.lens : variant().lenses[0];
       refresh(); syncUrl();
     });
-  });
-  $("#lenses").addEventListener("click", e => {
-    const b = e.target.closest("[data-lens]"); if (!b) return;
-    withVT(() => { state.lens = b.dataset.lens; refresh(); syncUrl(); });
   });
   function syncUrl() {
     const u = new URL(location.href);
@@ -144,20 +163,25 @@
   };
   $("#qminus").onclick = () => setQty(state.qty - 1);
   $("#qplus").onclick = () => setQty(state.qty + 1);
-  $("#add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, state.qty);
+  $("#add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, state.qty, { op: emOp() });
   $("#add-pair").onclick = () => { JR.addToCart(product.slug, state.v, state.lens, 1, { open: false }); JR.openPicker(product.slug); };
 
   /* Benefício = situação real (brand-voice) */
   $("#sports").innerHTML = ["Corrida", "Treino", "Bike", "Caminhada", "Dia a dia"].map(s => `<span>${s}</span>`).join("");
 
   /* ---------- Por que você vai gostar: MOVE · FEEL · LOOK · PROTECT ---------- */
-  $("#pillars").innerHTML = `<div class="pl-head"><span class="kicker" style="color:#4a5058">Por que você vai gostar</span>
-    <h2 class="display h-md">Feito para o treino.<br>Pensado para o seu estilo.</h2></div>` + [
-    ["Look", "lens", "Performance também pode ter estilo.", "Esportivo no visual, fácil de usar. Presença sem exagero."],
-    ["Feel", "feather", "Leve o suficiente para você esquecer que está usando.", "Narigueira emborrachada: menos peso no rosto, mais foco no caminho."],
-    ["Move", "grip", "Você se movimenta. Ele permanece no lugar.", "Hastes com grip e encaixe firme: mais estabilidade, menos ajustes."],
-    ["Protect", "uv", "Proteção para continuar em movimento.", "Lente polarizada com proteção UV400, em policarbonato."]
-  ].map(([k, i, t, s]) => `<div class="pl"><span class="pl-k">${icon[i]}${k}</span><strong>${t}</strong><p>${s}</p></div>`).join("");
+  /* 13/10: "Feito para o treino" como letreiro (marquee), igual à faixa do topo: os cards rodam sem parar,
+     param com o mouse em cima e ficam parados pra quem desativa animações. Cards repetidos pra emendar o loop. */
+  const PILARES = [
+    ["Look", "lens", "Performance com estilo.", "Esportivo no visual, fácil de usar. Presença sem exagero."],
+    ["Feel", "feather", "Leve no rosto.", "Narigueira emborrachada: menos peso, mais foco no caminho."],
+    ["Move", "grip", "Fica no lugar.", "Hastes com grip e encaixe firme: mais estabilidade, menos ajustes."],
+    ["Protect", "uv", "Proteção em movimento.", "Lente polarizada com proteção UV400, em policarbonato."]
+  ];
+  const plCard = ([k, i, t, s], dup) => `<div class="pl"${dup ? ' aria-hidden="true"' : ""}><span class="pl-k">${icon[i]}${k}</span><strong>${t}</strong><p>${s}</p></div>`;
+  $("#pillars").innerHTML = `<div class="pl-head"><div><span class="kicker" style="color:#4a5058">Por que você vai gostar</span>
+    <h2 class="display h-sm">Feito para o treino. Pensado para o seu estilo.</h2></div></div>
+    <div class="pl-marquee"><div class="pl-run">${PILARES.map(x => plCard(x)).join("")}${PILARES.map(x => plCard(x, true)).join("")}</div></div>`;
 
 
 
@@ -176,7 +200,7 @@
   const sb = $("#sticky-buy");
   const updSticky = () => {
     $("#sb-img").innerHTML = JR.thumb ? JR.thumb(product.slug, state.v, state.lens) : JR.glasses({ shape: product.shape, frame: variant().frame, lens: state.lens, shadow: false });
-    $("#sb-name").textContent = product.name;
+    $("#sb-name").textContent = JR.cardName ? JR.cardName(product, variant()) : product.name;
     $("#sb-var").textContent = `Armação ${variant().name}${JR.optLabel(state.lens) ? " · " + JR.optLabel(state.lens) : ""}`;
   };
   JR.onRefresh = updSticky;
@@ -186,11 +210,11 @@
       sb.classList.toggle("show", show); sb.setAttribute("aria-hidden", !show);
     }).observe($("#add-pair"));
   }
-  $("#sb-add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, 1);
+  $("#sb-add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, 1, { op: emOp() });
 
   /* ---------- Escolha seu segundo óculos (cross-sell do Compre 1 Leve 2) ---------- */
   $("#pair-grid").innerHTML = JR.SHOWCASE.all.filter(([sl]) => sl !== product.slug).slice(0, 4)
-    .map(([sl, v, l]) => JR.card(sl, v, l, { tag: "Compre 1 Leve 2" })).join("");
+    .map(([sl, v, l]) => JR.card(sl, v, l, { tag: "Compre 1 Leve 2", semLeve2: true })).join("");
   JR.bindCards($("#pair-grid"));
 
   /* ---------- Mídia ---------- */

@@ -18,8 +18,8 @@ const nextConfig: NextConfig = {
     }
   },
   async redirects() {
-    const prod = Object.entries(temaRedirects.produtos).map(([slug, { p, cor }]) => ({
-      source: `/produto/${slug}`, destination: `/tema/produto.html?p=${p}&cor=${encodeURIComponent(cor)}`, permanent: false,
+    const prod = Object.entries(temaRedirects.produtos as Record<string, { p: string; cor: string; op?: number }>).map(([slug, { p, cor, op }]) => ({
+      source: `/produto/${slug}`, destination: `/tema/produto.html?p=${p}&cor=${encodeURIComponent(cor)}${op ? '&op=1' : ''}`, permanent: false,
     }))
     const col = Object.entries(temaRedirects.colecoes).map(([slug, dest]) => ({
       source: `/colecao/${slug}`, destination: `/tema/${dest}`, permanent: false,

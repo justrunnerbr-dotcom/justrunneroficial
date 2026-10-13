@@ -103,43 +103,44 @@
 
   /* ---------- Coleção ---------- */
   if (page === "colecao") {
-    const STYLES = [["todos", "Todos"], ["performance", "Performance"], ["sportstyle", "Sportstyle"], ["everyday", "Everyday"]];
     const qs = new URLSearchParams(location.search);
-    let style = STYLES.some(([k]) => k === qs.get("estilo")) ? qs.get("estilo") : "todos";
-    /* Categorias por esporte (banners do usuário, 12/10): todas mostram todos os óculos, cada cor como um card. */
+    /* 13/10: sem os filtros Todos/Performance/Sportstyle/Everyday. Cada página é uma vitrine ou uma categoria do menu. */
+    const BANNER_CAT = { radar: "radarev", minute: "minute", "eye-jacket": "eyejacket", flak: "flak", plantaris: "plantaris", hstn: "hstn",
+      "half-jacket": "halfjacket", encoder: "encoder", "straight-jacket": "straightjacket" };
+    const corDe = slugs => JR.PRODUCTS.filter(p => slugs.includes(p.slug)).flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]));
     const CATS = {
       corrida:   { nome: "Corrida",      banner: "fotos/banner-cat-corrida.jpg",   alt: "Corrida: leveza e proteção para acompanhar cada treino" },
       bike:      { nome: "Bike",         banner: "fotos/banner-cat-bike.jpg",      alt: "Bike" },
       trail:     { nome: "Trail",        banner: "fotos/banner-cat-trail.jpg",     alt: "Trail" },
       beach:     { nome: "Beach Sports", banner: "fotos/banner-cat-beach.jpg",     alt: "Beach sports: leveza e conforto para jogar na areia" },
       lifestyle: { nome: "Lifestyle",    banner: "fotos/banner-cat-lifestyle.jpg", alt: "Lifestyle" },
-      /* Vitrines do site no ar (12/10) */
-      leve2:       { nome: "Leve 2 pelo preço de 1", banner: "fotos/hero-atual.jpg", alt: "Compre 1 Leve 2", lista: () => JR.SHOWCASE.leve2 },
-      leve3:       { nome: "Compre 1 Leve 3", banner: "fotos/cat-banner-combos.jpg", alt: "Compre 1 Leve 3: 3 óculos por R$ 327", lista: () => JR.SHOWCASE.combos },
-      lancamentos: { nome: "Lançamentos", banner: "fotos/cat-banner-lancamentos.jpg", alt: "Lançamentos Just Runner", lista: () => JR.SHOWCASE.lancamentos }
+      leve2:       { nome: "Compre 1 Leve 2", banner: "fotos/hero-atual.jpg", alt: "Compre 1 Leve 2", lista: () => JR.SHOWCASE.leve2 },
+      leve3:       { nome: "Combos", banner: "fotos/cat-banner-combos.jpg?v=2", bannerMob: "fotos/cat-banner-combos-mobile.jpg?v=2", alt: "Compre 1 Leve 3: trail, run e bike", lista: () => JR.SHOWCASE.combos },
+      lancamentos: { nome: "Lançamentos", banner: "fotos/cat-banner-lancamentos.jpg", alt: "Lançamentos Just Runner", lista: () => JR.SHOWCASE.lancamentos },
+      "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidos },
+      oferta:      { nome: "Oferta Progressiva", banner: "fotos/cat-banner-oferta.jpg", bannerMob: "fotos/cat-banner-oferta-mobile.jpg", alt: "Oferta Progressiva: 1 óculos por R$ 175, 2 por R$ 297", lista: () => JR.SHOWCASE.oferta, op: true }
     };
+    (JR.CATEGORIAS || []).forEach(c => { CATS[c.slug] = { nome: c.nome, lista: () => corDe(c.modelos),
+      banner: BANNER_CAT[c.slug] && `fotos/cat-${BANNER_CAT[c.slug]}.jpg`, bannerMob: BANNER_CAT[c.slug] && `fotos/cat-${BANNER_CAT[c.slug]}-mobile.jpg`, alt: c.nome }; });
     const cat = CATS[qs.get("cat")];
     if (cat) {
       document.title = `${cat.nome} | Just Runner`;
-      // O banner tem o botão "Escolher agora" desenhado: o clique leva até os óculos.
-      $(".page-hero").outerHTML = `
-        <section class="cat-banner"><a href="#col-grid" aria-label="Ver os óculos de ${cat.nome}"><img src="${cat.banner}" alt="${cat.alt}" width="2000" height="667" fetchpriority="high"></a></section>`;
+      $(".page-hero").outerHTML = cat.banner
+        ? `<section class="cat-banner"><a href="#col-grid" aria-label="Ver os óculos de ${cat.nome}"><picture>${cat.bannerMob ? `<source media="(max-width: 749px)" srcset="${cat.bannerMob}">` : ""}<img src="${cat.banner}" alt="${cat.alt}" fetchpriority="high"></picture></a></section>`
+        : `<section class="page-hero"><div class="wrap"><h1 class="display h-lg">${cat.nome}</h1>${cat.texto ? `<p class="lead">${cat.texto}</p>` : ""}</div></section>`;
       $(".filters").insertAdjacentHTML("beforebegin", `<nav class="crumbs cat-crumbs" aria-label="Você está em"><a href="index.html">Início</a><span>›</span><span>${cat.nome}</span></nav>`);
     }
-    const todasAsCores = () => (cat && cat.lista) ? cat.lista() : JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio").flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]));
+    const lista = () => (cat && cat.lista) ? cat.lista() : JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio").flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]));
     const lensCount = slug => new Set(JR.bySlug(slug).variants.flatMap(v => v.lenses).filter(JR.isLens)).size;
     const render = () => {
       const sort = $("#f-sort").value;
-      let list = (cat ? todasAsCores() : JR.SHOWCASE.all).filter(([sl]) => style === "todos" || JR.bySlug(sl).style === style);
+      let list = lista();
       if (sort === "az") list = [...list].sort((a, b) => JR.bySlug(a[0]).name.localeCompare(JR.bySlug(b[0]).name));
       if (sort === "lens") list = [...list].sort((a, b) => lensCount(b[0]) - lensCount(a[0]));
-      $("#f-style").innerHTML = STYLES.map(([k, t]) => `<button class="${k === style ? "on" : ""}" aria-pressed="${k === style}" data-style="${k}">${t}</button>`).join("");
-      $("#f-count").textContent = `${list.length} ${cat ? (list.length > 1 ? "óculos" : "óculos") : (list.length > 1 ? "modelos" : "modelo")} · todos com lente polarizada UV400`;
-      $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, {})).join("");
+      $("#f-count").textContent = `${list.length} óculos`;
+      $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, cat && cat.op ? { op: true } : {})).join("");
       JR.bindCards($("#col-grid"));
-      const u = new URL(location.href); style === "todos" ? u.searchParams.delete("estilo") : u.searchParams.set("estilo", style); history.replaceState(null, "", u);
     };
-    $("#f-style").addEventListener("click", e => { const b = e.target.closest("[data-style]"); if (b) { style = b.dataset.style; render(); } });
     $("#f-sort").addEventListener("change", render);
     render();
   }

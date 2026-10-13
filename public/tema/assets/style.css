@@ -1521,3 +1521,157 @@ section { position: relative; }
   .header .logo { justify-self: center; }
   .header .icons { justify-self: end; margin-left: 0; }
 }
+
+/* Menu "Categorias" igual ao site antigo (13/10): lista escura que abre ao passar o mouse ou clicar */
+.nav { align-items: center; }
+.nav-dd { position: relative; }
+.nav-dd-btn { font: 600 13px/1 var(--body); color: #dfe2e6; padding: 6px 0; display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; cursor: pointer; }
+.nav-dd-btn:hover, .nav-dd.open .nav-dd-btn { color: #fff; }
+.dd-seta { width: 7px; height: 7px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform .2s; }
+.nav-dd.open .dd-seta, .m-cats[open] .dd-seta { transform: rotate(-135deg) translateY(-1px); }
+.dd-panel { position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%); width: 200px; max-height: 60vh; overflow-y: auto; padding: 8px 0;
+  background: rgba(10,10,10,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.4); display: none; flex-direction: column; z-index: 60; }
+.nav-dd:hover .dd-panel, .nav-dd.open .dd-panel { display: flex; }
+.nav-dd::after { content: ""; position: absolute; left: -20px; right: -20px; top: 100%; height: 16px; }   /* ponte pro mouse não perder o hover */
+.dd-panel a { display: block; padding: 8px 20px; font: 500 12px/1.3 var(--logo); color: #d4d4d8; }
+.dd-panel a::after { display: none; }
+.dd-panel a:hover { color: #fff; background: rgba(255,255,255,.05); }
+.dd-sep { height: 1px; background: rgba(255,255,255,.08); margin: 8px 20px; }
+.dd-panel a.dd-all { font-weight: 700; color: #fff; }
+.m-cats { border-bottom: 1px solid var(--line); }
+.m-cats summary { list-style: none; display: flex; justify-content: space-between; align-items: center; padding: 14px 4px; font-weight: 600; cursor: pointer; }
+.m-cats summary::-webkit-details-marker { display: none; }
+.mobile-nav .m-cats a { padding: 10px 14px; border-bottom: 0; font-weight: 500; font-size: 14px; color: #cfd3d8; }
+.mobile-nav .m-cats a.dd-all { color: #fff; font-weight: 700; margin-bottom: 8px; }
+
+/* 13/10: fotos de produto no padrão do site antigo — fundo branco, quadro quadrado, óculos inteiro (contain),
+   em todos os cards (home, coleções, carrinho) e na galeria da página de produto, no computador e no celular. */
+.card .media, .cards-clean .card .media, .vit .cards-clean .card .media, #vit-leve3 .card .media, .card[data-slug="combo"] .media {
+  aspect-ratio: 1 / 1; background: #fff; padding: 0; }
+.card .media img, .cards-clean .card .media img, .vit .cards-clean .card .media img, #vit-leve3 .card .media img {
+  width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #fff !important; transform: none; }
+.card:hover .media img, .cards-clean .card:hover .media img, .vit .cards-clean .card:hover .media img { transform: scale(1.04); }
+.stage, .stage .slide { background: #fff; }
+.stage .slide > img, .stage .slide > img[src*="supabase"] { object-fit: contain; background: #fff; }
+.thumb { background: #fff; border-color: #ececec; }
+.thumb.on { border-color: var(--paper-ink); }
+.thumb > img, .thumb > img[src*="supabase"], .color-opt img, .line .lm img, #sb-img img { background: #fff !important; object-fit: contain; }
+.all-models, .light .grid-4 { background: transparent; }
+@media (hover: hover) and (min-width: 761px) {
+  .vit .cards-clean .card .quick, #vit-leve3 .card .quick { top: calc(100cqw - 46px); }
+}
+/* Seções com produtos em fundo branco (13/10); o card ganha borda fina pra não sumir no branco */
+.light, .light.sec { background: #fff; }
+.card { border: 1px solid #ececec; box-shadow: none; }
+.card:hover { box-shadow: 0 14px 30px -14px rgba(0,0,0,.18); }
+@media (max-width: 749px) { .card .swatches .more:last-child { display: none; } }   /* "· 13 lentes" quebrava a linha no celular */
+
+/* Escolha de cor+lente no estilo do site antigo (13/10): bolinhas de 22px, metade armação e metade lente */
+.colors.swatches-antigo { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatches-antigo .sw { width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid #e4e4e7; outline: 2px solid transparent; outline-offset: 2px;
+  overflow: hidden; display: flex; cursor: pointer; transition: outline-color .15s ease; background: #fff; }
+.swatches-antigo .sw i { flex: 1; height: 100%; }
+.swatches-antigo .sw.on { outline-color: #18181b; }
+.swatches-antigo .sw:hover:not(.on) { outline-color: #c4c4c8; }
+.pair-box { display: none !important; }   /* 13/10: sem o quadro verde "Leve 2 pelo preço de 1" na página do produto */
+
+/* "Em estoque e pronto para envio" com bolinha pulsando (13/10), versão clean do selo do site antigo */
+.stock { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 500; color: #1f7a3a; letter-spacing: .01em; }
+.stock-dot { position: relative; width: 8px; height: 8px; flex: none; border-radius: 50%; background: #22a04b; }
+.stock-dot::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #22a04b; animation: stock-pulse 1.8s ease-out infinite; }
+@keyframes stock-pulse { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.8); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .stock-dot::before { animation: none; } }
+.tag-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.tag-row .tag { margin: 0; }
+
+/* Nome e preço na mesma linha (13/10): nome à esquerda, preço à direita; desce sozinho se o nome for muito comprido */
+.title-row { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; margin: 12px 0 6px; }
+.title-row h1 { margin: 0; }
+.buy .title-row .price { margin: 0 0 2px; margin-left: auto; text-align: right; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; white-space: nowrap; }
+.title-row #p-price .de { margin: 0 0 4px; font-size: 14px; }
+.buy .inst { margin-top: -2px; }
+.opt.opt-cor { margin: 0 0 10px; }
+.opt.opt-cor .opt-label { margin-bottom: 8px; }
+.title-row + .inst { text-align: right; margin: -2px 0 8px; font-size: 12.5px; }
+/* Celular (13/10): foto do óculos e escolha de cor na mesma tela — galeria mais baixa, sem a fileira de miniaturas
+   (as setas e o "1/4" continuam) e as bolinhas de cor numa faixa que desliza pro lado. */
+@media (max-width: 760px) {
+  .thumbs { display: none; }
+  .stage { aspect-ratio: 5 / 4; }
+  .tag-row { margin-top: 2px; }
+  .title-row { margin: 8px 0 2px; }
+  .buy h1 { font-size: 26px; }
+  .buy .title-row .price { font-size: 26px; }
+  .opt.opt-cor .colors.swatches-antigo { flex-wrap: nowrap; overflow-x: auto; padding: 4px 2px 8px; margin: 0 calc(var(--gutter) * -1); padding-left: var(--gutter); padding-right: var(--gutter); scrollbar-width: none; }
+  .opt.opt-cor .colors.swatches-antigo::-webkit-scrollbar { display: none; }
+  .swatches-antigo .sw { flex: none; width: 30px; height: 30px; }
+}
+/* Barra fixa no celular: nome longo ("Radar EV Thieves Branca") corta com reticências em vez de passar por baixo do preço */
+@media (max-width: 760px) {
+  .sticky-buy .wrap { gap: 12px; }
+  .sb-prod { min-width: 0; flex: 1 1 auto; }
+  .sb-prod > div { min-width: 0; }
+  .sb-prod strong { overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
+  .sb-price { flex: none; }
+}
+/* 13/10: cada armação é um produto — o card não troca mais de armação pelas bolinhas; fica só a contagem de lentes */
+.card .swatches .dot, .card .swatches .more:not(:last-child) { display: none; }
+
+/* Menu do celular (13/10): categorias uma embaixo da outra, painel rola se a lista for grande */
+.mobile-nav .panel { overflow-y: auto; }
+.mobile-nav .m-cats a { display: block; padding: 11px 14px; }
+.mobile-nav .m-cats[open] { padding-bottom: 6px; }
+.mobile-nav .panel > .logo, .mobile-nav .panel div > .logo { border-bottom: 0; }
+/* Preço embaixo do nome, acima das estrelas: "de" riscado ao lado, à esquerda */
+.buy > .price { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 2px; text-align: left; }
+.buy > .price .de { font-size: 15px; margin: 0; }
+.buy > .price + .inst { text-align: left; margin: 0 0 8px; font-size: 13px; }
+.title-row { margin: 10px 0 4px; }
+
+/* "Feito para o treino" em carrossel clean (13/10) */
+.pillars { display: block; margin-top: 40px; }
+.pillars .pl-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.pillars .pl-head h2 { margin: 4px 0 0; font-size: clamp(18px, 2vw, 22px); }
+.pl-arrows { display: flex; gap: 8px; flex: none; }
+.pl-arrow { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #dcdde0; background: #fff; color: #111; display: grid; place-items: center; cursor: pointer; transition: background .15s, color .15s; }
+.pl-arrow:hover { background: #111; color: #fff; }
+.pl-arrow svg { width: 15px; height: 15px; }
+.pl-arrow[data-pl="-1"] svg { transform: rotate(180deg); }
+.pl-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 24px) / 3); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px; }
+.pl-track::-webkit-scrollbar { display: none; }
+.pl-track .pl { scroll-snap-align: start; padding: 16px; border-radius: 12px; }
+.pl-track .pl strong { font-size: 15px; margin: 8px 0 4px; }
+.pl-track .pl p { font-size: 13px; line-height: 1.5; }
+@media (max-width: 1020px) { .pl-track { grid-auto-columns: calc((100% - 24px) / 2.6); } }
+@media (max-width: 760px) {
+  .pl-track { grid-auto-columns: 68%; margin-right: calc(var(--gutter) * -1); padding-right: var(--gutter); }
+  .pillars .pl-head { align-items: center; }
+  .pl-arrows { display: none; }
+}
+.pl-track .pl .pl-k { margin-bottom: 2px; }
+
+/* Letreiro dos pilares (13/10): roda contínuo como a faixa do topo */
+.pl-marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.pl-run { display: flex; gap: 12px; width: max-content; animation: pl-run 22s linear infinite; }
+.pl-marquee:hover .pl-run { animation-play-state: paused; }
+.pl-run .pl { width: 280px; flex: none; padding: 16px; border-radius: 12px; }
+.pl-run .pl strong { font-size: 15px; margin: 8px 0 4px; }
+.pl-run .pl p { font-size: 13px; line-height: 1.5; }
+.pl-run .pl .pl-k { margin-bottom: 2px; }
+@keyframes pl-run { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 6px)); } }
+@media (max-width: 760px) { .pl-run .pl { width: 240px; } .pl-run { animation-duration: 18s; } }
+@media (prefers-reduced-motion: reduce) { .pl-run { animation: none; } .pl-marquee { overflow-x: auto; } }
+
+/* Seção da marca com o banner "footer" (13/10): foto de fundo inteira, texto na parte escura à esquerda */
+.brand { position: relative; }
+.brand > .brand-bg { position: absolute; inset: 0; z-index: 1; }
+.brand > .brand-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; display: block; }
+.brand::before { background: linear-gradient(90deg, rgba(5,6,7,.92) 0%, rgba(5,6,7,.6) 38%, rgba(5,6,7,0) 62%); }
+.brand .inner { min-height: 420px; }
+@media (max-width: 760px) {
+  .brand > .brand-bg img { object-position: 60% 30%; }
+  .brand::before { background: linear-gradient(0deg, rgba(5,6,7,.95) 30%, rgba(5,6,7,.55) 62%, rgba(5,6,7,.1) 100%); }
+  .brand .inner { min-height: 0; padding-top: 220px; }
+}
+.dd-panel a.dd-hot, .mobile-nav .m-cats a.dd-hot { color: #fff; font-weight: 700; }

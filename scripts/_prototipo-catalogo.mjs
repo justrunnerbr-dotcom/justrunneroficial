@@ -22,7 +22,7 @@ const get = async q => {
   return r.json()
 }
 
-const ps = await get('products?select=id,slug,name,status,collection:collections(slug),variants(id,name,sku,price,compare_price,position,yampi_product_id),images(url,position,variants(name))&status=eq.active')
+const ps = await get('products?select=id,slug,name,status,collection:collections(slug),variants(id,name,sku,price,compare_price,position,yampi_product_id),collection_id,images(url,position,variants(name))&status=eq.active')
 
 // Família (modelo do protótipo) pelo começo do nome — do prefixo mais longo pro mais curto.
 const FAMILIAS = [
@@ -53,7 +53,11 @@ const FAMILIAS = [
 const models = {}
 const porVariante = {}   // variant id → [modelo, cor, lente] (pra resolver as vitrines curadas)
 const semFamilia = []
+const opPendente = []   // variações JROP (Oferta Progressiva): entram como preço alternativo da mesma cor/lente
+const modelosDaColecao = {}
 for (const p of ps) {
+  const op = p.variants.filter(v => /^JROP-/.test(v.sku || '') && v.yampi_product_id)
+  if (op.length) { opPendente.push({ p, op }); continue }
   const jr = p.variants.filter(v => /^(JR|JRC)-/.test(v.sku || '') && v.yampi_product_id)
   if (!jr.length) continue
   const fam = FAMILIAS.find(([, pre]) => pre.some(x => p.name.toLowerCase().startsWith(x.toLowerCase())))
@@ -64,6 +68,7 @@ for (const p of ps) {
   for (const pre of prefixos) if (cor.toLowerCase().startsWith(pre.toLowerCase())) { cor = cor.slice(pre.length).trim(); break }
   if (combo) cor = p.name
   const m = (models[slug] ||= { name: nome, combo, colors: {} })
+  if (p.collection?.slug) (modelosDaColecao[p.collection.slug] ||= new Set()).add(slug)
   for (const v of [...jr].sort((a, b) => a.position - b.position)) {
     // "Cinza · Lente Azul": a cor vem na variação quando o nome do produto não traz cor (Eye Jacket, Redux).
     const partes = cor === 'Padrão' || !cor ? v.name.split(' · ') : [v.name]
@@ -76,6 +81,29 @@ for (const p of ps) {
     porVariante[v.id] = [slug, corV, lente]
   }
 }
+
+// Oferta Progressiva: mesma família, cor e lente do produto JR (nomes iguais), com o id/preço JROP.
+let opOk = 0; const opSem = []
+for (const { p, op } of opPendente) {
+  const fam = FAMILIAS.find(([, pre]) => pre.some(x => p.name.toLowerCase().startsWith(x.toLowerCase())))
+  if (!fam) { opSem.push(p.name); continue }
+  const [slug, prefixos] = fam
+  let cor = p.name
+  for (const pre of prefixos) if (cor.toLowerCase().startsWith(pre.toLowerCase())) { cor = cor.slice(pre.length).trim(); break }
+  for (const v of op) {
+    const partes = cor === 'Padrão' || !cor ? v.name.split(' · ') : [v.name]
+    const corV = partes.length > 1 ? partes[0] : (cor || 'Padrão')
+    const lente = (partes.length > 1 ? partes[1] : v.name).replace(/Lente /g, '')
+    const alvo = models[slug]?.colors[corV]?.lenses[lente]
+    if (alvo) { alvo.op = { id: String(v.yampi_product_id), sku: v.sku, price: v.price }; opOk++ } else opSem.push(`${p.name} · ${v.name}`)
+  }
+}
+console.log('oferta progressiva: ligadas', opOk, '| sem par JR:', opSem.length ? opSem.join(', ') : 'nenhuma')
+
+// Categorias do menu, na ordem do site antigo (collections.position), com os modelos de cada uma.
+const colTodas = await get('collections?select=slug,name,position&order=position')
+const categorias = colTodas.filter(c => modelosDaColecao[c.slug] && !['combos'].includes(c.slug))
+  .map(c => ({ slug: c.slug, nome: c.name === 'Hstn' ? 'HSTN' : c.name, modelos: [...modelosDaColecao[c.slug]] }))
 
 // Vitrines curadas do site no ar (mesmos arquivos que a home usa).
 const ids = txt => [...txt.matchAll(/variantId: '([0-9a-f-]{36})'/g)].map(x => x[1])
@@ -92,23 +120,23 @@ const vitrines = { lancamentos: resolve(ids(lancTxt)), leve2Destaque: resolve(id
 const redirProdutos = {}
 for (const [slug, m] of Object.entries(models)) {
   const cores = Object.keys(m.colors)
-  cores.forEach((cor, i) => { const ps = m.colors[cor].productSlug; redirProdutos[ps] ||= { p: slug, cor }; redirProdutos[ps + '-op'] ||= { p: slug, cor } })   // produto com várias cores (Eye Jacket, Redux) abre na 1ª
+  cores.forEach((cor, i) => { const ps = m.colors[cor].productSlug; redirProdutos[ps] ||= { p: slug, cor }; redirProdutos[ps + '-op'] ||= { p: slug, cor, op: 1 } })   // produto com várias cores (Eye Jacket, Redux) abre na 1ª
 }
 const colecoes = await get('collections?select=slug')
 const MODELO_DA_COLECAO = { radar: 'radar-ev', casual: 'dartboard', 'eye-jacket': 'eye-jacket', flak: 'flak', minute: 'minute', plantaris: 'plantaris', hstn: 'hstn',
   encoder: 'encoder', 'straight-jacket': 'straight-jacket', 'half-jacket': 'half-jacket', '1311': '1311', ellipse: 'ellipse', holbrook: 'holbrook',
   'm-frame': 'm-frame', 'monster-dog': 'monster-dog', soto: 'soto', sphaera: 'sphaera', sutro: 'sutro' }
-const CAT_DA_COLECAO = { 'compre-1-leve-2': 'leve2', 'oferta-progressiva': 'leve2', combos: 'leve3', lancamentos: 'lancamentos', 'mais-vendidos': 'leve2' }
+const CAT_DA_COLECAO = { 'compre-1-leve-2': 'leve2', 'oferta-progressiva': 'oferta', combos: 'leve3', lancamentos: 'lancamentos', 'mais-vendidos': 'mais-vendidos' }
 const redirColecoes = {}
 for (const { slug } of colecoes) {
   if (CAT_DA_COLECAO[slug]) redirColecoes[slug] = `colecao.html?cat=${CAT_DA_COLECAO[slug]}`
-  else if (MODELO_DA_COLECAO[slug] && models[MODELO_DA_COLECAO[slug]]) redirColecoes[slug] = `produto.html?p=${MODELO_DA_COLECAO[slug]}`
+  else if (modelosDaColecao[slug]) redirColecoes[slug] = `colecao.html?cat=${slug}`
 }
 for (const [k, v] of Object.entries(CAT_DA_COLECAO)) redirColecoes[k] ||= `colecao.html?cat=${v}`
 writeFileSync(join(ROOT, 'src/lib/tema-redirects.json'), JSON.stringify({ produtos: redirProdutos, colecoes: redirColecoes }, null, 1) + '\n')
 console.log('redirects: produtos', Object.keys(redirProdutos).length, '| coleções', Object.keys(redirColecoes).length)
 
-const out = { models, vitrines, checkoutDomain: `seguro.${new URL(env.NEXT_PUBLIC_SITE_URL).hostname.replace(/^www\./, '')}` }
+const out = { models, vitrines, categorias, checkoutDomain: `seguro.${new URL(env.NEXT_PUBLIC_SITE_URL).hostname.replace(/^www\./, '')}` }
 writeFileSync(join(ROOT, 'prototipo-tema/assets/catalogo-real.json.js'),
   `/* Gerado por scripts/_prototipo-catalogo.mjs em ${new Date().toISOString()} — não editar à mão. */\nwindow.JR_REAL = ${JSON.stringify(out)};\n`)
 

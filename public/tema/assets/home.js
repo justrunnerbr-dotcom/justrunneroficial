@@ -33,6 +33,7 @@
   vit("vit-leve2", JR.SHOWCASE.leve2.slice(0, 8));
   vit("vit-leve3", JR.SHOWCASE.combos);
   vit("vit-lanc", JR.SHOWCASE.lancamentos);
+  vit("vit-mais", (JR.SHOWCASE.maisVendidos || []).slice(0, 8));
   JR.bindCards();
 
   /* Feito para correr */
@@ -121,10 +122,8 @@
   ].map(([i, t, s], n) => `<div class="risk-item reveal">${icon[i]}<div><strong>${t}</strong><span>${s}</span></div>${n === 3 ? `<a class="btn btn-outline-dark" href="${JR.waLink()}" target="_blank" rel="noopener">Chamar ${icon.arrow}</a>` : ""}</div>`).join("");
 
   /* Institucional */
-  mount("brand-scene", JR.scene({ slot: "home-marca",
-    sky: "sunset", setting: "bridge", seed: 33, figure: "bust", x: 175, y: -28, s: .5, align: "xMidYMin",
-    hair: "pony", skin: "#b9805a", lens: "Gold", tank: true, light: "right"
-  }));
+  /* 13/10: fundo da seção da marca = banner "footer" do usuário (desktop 3:1 e mobile quadrado) */
+  mount("brand-scene", `<picture class="brand-bg"><source media="(max-width: 760px)" srcset="fotos/banner-footer-mobile.jpg"><img src="fotos/banner-footer.jpg" alt="" loading="lazy" decoding="async"></picture>`);
 
   /* Newsletter */
   $("#news-form").addEventListener("submit", e => {

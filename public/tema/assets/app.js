@@ -16,13 +16,19 @@ window.JR = window.JR || {};
 
   /* ---------- Header / footer ---------- */
   const page = document.body.dataset.page;
+  /* Menu igual ao site antigo (13/10): Início · Compre 1 Leve 2 · Combos · Categorias (lista) · Oferta Progressiva */
   const navLinks = [
-    ["Compre 1 Leve 2", "index.html#oferta", "hot"],
-    ["Modelos", "colecao.html"],
-    ["Por estilo", "index.html#estilos"],
-    ["Lentes", "index.html#lentes"],
-    ["Ajuda", "faq.html"]
+    ["Início", "index.html"],
+    ["Compre 1 Leve 2", "colecao.html?cat=leve2", "hot"],
+    ["Combos", "colecao.html?cat=leve3"],
+    ["Categorias", "colecao.html", "cats"],
+    ["Oferta Progressiva", "colecao.html?cat=oferta"]
   ];
+  const cats = () => `<a href="colecao.html?cat=mais-vendidos" class="dd-hot">Mais vendidos</a>` + (JR.CATEGORIAS || []).map(c => `<a href="colecao.html?cat=${c.slug}">${c.nome}</a>`).join("");
+  const navItem = ([t, h, c]) => c === "cats"
+    ? `<div class="nav-dd"><button type="button" class="nav-dd-btn" aria-expanded="false" aria-controls="dd-cats">${t}<span class="dd-seta" aria-hidden="true"></span></button>
+        <div class="dd-panel" id="dd-cats" role="region" aria-label="Categorias">${cats()}<span class="dd-sep"></span><a href="colecao.html" class="dd-all">Ver todas as coleções →</a></div></div>`
+    : `<a href="${h}" class="${c || ""}">${t}</a>`;
   const logo = `<a href="index.html" class="logo" aria-label="Just Runner — início"><img src="fotos/logo.png" alt="Just Runner" width="96" height="38"></a>`;
 
   function renderHeader() {
@@ -34,7 +40,7 @@ window.JR = window.JR || {};
         <div class="wrap">
           <button class="icon-btn menu-btn" data-open-menu aria-label="Abrir menu">${JR.icon.menu}</button>
           ${logo}
-          <nav class="nav" aria-label="Principal">${navLinks.map(([t, h, c]) => `<a href="${h}" class="${c || ""}">${t}</a>`).join("")}</nav>
+          <nav class="nav" aria-label="Principal">${navLinks.map(navItem).join("")}</nav>
           <div class="icons">
             <a class="icon-btn" aria-label="Buscar" href="/busca">${JR.icon.search}</a>
             <button class="icon-btn" aria-label="Carrinho" data-open-cart>${JR.icon.bag}<span class="cart-count" id="cart-count">0</span></button>
@@ -47,8 +53,9 @@ window.JR = window.JR || {};
       ].map(([i, t]) => `<span>${JR.icon[i]}${t}</span>`).join("")).join("")}</div></div>
       <div class="mobile-nav" id="mobile-nav"><div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">${logo}<button class="icon-btn" data-close-menu aria-label="Fechar">${JR.icon.close}</button></div>
-        ${navLinks.map(([t, h]) => `<a href="${h}" data-close-menu>${t}</a>`).join("")}
-        <a href="produto.html?p=radar-ev" data-close-menu>Radar EV</a>
+        ${navLinks.map(([t, h, c]) => c === "cats"
+          ? `<details class="m-cats"><summary>${t}<span class="dd-seta" aria-hidden="true"></span></summary>${cats()}<a href="colecao.html" class="dd-all">Ver todas as coleções →</a></details>`
+          : `<a href="${h}" data-close-menu>${t}</a>`).join("")}
       </div></div>`;
   }
 
@@ -119,11 +126,12 @@ window.JR = window.JR || {};
     const p = JR.bySlug(slug);
     const v = p.variants[vIdx] || p.variants[0];
     lens = lens && v.lenses.includes(lens) ? lens : v.lenses[0];
-    const found = cart.find(i => i.slug === slug && i.v === vIdx && i.lens === lens);
-    if (found) found.qty += qty; else cart.push({ slug, v: vIdx, lens, qty });
+    const op = !!(opts.op && JR.opOf && JR.opOf(slug, vIdx, lens));   // Oferta Progressiva só se a lente tiver versão JROP
+    const found = cart.find(i => i.slug === slug && i.v === vIdx && i.lens === lens && !!i.op === op);
+    if (found) found.qty += qty; else cart.push(op ? { slug, v: vIdx, lens, qty, op: true } : { slug, v: vIdx, lens, qty });
     { const l = JR.realLens && JR.realLens(slug, vIdx, lens);
-      JR.meta && JR.meta("AddToCart", { content_ids: [l ? l.sku : slug], content_name: JR.cardName ? JR.cardName(p, v) : p.name, content_category: p.name,
-        value: (l ? l.price : JR.PRICE.one) * qty, currency: "BRL", content_type: "product", num_items: qty }); }
+      JR.meta && JR.meta("AddToCart", { content_ids: [JR.skuOf ? JR.skuOf(slug, vIdx, lens, op) : (l ? l.sku : slug)], content_name: JR.cardName ? JR.cardName(p, v) : p.name, content_category: p.name,
+        value: (JR.priceOf ? JR.priceOf(slug, vIdx, lens, op) : JR.PRICE.one) * qty, currency: "BRL", content_type: "product", num_items: qty }); }
     save(); renderCart();
     const c = $("#cart-count"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump");
     if (opts.open !== false) openCart();
@@ -155,15 +163,16 @@ window.JR = window.JR || {};
     body.innerHTML = cart.map((i, k) => {
       const p = JR.bySlug(i.slug), v = p.variants[i.v];
       return `<div class="line">
-        <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
-        <div><div class="ln">${p.name}</div><div class="lv">Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}</div>
+        <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}${i.op ? "&op=1" : ""}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
+        <div><div class="ln">${p.name}</div><div class="lv">Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.op ? " · Oferta Progressiva" : ""}</div>
           <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
         <button class="rm" data-rm="${k}">Remover</button>
       </div>`;
     }).join("") + (tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
     foot.innerHTML = `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
-      ${saving ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(saving)}</span></div>` : ""}
+      ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
+      ${tt.descontoOp ? `<div class="row save"><span>Oferta Progressiva</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
       <div class="row"><span>Frete</span><span>${free ? "Grátis" : "calculado no checkout"}</span></div>
       <div class="row total"><span>Total</span><span>${brl(total)}</span></div>
       <div class="row" style="justify-content:flex-end"><small>Parcele em até 12x</small></div>
@@ -193,7 +202,8 @@ window.JR = window.JR || {};
   JR.card = (slug, vIdx = 0, lens, o = {}) => {
     const p = JR.bySlug(slug), v = p.variants[vIdx];
     lens = lens || v.lenses[0];
-    const href = `produto.html?p=${slug}&c=${vIdx}&l=${encodeURIComponent(lens)}`;
+    const op = !!(o.op && JR.opOf && JR.opOf(slug, vIdx, lens));
+    const href = `produto.html?p=${slug}&c=${vIdx}&l=${encodeURIComponent(lens)}${op ? "&op=1" : ""}`;
     const dots = p.variants.slice(0, 5).map((x, i) =>
       `<button class="dot ${i === vIdx ? "on" : ""}" style="background:${x.frame}" data-dot="${i}" aria-label="Armação ${x.name}" title="${x.name}"></button>`).join("");
     const lensCount = new Set(p.variants.flatMap(x => x.lenses).filter(JR.isLens)).size;
@@ -201,13 +211,13 @@ window.JR = window.JR || {};
        têm nome de lente (Cooper, Full Black…): conta todas como opções em vez de mostrar "1 lente" ou nada. */
     const totalOpc = new Set(p.variants.flatMap(x => x.lenses)).size;
     const opcoes = p.variants.length === 1 && totalOpc > lensCount ? `${totalOpc} opções` : lensCount ? `${lensCount} ${lensCount > 1 ? "lentes" : "lente"}` : "";
-    return `<article class="card ${o.mini ? "mini" : ""}" data-slug="${slug}" data-v="${vIdx}" data-lens="${lens}">
+    return `<article class="card ${o.mini ? "mini" : ""}" data-slug="${slug}" data-v="${vIdx}" data-lens="${lens}"${op ? ' data-op="1"' : ""}>
       ${o.tag ? `<span class="tag ${o.tag === "Novo" ? "new" : ""}">${o.tag}</span>` : ""}
       <a class="media" href="${href}" aria-label="${p.name}">${JR.thumb ? JR.thumb(slug, vIdx, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens })}</a>
       <div class="info">
         <a class="name" href="${href}">${JR.cardName(p, v)}</a>
-        ${o.mini ? "" : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
-          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
+        ${o.mini ? "" : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · Oferta Progressiva</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
+          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
         <div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>
         ${o.mini ? "" : `<button class="quick" data-add>${o.pick ? "Escolher este" : "Adicionar ao carrinho"}</button>`}
       </div>
@@ -228,14 +238,14 @@ window.JR = window.JR || {};
           card.dataset.v = i; card.dataset.lens = lens;
           const nm = card.querySelector(".name"); if (nm) nm.textContent = JR.cardName(p, v);
           card.querySelector(".media").innerHTML = JR.thumb ? JR.thumb(p.slug, i, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens });
-          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}`;
+          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
           card.querySelectorAll("a").forEach(a => a.href = href);
           card.querySelectorAll(".dot").forEach(d => d.classList.toggle("on", d === dot));
         }
         if (e.target.closest("[data-add]")) {
           e.preventDefault();
           const inModal = !!card.closest("#pick-modal");
-          JR.addToCart(p.slug, +card.dataset.v, card.dataset.lens);
+          JR.addToCart(p.slug, +card.dataset.v, card.dataset.lens, 1, { op: !!card.dataset.op });
           if (inModal) $("#pick-modal").classList.remove("open");
         }
       });
@@ -260,6 +270,8 @@ window.JR = window.JR || {};
 
     document.addEventListener("click", e => {
       const t = e.target;
+      const dd = t.closest(".nav-dd-btn");
+      $$(".nav-dd").forEach(x => { const open = dd && x.contains(dd) ? !x.classList.contains("open") : false; x.classList.toggle("open", open); x.querySelector(".nav-dd-btn").setAttribute("aria-expanded", open); });
       if (t.closest("[data-open-cart]")) { openCart(); }
       if (t.closest("[data-close-cart]") || t.closest("[data-close-modal]") || t === overlay()) closeAll();
       if (t.closest("[data-open-menu]")) $("#mobile-nav").classList.add("open");
@@ -270,7 +282,7 @@ window.JR = window.JR || {};
       if (rm) { cart.splice(+rm.dataset.rm, 1); save(); renderCart(); }
       if (t.closest("[data-pick]")) JR.openPicker(cart[cart.length - 1]?.slug);
       if (t.closest("[data-checkout]") && JR.meta) { const tt = JR.cartTotals ? JR.cartTotals(cart) : { total: 0 };
-        JR.meta("InitiateCheckout", { content_ids: cart.map(i => (JR.realLens(i.slug, i.v, i.lens) || {}).sku).filter(Boolean), value: tt.total, currency: "BRL", num_items: cart.reduce((a, i) => a + i.qty, 0) }); }
+        JR.meta("InitiateCheckout", { content_ids: cart.map(i => JR.skuOf(i.slug, i.v, i.lens, i.op)).filter(Boolean), value: tt.total, currency: "BRL", num_items: cart.reduce((a, i) => a + i.qty, 0) }); }
       if (t.closest("[data-checkout]")) { const u = JR.checkoutUrl && JR.checkoutUrl(cart); if (u) location.href = u; else JR.toast("Não consegui montar o checkout: atualize a página e tente de novo."); }
       const soon = t.closest("[data-soon]");
       if (soon) { e.preventDefault(); JR.toast(`${soon.dataset.soon}: fora do escopo deste protótipo.`); }

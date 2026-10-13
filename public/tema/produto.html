@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=64">
+  <link rel="stylesheet" href="assets/style.css?v=82">
   <link rel="stylesheet" href="assets/guia-rostos.css?v=1">
   <link rel="stylesheet" href="assets/guia-lentes.css?v=7">
   <script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/produto.html*"},"eagerness":"moderate"}]}</script>
@@ -28,23 +28,25 @@
           <div class="stage" id="stage" aria-live="polite"></div>
 
           <div class="buy" id="buy">
-            <span class="tag">Compre 1 Leve 2</span>
-            <h1 id="p-name">Radar EV</h1>
+            <div class="tag-row"><span class="tag">Compre 1 Leve 2</span><span class="stock"><span class="stock-dot" aria-hidden="true"></span>Em estoque e pronto para envio</span></div>
+            <div class="title-row"><h1 id="p-name">Radar EV</h1></div>
+            <!-- 13/10: escolha de cor logo abaixo do nome, pra trocar e ver o óculos sem rolar -->
+            <div class="opt opt-cor">
+              <div class="opt-label"><span>Cor: <b id="color-name"></b></span></div>
+              <div class="colors" id="colors" role="radiogroup" aria-label="Cor da armação"></div>
+            </div>
             <p class="p-sub" id="p-sub">Óculos de sol esportivo polarizado</p>
-            <a class="p-rating" id="p-rating" href="#avaliacoes" hidden></a>
-            <div class="meta" id="p-meta"></div>
+            <!-- 13/10: preço de volta embaixo do nome, logo acima das estrelas de avaliação -->
             <div class="price" id="p-price"></div>
             <div class="inst" id="p-inst"></div>
+            <a class="p-rating" id="p-rating" href="#avaliacoes" hidden></a>
+            <div class="meta" id="p-meta"></div>
 
             <div class="pair-box">
               <div><strong>Leve 2 pelo preço de 1.</strong>Adicione 2 óculos e o 2º sai grátis, com frete grátis.</div>
               <div class="big">2º grátis</div>
             </div>
 
-            <div class="opt">
-              <div class="opt-label"><span>Cor: <b id="color-name"></b></span></div>
-              <div class="colors" id="colors" role="radiogroup" aria-label="Cor da armação"></div>
-            </div>
             <div class="opt" id="lens-opt">
               <div class="opt-label"><span><span id="lens-label">Lente</span>: <b id="lens-name"></b></span><span>Polarizada · UV400 · <a href="#guia-lentes" class="lens-help">Qual escolher?</a></span></div>
               <div class="lenses" id="lenses" role="radiogroup" aria-label="Lente"></div>
@@ -232,12 +234,12 @@
   <div id="footer"></div>
 
   <script src="assets/data.js?v=28"></script>
-  <script src="assets/catalogo-real.json.js?v=31"></script>
-  <script src="assets/catalogo-real.js?v=389"></script>
+  <script src="assets/catalogo-real.json.js?v=51"></script>
+  <script src="assets/catalogo-real.js?v=54"></script>
   <script src="assets/art.js?v=28"></script>
   <script src="assets/pixel.js?v=2"></script>
-  <script src="assets/app.js?v=509"></script>
-  <script src="assets/pdp.js?v=449"></script>
+  <script src="assets/app.js?v=54"></script>
+  <script src="assets/pdp.js?v=58"></script>
   <script src="assets/reviews.js?v=30"></script>
   <script src="assets/guia-rostos.js?v=1"></script>
 </body>
