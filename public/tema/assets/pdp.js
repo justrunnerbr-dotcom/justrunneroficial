@@ -8,6 +8,8 @@
   JR.currentProduct = product;   // usado por reviews.js
   const state = { v: 0, lens: null, slide: 0, qty: 1 };
   state.v = Math.min(Math.max(+qs.get("c") || 0, 0), product.variants.length - 1);
+  /* ?cor=Piet (links antigos /produto/<slug> do site redirecionam com o nome da cor) */
+  if (qs.get("cor")) { const i = product.variants.findIndex(v => v.name === qs.get("cor")); if (i >= 0) state.v = i; }
   const variant = () => product.variants[state.v];
   state.lens = variant().lenses.includes(qs.get("l")) ? qs.get("l") : variant().lenses[0];
   { const l0 = JR.realLens(product.slug, state.v, state.lens) || {};

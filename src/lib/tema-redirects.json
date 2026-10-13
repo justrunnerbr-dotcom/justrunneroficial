@@ -1,0 +1,653 @@
+{
+ "produtos": {
+  "1311-cinza": {
+   "p": "1311",
+   "cor": "Cinza"
+  },
+  "1311-cinza-op": {
+   "p": "1311",
+   "cor": "Cinza"
+  },
+  "dartboard": {
+   "p": "dartboard",
+   "cor": "Padrão"
+  },
+  "dartboard-op": {
+   "p": "dartboard",
+   "cor": "Padrão"
+  },
+  "encoder": {
+   "p": "encoder",
+   "cor": "Padrão"
+  },
+  "encoder-op": {
+   "p": "encoder",
+   "cor": "Padrão"
+  },
+  "flak-branca": {
+   "p": "flak",
+   "cor": "Branca"
+  },
+  "flak-branca-op": {
+   "p": "flak",
+   "cor": "Branca"
+  },
+  "flak-preta": {
+   "p": "flak",
+   "cor": "Preta"
+  },
+  "flak-preta-op": {
+   "p": "flak",
+   "cor": "Preta"
+  },
+  "flak-cooper": {
+   "p": "flak",
+   "cor": "Cooper"
+  },
+  "flak-cooper-op": {
+   "p": "flak",
+   "cor": "Cooper"
+  },
+  "half-jacket": {
+   "p": "half-jacket",
+   "cor": "Padrão"
+  },
+  "half-jacket-op": {
+   "p": "half-jacket",
+   "cor": "Padrão"
+  },
+  "hstn-cinza": {
+   "p": "hstn",
+   "cor": "Cinza"
+  },
+  "hstn-cinza-op": {
+   "p": "hstn",
+   "cor": "Cinza"
+  },
+  "hstn-cooper": {
+   "p": "hstn",
+   "cor": "Cooper"
+  },
+  "hstn-cooper-op": {
+   "p": "hstn",
+   "cor": "Cooper"
+  },
+  "hstn-preta": {
+   "p": "hstn",
+   "cor": "Preta"
+  },
+  "hstn-preta-op": {
+   "p": "hstn",
+   "cor": "Preta"
+  },
+  "minute-azul": {
+   "p": "minute",
+   "cor": "Azul"
+  },
+  "minute-azul-op": {
+   "p": "minute",
+   "cor": "Azul"
+  },
+  "minute-branca": {
+   "p": "minute",
+   "cor": "Branca"
+  },
+  "minute-branca-op": {
+   "p": "minute",
+   "cor": "Branca"
+  },
+  "minute-cinza": {
+   "p": "minute",
+   "cor": "Cinza"
+  },
+  "minute-cinza-op": {
+   "p": "minute",
+   "cor": "Cinza"
+  },
+  "minute-cooper": {
+   "p": "minute",
+   "cor": "Cooper"
+  },
+  "minute-cooper-op": {
+   "p": "minute",
+   "cor": "Cooper"
+  },
+  "minute-cristal": {
+   "p": "minute",
+   "cor": "Cristal"
+  },
+  "minute-cristal-op": {
+   "p": "minute",
+   "cor": "Cristal"
+  },
+  "minute-preta": {
+   "p": "minute",
+   "cor": "Preta"
+  },
+  "minute-preta-op": {
+   "p": "minute",
+   "cor": "Preta"
+  },
+  "minute-branca-kit-marrom": {
+   "p": "minute",
+   "cor": "Branca Kit Marrom"
+  },
+  "minute-branca-kit-marrom-op": {
+   "p": "minute",
+   "cor": "Branca Kit Marrom"
+  },
+  "minute-verde": {
+   "p": "minute",
+   "cor": "Verde"
+  },
+  "minute-verde-op": {
+   "p": "minute",
+   "cor": "Verde"
+  },
+  "plantaris-azul-escuro": {
+   "p": "plantaris",
+   "cor": "Azul Escuro"
+  },
+  "plantaris-azul-escuro-op": {
+   "p": "plantaris",
+   "cor": "Azul Escuro"
+  },
+  "plantaris-cinza": {
+   "p": "plantaris",
+   "cor": "Cinza"
+  },
+  "plantaris-cinza-op": {
+   "p": "plantaris",
+   "cor": "Cinza"
+  },
+  "plantaris-matte-bone": {
+   "p": "plantaris",
+   "cor": "Matte Bone"
+  },
+  "plantaris-matte-bone-op": {
+   "p": "plantaris",
+   "cor": "Matte Bone"
+  },
+  "plantaris-podpah": {
+   "p": "plantaris",
+   "cor": "Podpah"
+  },
+  "plantaris-podpah-op": {
+   "p": "plantaris",
+   "cor": "Podpah"
+  },
+  "plantaris-preta-haste-transparente": {
+   "p": "plantaris",
+   "cor": "Preta Haste Transparente"
+  },
+  "plantaris-preta-haste-transparente-op": {
+   "p": "plantaris",
+   "cor": "Preta Haste Transparente"
+  },
+  "plantaris-preta": {
+   "p": "plantaris",
+   "cor": "Preta"
+  },
+  "plantaris-preta-op": {
+   "p": "plantaris",
+   "cor": "Preta"
+  },
+  "plantaris-stonewash": {
+   "p": "plantaris",
+   "cor": "Stonewash"
+  },
+  "plantaris-stonewash-op": {
+   "p": "plantaris",
+   "cor": "Stonewash"
+  },
+  "plantaris-verde": {
+   "p": "plantaris",
+   "cor": "Verde"
+  },
+  "plantaris-verde-op": {
+   "p": "plantaris",
+   "cor": "Verde"
+  },
+  "plantaris-piet": {
+   "p": "plantaris",
+   "cor": "Piet"
+  },
+  "plantaris-piet-op": {
+   "p": "plantaris",
+   "cor": "Piet"
+  },
+  "radar-ev-bronze": {
+   "p": "radar-ev",
+   "cor": "Bronze"
+  },
+  "radar-ev-bronze-op": {
+   "p": "radar-ev",
+   "cor": "Bronze"
+  },
+  "radar-ev-cooper": {
+   "p": "radar-ev",
+   "cor": "Cooper"
+  },
+  "radar-ev-cooper-op": {
+   "p": "radar-ev",
+   "cor": "Cooper"
+  },
+  "radar-ev-laranja": {
+   "p": "radar-ev",
+   "cor": "Laranja"
+  },
+  "radar-ev-laranja-op": {
+   "p": "radar-ev",
+   "cor": "Laranja"
+  },
+  "radar-ev-piet": {
+   "p": "radar-ev",
+   "cor": "Piet"
+  },
+  "radar-ev-piet-op": {
+   "p": "radar-ev",
+   "cor": "Piet"
+  },
+  "radar-ev-preta": {
+   "p": "radar-ev",
+   "cor": "Preta"
+  },
+  "radar-ev-preta-op": {
+   "p": "radar-ev",
+   "cor": "Preta"
+  },
+  "radar-verde": {
+   "p": "radar-ev",
+   "cor": "Verde"
+  },
+  "radar-verde-op": {
+   "p": "radar-ev",
+   "cor": "Verde"
+  },
+  "radar-ev-acrilico": {
+   "p": "radar-ev",
+   "cor": "Acrílico"
+  },
+  "radar-ev-acrilico-op": {
+   "p": "radar-ev",
+   "cor": "Acrílico"
+  },
+  "radar-ev-branca": {
+   "p": "radar-ev",
+   "cor": "Branca"
+  },
+  "radar-ev-branca-op": {
+   "p": "radar-ev",
+   "cor": "Branca"
+  },
+  "radar-ev-cinza": {
+   "p": "radar-ev",
+   "cor": "Cinza"
+  },
+  "radar-ev-cinza-op": {
+   "p": "radar-ev",
+   "cor": "Cinza"
+  },
+  "radar-ev-neon": {
+   "p": "radar-ev",
+   "cor": "Neon"
+  },
+  "radar-ev-neon-op": {
+   "p": "radar-ev",
+   "cor": "Neon"
+  },
+  "radar-ev-transparente": {
+   "p": "radar-ev",
+   "cor": "Transparente"
+  },
+  "radar-ev-transparente-op": {
+   "p": "radar-ev",
+   "cor": "Transparente"
+  },
+  "radar-ev-thieves": {
+   "p": "radar-ev",
+   "cor": "Thieves Preta"
+  },
+  "radar-ev-thieves-op": {
+   "p": "radar-ev",
+   "cor": "Thieves Preta"
+  },
+  "radar-ev-thieves-branca": {
+   "p": "radar-ev",
+   "cor": "Thieves Branca"
+  },
+  "radar-ev-thieves-branca-op": {
+   "p": "radar-ev",
+   "cor": "Thieves Branca"
+  },
+  "radar-ev-kit-de-lentes": {
+   "p": "radar-ev-kit",
+   "cor": "Padrão"
+  },
+  "radar-ev-kit-de-lentes-op": {
+   "p": "radar-ev-kit",
+   "cor": "Padrão"
+  },
+  "straight-jacket-cinza": {
+   "p": "straight-jacket",
+   "cor": "Cinza"
+  },
+  "straight-jacket-cinza-op": {
+   "p": "straight-jacket",
+   "cor": "Cinza"
+  },
+  "straight-jacket-cooper": {
+   "p": "straight-jacket",
+   "cor": "Cooper"
+  },
+  "straight-jacket-cooper-op": {
+   "p": "straight-jacket",
+   "cor": "Cooper"
+  },
+  "straight-jacket-preta": {
+   "p": "straight-jacket",
+   "cor": "Preta"
+  },
+  "straight-jacket-preta-op": {
+   "p": "straight-jacket",
+   "cor": "Preta"
+  },
+  "eye-jacket-brain-dead": {
+   "p": "eye-jacket",
+   "cor": "Brain Dead"
+  },
+  "eye-jacket-brain-dead-op": {
+   "p": "eye-jacket",
+   "cor": "Brain Dead"
+  },
+  "eye-jacket": {
+   "p": "eye-jacket",
+   "cor": "Cinza"
+  },
+  "eye-jacket-op": {
+   "p": "eye-jacket",
+   "cor": "Cinza"
+  },
+  "eye-jacket-flame": {
+   "p": "eye-jacket",
+   "cor": "Flame"
+  },
+  "eye-jacket-flame-op": {
+   "p": "eye-jacket",
+   "cor": "Flame"
+  },
+  "eye-jacket-cooper": {
+   "p": "eye-jacket",
+   "cor": "Cooper"
+  },
+  "eye-jacket-cooper-op": {
+   "p": "eye-jacket",
+   "cor": "Cooper"
+  },
+  "eye-jacket-redux": {
+   "p": "eye-jacket-redux",
+   "cor": "Branca"
+  },
+  "eye-jacket-redux-op": {
+   "p": "eye-jacket-redux",
+   "cor": "Branca"
+  },
+  "ellipse-laranja": {
+   "p": "ellipse",
+   "cor": "Laranja"
+  },
+  "ellipse-laranja-op": {
+   "p": "ellipse",
+   "cor": "Laranja"
+  },
+  "ellipse-preta": {
+   "p": "ellipse",
+   "cor": "Preta"
+  },
+  "ellipse-preta-op": {
+   "p": "ellipse",
+   "cor": "Preta"
+  },
+  "holbrook-preta": {
+   "p": "holbrook",
+   "cor": "Preta"
+  },
+  "holbrook-preta-op": {
+   "p": "holbrook",
+   "cor": "Preta"
+  },
+  "m-frame-preta": {
+   "p": "m-frame",
+   "cor": "Preta"
+  },
+  "m-frame-preta-op": {
+   "p": "m-frame",
+   "cor": "Preta"
+  },
+  "m-frame-x-metal": {
+   "p": "m-frame",
+   "cor": "X Metal"
+  },
+  "m-frame-x-metal-op": {
+   "p": "m-frame",
+   "cor": "X Metal"
+  },
+  "monster-dog-all-black": {
+   "p": "monster-dog",
+   "cor": "All Black"
+  },
+  "monster-dog-all-black-op": {
+   "p": "monster-dog",
+   "cor": "All Black"
+  },
+  "monster-dog-marrom": {
+   "p": "monster-dog",
+   "cor": "Marrom"
+  },
+  "monster-dog-marrom-op": {
+   "p": "monster-dog",
+   "cor": "Marrom"
+  },
+  "plantaris-squared-bege": {
+   "p": "plantaris-squared",
+   "cor": "Bege"
+  },
+  "plantaris-squared-bege-op": {
+   "p": "plantaris-squared",
+   "cor": "Bege"
+  },
+  "plantaris-squared-cinza": {
+   "p": "plantaris-squared",
+   "cor": "Cinza"
+  },
+  "plantaris-squared-cinza-op": {
+   "p": "plantaris-squared",
+   "cor": "Cinza"
+  },
+  "plantaris-squared-marrom": {
+   "p": "plantaris-squared",
+   "cor": "Marrom"
+  },
+  "plantaris-squared-marrom-op": {
+   "p": "plantaris-squared",
+   "cor": "Marrom"
+  },
+  "plantaris-squared-preta": {
+   "p": "plantaris-squared",
+   "cor": "Preta"
+  },
+  "plantaris-squared-preta-op": {
+   "p": "plantaris-squared",
+   "cor": "Preta"
+  },
+  "plantaris-squared-verde": {
+   "p": "plantaris-squared",
+   "cor": "Verde"
+  },
+  "plantaris-squared-verde-op": {
+   "p": "plantaris-squared",
+   "cor": "Verde"
+  },
+  "soto-azul": {
+   "p": "soto",
+   "cor": "Azul"
+  },
+  "soto-azul-op": {
+   "p": "soto",
+   "cor": "Azul"
+  },
+  "soto-carbon": {
+   "p": "soto",
+   "cor": "Carbon"
+  },
+  "soto-carbon-op": {
+   "p": "soto",
+   "cor": "Carbon"
+  },
+  "soto-cristal": {
+   "p": "soto",
+   "cor": "Cristal"
+  },
+  "soto-cristal-op": {
+   "p": "soto",
+   "cor": "Cristal"
+  },
+  "sphaera-preta": {
+   "p": "sphaera",
+   "cor": "Preta"
+  },
+  "sphaera-preta-op": {
+   "p": "sphaera",
+   "cor": "Preta"
+  },
+  "sutro-preta": {
+   "p": "sutro",
+   "cor": "Preta"
+  },
+  "sutro-preta-op": {
+   "p": "sutro",
+   "cor": "Preta"
+  },
+  "combo-1": {
+   "p": "combo",
+   "cor": "Combo 1"
+  },
+  "combo-1-op": {
+   "p": "combo",
+   "cor": "Combo 1"
+  },
+  "combo-2": {
+   "p": "combo",
+   "cor": "Combo 2"
+  },
+  "combo-2-op": {
+   "p": "combo",
+   "cor": "Combo 2"
+  },
+  "combo-5": {
+   "p": "combo",
+   "cor": "Combo 3"
+  },
+  "combo-5-op": {
+   "p": "combo",
+   "cor": "Combo 3"
+  },
+  "combo-6": {
+   "p": "combo",
+   "cor": "Combo 4"
+  },
+  "combo-6-op": {
+   "p": "combo",
+   "cor": "Combo 4"
+  },
+  "combo-7": {
+   "p": "combo",
+   "cor": "Combo 5"
+  },
+  "combo-7-op": {
+   "p": "combo",
+   "cor": "Combo 5"
+  },
+  "combo-9": {
+   "p": "combo",
+   "cor": "Combo 6"
+  },
+  "combo-9-op": {
+   "p": "combo",
+   "cor": "Combo 6"
+  },
+  "combo-10": {
+   "p": "combo",
+   "cor": "Combo 7"
+  },
+  "combo-10-op": {
+   "p": "combo",
+   "cor": "Combo 7"
+  },
+  "combo-8": {
+   "p": "combo",
+   "cor": "Combo 8"
+  },
+  "combo-8-op": {
+   "p": "combo",
+   "cor": "Combo 8"
+  },
+  "combo-11": {
+   "p": "combo",
+   "cor": "Combo 9"
+  },
+  "combo-11-op": {
+   "p": "combo",
+   "cor": "Combo 9"
+  },
+  "combo-12": {
+   "p": "combo",
+   "cor": "Combo 10"
+  },
+  "combo-12-op": {
+   "p": "combo",
+   "cor": "Combo 10"
+  },
+  "combo-13": {
+   "p": "combo",
+   "cor": "Combo 11"
+  },
+  "combo-13-op": {
+   "p": "combo",
+   "cor": "Combo 11"
+  },
+  "combo-14": {
+   "p": "combo",
+   "cor": "Combo 12"
+  },
+  "combo-14-op": {
+   "p": "combo",
+   "cor": "Combo 12"
+  }
+ },
+ "colecoes": {
+  "1311": "produto.html?p=1311",
+  "radar": "produto.html?p=radar-ev",
+  "minute": "produto.html?p=minute",
+  "eye-jacket": "produto.html?p=eye-jacket",
+  "flak": "produto.html?p=flak",
+  "plantaris": "produto.html?p=plantaris",
+  "hstn": "produto.html?p=hstn",
+  "half-jacket": "produto.html?p=half-jacket",
+  "encoder": "produto.html?p=encoder",
+  "straight-jacket": "produto.html?p=straight-jacket",
+  "casual": "produto.html?p=dartboard",
+  "oferta-progressiva": "colecao.html?cat=leve2",
+  "combos": "colecao.html?cat=leve3",
+  "ellipse": "produto.html?p=ellipse",
+  "holbrook": "produto.html?p=holbrook",
+  "m-frame": "produto.html?p=m-frame",
+  "monster-dog": "produto.html?p=monster-dog",
+  "soto": "produto.html?p=soto",
+  "sphaera": "produto.html?p=sphaera",
+  "sutro": "produto.html?p=sutro",
+  "compre-1-leve-2": "colecao.html?cat=leve2",
+  "lancamentos": "colecao.html?cat=lancamentos",
+  "mais-vendidos": "colecao.html?cat=leve2"
+ }
+}

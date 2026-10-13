@@ -86,6 +86,28 @@ const c1l2Bloco = homeTxt.slice(c1l2Ini, homeTxt.indexOf('\n]', c1l2Ini))
 const resolve = list => list.map(id => porVariante[id]).filter(Boolean)
 const vitrines = { lancamentos: resolve(ids(lancTxt)), leve2Destaque: resolve(ids(c1l2Bloco)) }
 
+// Redirecionamentos do site no ar pro tema novo (next.config.ts): /produto/<slug> → página do modelo na cor certa.
+// Inclui as versões -op (Oferta Progressiva), que caem no mesmo modelo/cor do produto JR. A cor vai pelo nome
+// (?cor=), porque a ordem das cores na página do tema não é a do banco.
+const redirProdutos = {}
+for (const [slug, m] of Object.entries(models)) {
+  const cores = Object.keys(m.colors)
+  cores.forEach((cor, i) => { const ps = m.colors[cor].productSlug; redirProdutos[ps] ||= { p: slug, cor }; redirProdutos[ps + '-op'] ||= { p: slug, cor } })   // produto com várias cores (Eye Jacket, Redux) abre na 1ª
+}
+const colecoes = await get('collections?select=slug')
+const MODELO_DA_COLECAO = { radar: 'radar-ev', casual: 'dartboard', 'eye-jacket': 'eye-jacket', flak: 'flak', minute: 'minute', plantaris: 'plantaris', hstn: 'hstn',
+  encoder: 'encoder', 'straight-jacket': 'straight-jacket', 'half-jacket': 'half-jacket', '1311': '1311', ellipse: 'ellipse', holbrook: 'holbrook',
+  'm-frame': 'm-frame', 'monster-dog': 'monster-dog', soto: 'soto', sphaera: 'sphaera', sutro: 'sutro' }
+const CAT_DA_COLECAO = { 'compre-1-leve-2': 'leve2', 'oferta-progressiva': 'leve2', combos: 'leve3', lancamentos: 'lancamentos', 'mais-vendidos': 'leve2' }
+const redirColecoes = {}
+for (const { slug } of colecoes) {
+  if (CAT_DA_COLECAO[slug]) redirColecoes[slug] = `colecao.html?cat=${CAT_DA_COLECAO[slug]}`
+  else if (MODELO_DA_COLECAO[slug] && models[MODELO_DA_COLECAO[slug]]) redirColecoes[slug] = `produto.html?p=${MODELO_DA_COLECAO[slug]}`
+}
+for (const [k, v] of Object.entries(CAT_DA_COLECAO)) redirColecoes[k] ||= `colecao.html?cat=${v}`
+writeFileSync(join(ROOT, 'src/lib/tema-redirects.json'), JSON.stringify({ produtos: redirProdutos, colecoes: redirColecoes }, null, 1) + '\n')
+console.log('redirects: produtos', Object.keys(redirProdutos).length, '| coleções', Object.keys(redirColecoes).length)
+
 const out = { models, vitrines, checkoutDomain: `seguro.${new URL(env.NEXT_PUBLIC_SITE_URL).hostname.replace(/^www\./, '')}` }
 writeFileSync(join(ROOT, 'prototipo-tema/assets/catalogo-real.json.js'),
   `/* Gerado por scripts/_prototipo-catalogo.mjs em ${new Date().toISOString()} — não editar à mão. */\nwindow.JR_REAL = ${JSON.stringify(out)};\n`)

@@ -2,6 +2,17 @@
    Desligado em localhost (igual ao site). Cada evento vai pro navegador (fbq) e pro servidor (/api/meta/capi-event, CAPI)
    com o mesmo event_id, pra Meta não contar duas vezes. */
 (function () {
+  /* Atribuição: mesma chave e formato do site no ar (src/lib/analytics/client.ts → captureAttribution). */
+  try {
+    const K = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid", "meta_campaign_id", "meta_adset_id", "meta_ad_id",
+      "meta_campaign_name", "meta_adset_name", "meta_ad_name", "meta_placement", "jr_channel", "jr_funnel"];
+    const q = new URLSearchParams(location.search);
+    if (K.some(k => q.get(k))) {
+      const now = new Date(), a = { landing_page: location.pathname, captured_at: now.toISOString(), expires_at: new Date(now.getTime() + 30 * 864e5).toISOString() };
+      K.forEach(k => { const v = q.get(k); if (v) a[k] = v; });
+      localStorage.setItem("jr_attribution", JSON.stringify(a));
+    }
+  } catch (e) { /* sem storage */ }
   if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { window.JR = window.JR || {}; JR.meta = () => {}; return; }
   !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
   if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;

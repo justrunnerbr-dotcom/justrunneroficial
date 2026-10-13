@@ -36,8 +36,7 @@ window.JR = window.JR || {};
           ${logo}
           <nav class="nav" aria-label="Principal">${navLinks.map(([t, h, c]) => `<a href="${h}" class="${c || ""}">${t}</a>`).join("")}</nav>
           <div class="icons">
-            <button class="icon-btn" aria-label="Buscar" data-soon="Busca">${JR.icon.search}</button>
-            <button class="icon-btn" aria-label="Minha conta" data-soon="Minha conta">${JR.icon.user}</button>
+            <a class="icon-btn" aria-label="Buscar" href="/busca">${JR.icon.search}</a>
             <button class="icon-btn" aria-label="Carrinho" data-open-cart>${JR.icon.bag}<span class="cart-count" id="cart-count">0</span></button>
           </div>
         </div>

@@ -99,13 +99,22 @@
 
   /* ---------- Checkout real da Yampi ---------- */
   const STORE_TOKEN = "BDMGAOde7Xbg3YDZxV5e7IJb5rkqTGKHZJ2SaUtU";   // token público, o mesmo do site
+  /* UTMs do pedido: igual ao site no ar (src/lib/yampi.ts → attributionParams): URL atual ou o que ficou guardado
+     em localStorage jr_attribution (gravado por pixel.js na chegada, 30 dias). */
+  const atribuicao = () => {
+    try {
+      const url = new URLSearchParams(location.search); let st = {};
+      const raw = localStorage.getItem("jr_attribution");
+      if (raw) { const a = JSON.parse(raw); if (!a.expires_at || new Date(a.expires_at) >= new Date()) st = a; }
+      return ["utm_source", "utm_medium", "utm_campaign"].map(k => { const v = url.get(k) || st[k]; return v ? `&${k}=${encodeURIComponent(v)}` : ""; }).join("");
+    } catch (e) { return ""; }
+  };
   JR.checkoutUrl = items => {
     const lines = items.map(i => ({ l: JR.realLens(i.slug, i.v, i.lens), q: i.qty })).filter(x => x.l);
     if (!lines.length) return null;
     return `https://${REAL.checkoutDomain}/cart/items?` +
       lines.map(x => `product_option_id%5B%5D=${x.l.id}&quantity%5B%5D=${x.q}`).join("&") +
-      `&redirectTo=checkout&skipToCheckout=1&store_token=${STORE_TOKEN}&clearCart=1` +
-      `&utm_source=prototipo&utm_medium=teste&utm_campaign=tema-novo`;
+      `&redirectTo=checkout&skipToCheckout=1&store_token=${STORE_TOKEN}&clearCart=1` + atribuicao();
   };
 
   /* ---------- Fotos de página (slots do tema) ---------- */
