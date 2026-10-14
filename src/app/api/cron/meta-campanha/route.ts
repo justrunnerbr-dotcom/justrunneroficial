@@ -10,6 +10,18 @@ import {
 
 export const maxDuration = 300
 
+interface TrocaLink {
+  conta: string; link: string; paginaId: string; instagramId?: string; soConferir?: boolean
+  anuncios: { adId: string; videoId: string; nome: string; texto: string; titulo: string }[]
+}
+
+async function metaPostAd(adId: string, body: Record<string, unknown>, token: string) {
+  const res = await fetch(`https://graph.facebook.com/v21.0/${adId}`, { method: 'POST', cache: 'no-store',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  const j = await res.json().catch(() => ({})) as { error?: { message?: string } }
+  if (!res.ok || j.error) throw new Error(j.error?.message ?? `HTTP ${res.status}`)
+}
+
 interface Pedido {
   teste?: boolean
   conta: string
@@ -30,7 +42,40 @@ export async function POST(request: Request) {
   const cfg = getMetaCreateConfig()
   if (!cfg) return NextResponse.json({ ok: false, erro: 'Meta não configurada (token, contas ou páginas)' }, { status: 500 })
 
-  const p = await request.json().catch(() => null) as Pedido | null
+  const corpo = await request.json().catch(() => null) as (Pedido & { trocarLink?: TrocaLink }) | null
+
+  // trocarLink: anúncios já criados (pausados) ganham criativo novo com outro link; o anúncio continua o mesmo.
+  // Também devolve status e problemas (issues_info) de cada anúncio, pra conferir.
+  if (corpo?.trocarLink) {
+    const t = corpo.trocarLink
+    if (!/^\d+$/.test(t.conta) || !/^https:\/\//.test(t.link) || !/^\d+$/.test(t.paginaId) || !Array.isArray(t.anuncios) || !t.anuncios.length || t.anuncios.length > 20
+      || t.anuncios.some(a => !/^\d+$/.test(a.adId) || !/^\d+$/.test(a.videoId) || !a.texto || !a.titulo || !a.nome)) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === t.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const urlTags = buildUtmTags()
+    const res = []
+    for (const a of t.anuncios) {
+      const r: Record<string, unknown> = { adId: a.adId }
+      try {
+        if (!t.soConferir) {
+          const capa = await getVideoThumbnail(cfg, a.videoId)
+          const cr = await createStaticVideoAdCreative(cfg, { name: a.nome, videoId: a.videoId, thumbnailUrl: capa, link: t.link, message: a.texto, title: a.titulo,
+            cta: 'SHOP_NOW', pageId: t.paginaId, accountId: t.conta, urlTags, igUserId: t.instagramId })
+          r.creativeId = String(cr.id)
+          await metaPostAd(a.adId, { creative: { creative_id: r.creativeId } }, cfg.token)
+        }
+        const g = await fetch(`https://graph.facebook.com/v21.0/${a.adId}?fields=status,effective_status,issues_info,creative{object_story_spec}`,
+          { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as Record<string, unknown>
+        r.status = g.effective_status; r.problemas = g.issues_info ?? null
+        r.link = (g.creative as { object_story_spec?: { video_data?: { call_to_action?: { value?: { link?: string } } } } })?.object_story_spec?.video_data?.call_to_action?.value?.link
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.link === t.link), anuncios: res })
+  }
+
+  const p = corpo as Pedido | null
   if (!p || !/^\d+$/.test(p.conta) || !p.campanha || !/^https:\/\//.test(p.link) || !/^\d+$/.test(p.paginaId)
     || !Array.isArray(p.conjuntos) || !p.conjuntos.length || p.conjuntos.length > 20
     || p.conjuntos.some(c => !c.nome || !/^\d+$/.test(c.videoId) || !(c.orcamentoDia >= 6 && c.orcamentoDia <= 500) || !c.texto || !c.titulo)) {
