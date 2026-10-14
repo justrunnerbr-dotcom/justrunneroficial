@@ -16,7 +16,7 @@ const INSIGHTS = [
   'video_play_actions', 'video_thruplay_watched_actions', 'video_p25_watched_actions', 'video_p50_watched_actions',
   'video_p75_watched_actions', 'video_p100_watched_actions', 'video_avg_time_watched_actions',
 ].join(',')
-const ADS = 'id,name,status,effective_status,created_time,adset_id,campaign_id,' +
+const ADS = 'id,name,status,effective_status,created_time,adset_id,campaign_id,preview_shareable_link,' +
   'creative{id,name,title,body,object_type,thumbnail_url,image_url,video_id,call_to_action_type,object_story_spec,asset_feed_spec}'
 
 async function todas(url: string, token: string): Promise<{ data: Record<string, unknown>[]; erro?: string }> {
@@ -56,5 +56,23 @@ export async function GET(request: Request) {
     const [insights, anuncios] = await Promise.all([todas(`${base}/insights?${pi}`, token), todas(`${base}/ads?${pa}`, token)])
     contas.push({ conta: conta.name, id: conta.id, insights: insights.data, anuncios: anuncios.data, erros: [insights.erro, anuncios.erro].filter(Boolean) })
   }
-  return NextResponse.json({ ok: true, desde, ate, contas })
+
+  // ?videos=1: link pra assistir (permalink), capa grande e duração de cada vídeo usado nos anúncios.
+  const videos: Record<string, unknown> = {}
+  if (q.get('videos') === '1') {
+    type Criativo = { video_id?: string; object_story_spec?: { video_data?: { video_id?: string } }; asset_feed_spec?: { videos?: { video_id?: string }[] } }
+    const ids = [...new Set(contas.flatMap(c => c.anuncios.flatMap(a => {
+      const cr = (a.creative ?? {}) as Criativo
+      return [cr.video_id, cr.object_story_spec?.video_data?.video_id, ...(cr.asset_feed_spec?.videos ?? []).map(v => v.video_id)]
+    })).filter((v): v is string => !!v))]
+    for (let i = 0; i < ids.length; i += 50) {
+      const lote = ids.slice(i, i + 50)
+      const res = await fetch(`https://graph.facebook.com/${VER}/?${new URLSearchParams({ ids: lote.join(','), fields: 'permalink_url,picture,length,title,description' })}`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: AbortSignal.timeout(60000) })
+      const j = await res.json().catch(() => ({})) as Record<string, unknown> & { error?: { message?: string } }
+      if (res.ok) Object.assign(videos, j)
+      else for (const id of lote) videos[id] = { erro: j.error?.message ?? `HTTP ${res.status}` }   // um id sem acesso derruba o lote: marca e segue
+    }
+  }
+  return NextResponse.json({ ok: true, desde, ate, contas, videos })
 }
