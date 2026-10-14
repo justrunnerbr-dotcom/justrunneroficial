@@ -41,13 +41,21 @@ export async function GET(request: Request) {
   if (!token) return NextResponse.json({ ok: false, erro: 'META_ACCESS_TOKEN ausente' }, { status: 500 })
 
   const q = new URL(request.url).searchParams
+  // ?contas=1: lista as contas de anúncio que o token enxerga (pra achar conta fora do META_ACCOUNTS)
+  if (q.get('contas') === '1') {
+    const r = await todas(`https://graph.facebook.com/${VER}/me/adaccounts?${new URLSearchParams({ fields: 'account_id,name,account_status,amount_spent,currency', limit: '100' })}`, token)
+    return NextResponse.json({ ok: !r.erro, erro: r.erro, configuradas: META_ACCOUNTS.map(a => a.id), contas: r.data })
+  }
   const dia = /^\d{4}-\d{2}-\d{2}$/
   const desde = q.get('desde') ?? ''
   const ate = q.get('ate') ?? new Date().toISOString().slice(0, 10)
   if (!dia.test(desde) || !dia.test(ate)) return NextResponse.json({ ok: false, erro: 'use ?desde=AAAA-MM-DD&ate=AAAA-MM-DD' }, { status: 400 })
 
   const contas = []
-  for (const conta of META_ACCOUNTS.filter(a => a.id)) {
+  // ?conta=ID: lê só essa conta (precisa estar entre as que o token enxerga)
+  const alvo = q.get('conta')
+  const lista = alvo && /^\d+$/.test(alvo) ? [{ id: alvo, name: `act_${alvo}` }] : META_ACCOUNTS.filter(a => a.id)
+  for (const conta of lista) {
     const base = `https://graph.facebook.com/${VER}/act_${conta.id}`
     const pi = new URLSearchParams({ fields: INSIGHTS, level: 'ad', time_range: JSON.stringify({ since: desde, until: ate }), limit: '200' })
     if (q.get('diario') === '1') pi.set('time_increment', '1')
