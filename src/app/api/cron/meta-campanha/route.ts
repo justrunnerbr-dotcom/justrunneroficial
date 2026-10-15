@@ -75,6 +75,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro && r.link === t.link), anuncios: res })
   }
 
+  // mudarStatus: liga/pausa conjuntos e anúncios de UMA campanha. A campanha em si nunca é tocada aqui
+  // (cada id precisa ter campaign_id igual ao informado e não pode ser a própria campanha). Devolve o estado lido depois.
+  const ms = (corpo as { mudarStatus?: { campanhaId: string; ids: string[]; status: 'ACTIVE' | 'PAUSED' } } | null)?.mudarStatus
+  if (ms) {
+    if (!/^\d+$/.test(ms.campanhaId) || !['ACTIVE', 'PAUSED'].includes(ms.status) || !Array.isArray(ms.ids) || !ms.ids.length || ms.ids.length > 50
+      || ms.ids.some(id => !/^\d+$/.test(id) || id === ms.campanhaId)) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const ler = (id: string, campos: string) => fetch(`https://graph.facebook.com/v21.0/${id}?fields=${campos}`,
+      { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as Promise<Record<string, unknown>>
+    const res = []
+    for (const id of ms.ids) {
+      const r: Record<string, unknown> = { id }
+      try {
+        const g = await ler(id, 'name,campaign_id')
+        if (g.campaign_id !== ms.campanhaId) throw new Error('não pertence à campanha')
+        r.nome = g.name
+        await metaPostAd(id, { status: ms.status }, cfg.token)
+        const d = await ler(id, 'status,effective_status')
+        r.status = d.status; r.efetivo = d.effective_status
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    const camp = await ler(ms.campanhaId, 'name,status,effective_status')
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.status === ms.status), campanha: camp, itens: res })
+  }
+
   const p = corpo as Pedido | null
   if (!p || !/^\d+$/.test(p.conta) || !p.campanha || !/^https:\/\//.test(p.link) || !/^\d+$/.test(p.paginaId)
     || !Array.isArray(p.conjuntos) || !p.conjuntos.length || p.conjuntos.length > 20
