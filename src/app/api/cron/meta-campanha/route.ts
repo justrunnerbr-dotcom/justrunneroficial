@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro && r.pixel === tp.pixelId), itens: res })
   }
 
-  const ms = (corpo as { mudarStatus?: { campanhaId: string; ids: string[]; status: 'ACTIVE' | 'PAUSED' } } | null)?.mudarStatus
+  const ms = (corpo as { mudarStatus?: { campanhaId: string; ids: string[]; status: 'ACTIVE' | 'PAUSED'; campanha?: 'ACTIVE' | 'PAUSED' } } | null)?.mudarStatus
   if (ms) {
     if (!/^\d+$/.test(ms.campanhaId) || !['ACTIVE', 'PAUSED'].includes(ms.status) || !Array.isArray(ms.ids) || !ms.ids.length || ms.ids.length > 50
       || ms.ids.some(id => !/^\d+$/.test(id) || id === ms.campanhaId)) {
@@ -125,8 +125,13 @@ export async function POST(request: Request) {
       } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
       res.push(r)
     }
+    // campanha: só quando pedido explicitamente no corpo (ligar a campanha é decisão do usuário)
+    let erroCampanha: string | undefined
+    if (ms.campanha === 'ACTIVE' || ms.campanha === 'PAUSED') {
+      try { await metaPostAd(ms.campanhaId, { status: ms.campanha }, cfg.token) } catch (e) { erroCampanha = e instanceof Error ? e.message : 'erro' }
+    }
     const camp = await ler(ms.campanhaId, 'name,status,effective_status')
-    return NextResponse.json({ ok: res.every(r => !r.erro && r.status === ms.status), campanha: camp, itens: res })
+    return NextResponse.json({ ok: !erroCampanha && res.every(r => !r.erro && r.status === ms.status), erroCampanha, campanha: camp, itens: res })
   }
 
   const p = corpo as Pedido | null
