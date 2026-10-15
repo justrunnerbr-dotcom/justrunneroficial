@@ -46,6 +46,15 @@ export async function GET(request: Request) {
     const r = await todas(`https://graph.facebook.com/${VER}/me/adaccounts?${new URLSearchParams({ fields: 'account_id,name,account_status,amount_spent,currency', limit: '100' })}`, token)
     return NextResponse.json({ ok: !r.erro, erro: r.erro, configuradas: META_ACCOUNTS.map(a => a.id), contas: r.data })
   }
+  // ?pixels=1&conta=ID: pixels que a conta enxerga + pixel/evento dos conjuntos (promoted_object)
+  if (q.get('pixels') === '1' && /^\d+$/.test(q.get('conta') ?? '')) {
+    const base = `https://graph.facebook.com/${VER}/act_${q.get('conta')}`
+    const [px, cj] = await Promise.all([
+      todas(`${base}/adspixels?${new URLSearchParams({ fields: 'id,name,last_fired_time', limit: '50' })}`, token),
+      todas(`${base}/adsets?${new URLSearchParams({ fields: 'name,effective_status,created_time,promoted_object', limit: '200' })}`, token),
+    ])
+    return NextResponse.json({ ok: !px.erro && !cj.erro, erros: [px.erro, cj.erro].filter(Boolean), pixels: px.data, conjuntos: cj.data })
+  }
   const dia = /^\d{4}-\d{2}-\d{2}$/
   const desde = q.get('desde') ?? ''
   const ate = q.get('ate') ?? new Date().toISOString().slice(0, 10)
