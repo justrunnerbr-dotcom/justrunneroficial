@@ -175,8 +175,8 @@
     /* 13/10: depois dos destaques, os modelos espalhados (antes vinham todas as cores do Radar juntas, depois as do Minute…) */
     leve2: semVizinho([...destaque, ...espalhar(naoCombo.flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]))
       .filter(([s, i]) => !destaque.some(d => d[0] === s && d[1] === i)))], destaque.length),
-    /* Topo da home: os 8 primeiros do Leve 2 sem as cores que saíram do destaque (a Minute Preta não volta no 8º lugar). */
-    homeLeve2: (l => l.filter(([s, i]) => !TROCA_DESTAQUE[s + "|" + JR.bySlug(s).variants[i].name] || destaque.some(d => d[0] === s && d[1] === i)).slice(0, 8)),
+    /* Topo da home: os 12 primeiros (15/10; eram 8) do Leve 2 sem as cores que saíram do destaque (a Minute Preta não volta no 8º lugar). */
+    homeLeve2: (l => l.filter(([s, i]) => !TROCA_DESTAQUE[s + "|" + JR.bySlug(s).variants[i].name] || destaque.some(d => d[0] === s && d[1] === i)).slice(0, 12)),
     /* 15/10: Ellipse Preta sai, Monster Dog All Black entra no lugar (a Marrom já está na lista) */
     lancamentos: (REAL.vitrines.lancamentos || []).map(d => d[0] === "ellipse" && d[1] === "Preta" ? ["monster-dog", "All Black", "Único"] : d).map(idx).filter(Boolean),
     combos: (JR.bySlug("combo") || { variants: [] }).variants.map((v, i) => ["combo", i, v.lenses[0]]),

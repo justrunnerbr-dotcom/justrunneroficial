@@ -31,7 +31,7 @@
   /* Vitrines iguais ao site no ar (12/10): destaques do Leve 2 + resto do catálogo, combos e lançamentos. */
   const vit = (id, list) => { const el = $("#" + id); if (el) el.innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, { lentes: true })).join(""); };
   vit("vit-leve2", JR.SHOWCASE.homeLeve2(JR.SHOWCASE.leve2));
-  vit("vit-leve3", JR.SHOWCASE.combos);
+  vit("vit-leve3", JR.SHOWCASE.combos.slice(0, 8));   // 15/10: 8 combos na home (a categoria Combos mostra todos)
   vit("vit-lanc", JR.SHOWCASE.lancamentos);
   vit("vit-mais", (JR.SHOWCASE.maisVendidos || []).slice(0, 8));
   JR.bindCards();

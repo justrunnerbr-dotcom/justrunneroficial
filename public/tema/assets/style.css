@@ -1698,3 +1698,7 @@ section { position: relative; }
 .lente-dots a.more { text-decoration: none; }
 @media (max-width: 749px) { .ldot { width: 18px; height: 18px; } .lente-dots { gap: 5px; } }
 @media (max-width: 749px) { .card .lente-dots .more:last-child { display: inline; } }
+
+/* 15/10: home com 12 produtos no topo (celular também) e 8 combos (4 por linha no computador, carrossel no celular) */
+#vit-leve2 > :nth-child(n+7) { display: flex; }
+@media (min-width: 750px) { #vit-leve3 { grid-template-columns: repeat(4, 1fr); gap: 16px; } #vit-leve3 > :nth-child(n+7) { display: flex; } }
