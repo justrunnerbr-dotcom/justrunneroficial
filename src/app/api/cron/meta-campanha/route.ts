@@ -77,6 +77,33 @@ export async function POST(request: Request) {
 
   // mudarStatus: liga/pausa conjuntos e anúncios de UMA campanha. A campanha em si nunca é tocada aqui
   // (cada id precisa ter campaign_id igual ao informado e não pode ser a própria campanha). Devolve o estado lido depois.
+  // trocarPixel: troca o pixel (promoted_object) dos conjuntos de UMA campanha. Só aceita pixel que a conta enxerga.
+  const tp = (corpo as { trocarPixel?: { conta: string; campanhaId: string; pixelId: string; ids: string[] } } | null)?.trocarPixel
+  if (tp) {
+    if (!/^\d+$/.test(tp.conta) || !/^\d+$/.test(tp.campanhaId) || !/^\d+$/.test(tp.pixelId) || !Array.isArray(tp.ids) || !tp.ids.length || tp.ids.length > 50
+      || tp.ids.some(id => !/^\d+$/.test(id) || id === tp.campanhaId)) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`,
+      { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as Promise<Record<string, unknown>>
+    const px = await ler(`act_${tp.conta}/adspixels?fields=id`) as { data?: { id: string }[] }
+    if (!px.data?.some(p => p.id === tp.pixelId)) return NextResponse.json({ ok: false, erro: 'a conta não enxerga esse pixel' }, { status: 400 })
+    const res = []
+    for (const id of tp.ids) {
+      const r: Record<string, unknown> = { id }
+      try {
+        const g = await ler(`${id}?fields=name,campaign_id,promoted_object`)
+        if (g.campaign_id !== tp.campanhaId) throw new Error('não pertence à campanha')
+        const po = (g.promoted_object ?? {}) as Record<string, unknown>
+        await metaPostAd(id, { promoted_object: { ...po, pixel_id: tp.pixelId, custom_event_type: po.custom_event_type ?? 'PURCHASE' } }, cfg.token)
+        const d = await ler(`${id}?fields=name,promoted_object,effective_status`)
+        r.nome = d.name; r.pixel = (d.promoted_object as { pixel_id?: string })?.pixel_id; r.efetivo = d.effective_status
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.pixel === tp.pixelId), itens: res })
+  }
+
   const ms = (corpo as { mudarStatus?: { campanhaId: string; ids: string[]; status: 'ACTIVE' | 'PAUSED' } } | null)?.mudarStatus
   if (ms) {
     if (!/^\d+$/.test(ms.campanhaId) || !['ACTIVE', 'PAUSED'].includes(ms.status) || !Array.isArray(ms.ids) || !ms.ids.length || ms.ids.length > 50
@@ -115,12 +142,16 @@ export async function POST(request: Request) {
   const capas: Record<string, string> = {}
   const problemas: string[] = []
   if (!perm.ok) problemas.push('token sem ads_management')
-  if (!cfg.pixelId) problemas.push('pixel não configurado')
+  // O pixel tem que ser um que a conta enxerga (15/10: o NEXT_PUBLIC_META_PIXEL_ID não estava na conta e travou os anúncios).
+  const pxConta = await fetch(`https://graph.facebook.com/v21.0/act_${p.conta}/adspixels?fields=id`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' })
+    .then(x => x.json()).then((j: { data?: { id: string }[] }) => (j.data ?? []).map(x => x.id)).catch(() => [] as string[])
+  const pixelId = pxConta.includes(cfg.pixelId) ? cfg.pixelId : pxConta[0] ?? ''
+  if (!pixelId) problemas.push('a conta não enxerga nenhum pixel')
   for (const c of p.conjuntos) {
     try { capas[c.videoId] = await getVideoThumbnail(cfg, c.videoId) } catch (e) { problemas.push(`${c.nome}: ${e instanceof Error ? e.message : 'sem capa'}`) }
   }
   if (p.teste || problemas.length) {
-    return NextResponse.json({ ok: !problemas.length, teste: true, problemas, videosComCapa: Object.keys(capas).length, pixel: !!cfg.pixelId })
+    return NextResponse.json({ ok: !problemas.length, teste: true, problemas, videosComCapa: Object.keys(capas).length, pixel: pixelId })
   }
 
   const criados: { conjunto: string; adsetId?: string; creativeId?: string; adId?: string; erro?: string }[] = []
@@ -130,7 +161,7 @@ export async function POST(request: Request) {
   for (const c of p.conjuntos) {
     const r: (typeof criados)[number] = { conjunto: c.nome }
     try {
-      const adset = await createAdSet(cfg, { name: c.nome, campaignId, accountId: p.conta, dailyBudgetBrl: c.orcamentoDia,
+      const adset = await createAdSet({ ...cfg, pixelId }, { name: c.nome, campaignId, accountId: p.conta, dailyBudgetBrl: c.orcamentoDia,
         ageMin: p.idadeMin ?? 18, ageMax: p.idadeMax ?? 65, gender: 'all' })
       r.adsetId = String(adset.id)
       const cr = await createStaticVideoAdCreative(cfg, { name: c.nome, videoId: c.videoId, thumbnailUrl: capas[c.videoId], link: p.link,
