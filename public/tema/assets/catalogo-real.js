@@ -94,7 +94,9 @@
 
   /* Vitrines do site no ar: destaques do "Leve 2" (home), Lançamentos (src/lib/lancamentos.ts) e combos. */
   const idx = ([slug, cor, lente]) => { const p = JR.bySlug(slug); if (!p) return null; const i = p.variants.findIndex(v => v.name === cor); return i < 0 ? null : [slug, i, lente]; };
-  const destaque = (REAL.vitrines.leve2Destaque || []).map(idx).filter(Boolean);
+  /* 15/10, pedido do usuário: no topo da home, Minute Preta → Minute Cooper (marrom) com lente VR28, e Flak Preta com a foto da lente Preta. */
+  const TROCA_DESTAQUE = { "minute|Preta": ["minute", "Cooper", "VR28"], "flak|Preta": ["flak", "Preta", "Preta"] };
+  const destaque = (REAL.vitrines.leve2Destaque || []).map(d => TROCA_DESTAQUE[d[0] + "|" + d[1]] || d).map(idx).filter(Boolean);
   const naoCombo = JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio");
   /* Posição da armação no ranking de vendas (src/lib/best-sellers.ts); quem não vendeu vai pro fim. */
   const RANK = REAL.ranking || [];
@@ -147,12 +149,36 @@
   JR.lenteLista = slug => rodizio(JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio")
     .flatMap(p => p.variants.flatMap((v, i) => v.lenses.filter(l => (JR.lenteDe(l) || {}).slug === slug).map(l => [p.slug, i, l]))));
 
+  /* ---------- Encontre seu Just Runner (15/10): modelos escolhidos pelo usuário por esporte ----------
+     Entra toda cor × lente dos modelos (volume), a mais vendida de cada modelo primeiro e o resto espalhado sem vizinho igual. */
+  JR.ESTILOS = {
+    bike:      ["radar-ev", "encoder", "sutro"],
+    corrida:   ["flak", "eye-jacket", "eye-jacket-redux", "radar-ev"],
+    beach:     ["flak", "radar-ev", "half-jacket"],
+    lifestyle: ["plantaris", "minute", "dartboard", "monster-dog", "hstn", "soto", "straight-jacket"],
+    trail:     ["radar-ev", "flak", "eye-jacket", "encoder", "m-frame", "sutro"]   // 15/10: Radar + 5 esportivos, pra não parecer só Radar
+  };
+  /* Dentro do modelo, rodízio de cores (cor mais vendida primeiro): Radar com 47 variações não gruda 5 lentes da mesma cor. */
+  JR.estiloLista = cat => {
+    const modelos = [...new Set(JR.ESTILOS[cat] || [])].map(JR.bySlug).filter(Boolean).map(p => {
+      const cores = p.variants.map((v, i) => v.lenses.map(l => [p.slug, i, l])).sort((a, b) => rankDe(a[0]) - rankDe(b[0]));
+      const fila = []; for (let n = 0; cores.some(c => c[n]); n++) cores.forEach(c => c[n] && fila.push(c[n]));
+      return fila;
+    }).sort((a, b) => rankDe(a[0]) - rankDe(b[0]));
+    const topo = modelos.map(f => f[0]);
+    const resto = modelos.flatMap((f, gi) => f.slice(1).map((x, j) => ({ x, k: (j + .5) / (f.length - 1) + gi * 1e-4 }))).sort((a, b) => a.k - b.k).map(o => o.x);
+    return semVizinho([...topo, ...resto], topo.length);
+  };
+
   JR.SHOWCASE = {
     offer: destaque,
     /* 13/10: depois dos destaques, os modelos espalhados (antes vinham todas as cores do Radar juntas, depois as do Minute…) */
     leve2: semVizinho([...destaque, ...espalhar(naoCombo.flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]))
       .filter(([s, i]) => !destaque.some(d => d[0] === s && d[1] === i)))], destaque.length),
-    lancamentos: (REAL.vitrines.lancamentos || []).map(idx).filter(Boolean),
+    /* Topo da home: os 8 primeiros do Leve 2 sem as cores que saíram do destaque (a Minute Preta não volta no 8º lugar). */
+    homeLeve2: (l => l.filter(([s, i]) => !TROCA_DESTAQUE[s + "|" + JR.bySlug(s).variants[i].name] || destaque.some(d => d[0] === s && d[1] === i)).slice(0, 8)),
+    /* 15/10: Ellipse Preta sai, Monster Dog All Black entra no lugar (a Marrom já está na lista) */
+    lancamentos: (REAL.vitrines.lancamentos || []).map(d => d[0] === "ellipse" && d[1] === "Preta" ? ["monster-dog", "All Black", "Único"] : d).map(idx).filter(Boolean),
     combos: (JR.bySlug("combo") || { variants: [] }).variants.map((v, i) => ["combo", i, v.lenses[0]]),
     /* Oferta Progressiva: cada cor que tem versão JROP, na 1ª lente com JROP */
     oferta: naoCombo.flatMap(p => p.variants.map((v, i) => { const l = v.lenses.find(x => (JR.REAL_LENS[p.slug][v.name].lenses[x] || {}).op); return l ? [p.slug, i, l] : null; })).filter(Boolean),
@@ -160,8 +186,8 @@
     /* Mais vendidos (13/10): os 4 do banner escolhidos pelo usuário + os 8 seguintes do ranking de vendas
        da Yampi (src/lib/best-sellers.ts), cada um como armação/produto do site antigo. */
     maisVendidos: [
-      ["flak", "Preta", "Preta"], ["eye-jacket-redux", "Branca", "Preta"], ["radar-ev", "Preta", "Sapphire"], ["minute", "Preta", "Preta"],
-      ...["minute-cooper", "radar-ev-piet", "eye-jacket", "hstn-preta", "half-jacket", "plantaris-preta", "radar-ev-cooper", "encoder"]
+      ["flak", "Preta", "Preta"], ["eye-jacket-redux", "Branca", "Preta"], ["radar-ev", "Preta", "Sapphire"], ["minute", "Cooper", "VR28"],   // 15/10: Minute Preta → Cooper VR28
+      ...["radar-ev-piet", "eye-jacket", "hstn-preta", "half-jacket", "plantaris-preta", "radar-ev-cooper", "encoder"]
         .map(ps => { for (const p of naoCombo) { const i = p.variants.findIndex(v => JR.REAL_LENS[p.slug][v.name].productSlug === ps); if (i >= 0) return [p.slug, p.variants[i].name, p.variants[i].lenses[0]]; } return null; })
         .filter(Boolean)
     ].map(([sl, cor, l]) => { const p = JR.bySlug(sl); const i = p ? p.variants.findIndex(v => v.name === cor) : -1; return i < 0 ? null : [sl, i, p.variants[i].lenses.includes(l) ? l : p.variants[i].lenses[0]]; }).filter(Boolean)

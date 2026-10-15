@@ -120,6 +120,7 @@
       "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidos },
       oferta:      { nome: "Oferta Progressiva", banner: "fotos/cat-banner-oferta.jpg", bannerMob: "fotos/cat-banner-oferta-mobile.jpg", alt: "Oferta Progressiva: 1 óculos por R$ 175, 2 por R$ 297", lista: () => JR.SHOWCASE.oferta, op: true }
     };
+    Object.keys(JR.ESTILOS || {}).forEach(k => { if (CATS[k]) CATS[k].lista = () => JR.estiloLista(k); });
     (JR.CATEGORIAS || []).forEach(c => { CATS[c.slug] = { nome: c.nome, lista: () => corDe(c.modelos),
       banner: BANNER_CAT[c.slug] && `fotos/cat-${BANNER_CAT[c.slug]}.jpg`, bannerMob: BANNER_CAT[c.slug] && `fotos/cat-${BANNER_CAT[c.slug]}-mobile.jpg`, alt: c.nome }; });
     /* Lentes Mais Vendidas: colecao.html?lente=preta (lista em JR.lenteLista, mais vendidos primeiro) */
@@ -143,7 +144,7 @@
       if (sort === "az") list = [...list].sort((a, b) => JR.bySlug(a[0]).name.localeCompare(JR.bySlug(b[0]).name));
       if (sort === "lens") list = [...list].sort((a, b) => lensCount(b[0]) - lensCount(a[0]));
       $("#f-count").textContent = cat && cat.lente ? `${list.length} óculos com ${cat.nome.toLowerCase()} · mais vendidos primeiro` : `${list.length} óculos`;
-      $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, cat && cat.op ? { op: true } : {})).join("");
+      $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, cat && cat.op ? { op: true } : { lentes: true })).join("");
       JR.bindCards($("#col-grid"));
     };
     $("#f-sort").addEventListener("change", render);

@@ -207,6 +207,14 @@ window.JR = window.JR || {};
   /* ---------- Card de produto ---------- */
   /* Nome do card igual ao produto do site no ar: modelo + cor ("Radar EV Piet"); combo pelo nome dele ("Combo 3"). */
   JR.cardName = (p, v) => p.combo ? v.name : (!v || v.name === "Padrão" ? p.name : `${p.name} ${v.name}`);
+  /* Bolinhas de lente no card (home, 15/10): metade armação, metade lente, igual à página do produto. Trocam foto e link ali mesmo. */
+  const MAX_LDOT = 6;
+  JR.lenteDots = (p, vIdx, lens, href) => {
+    const v = p.variants[vIdx], cor = l => JR.lensCss(l.split(/\s*[+·]\s*/)[0]);
+    return `<div class="swatches lente-dots" role="radiogroup" aria-label="Lentes">${v.lenses.slice(0, MAX_LDOT).map(l =>
+      `<button class="ldot ${l === lens ? "on" : ""}" role="radio" aria-checked="${l === lens}" data-ldot="${l}" aria-label="Lente ${l}" title="Lente ${l}"><i style="background:${v.frame}"></i><i style="background:${cor(l)}"></i></button>`).join("")}${
+      v.lenses.length > MAX_LDOT ? `<a class="more" href="${href}">+${v.lenses.length - MAX_LDOT}</a>` : ""}</div>`;
+  };
   JR.card = (slug, vIdx = 0, lens, o = {}) => {
     const p = JR.bySlug(slug), v = p.variants[vIdx];
     lens = lens || v.lenses[0];
@@ -226,7 +234,7 @@ window.JR = window.JR || {};
         <a class="name" href="${href}">${JR.cardName(p, v)}</a>
         ${o.mini ? "" : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · Oferta Progressiva</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
           return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
-        <div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>
+        ${o.lentes && !p.combo && v.lenses.length > 1 ? JR.lenteDots(p, vIdx, lens, href) : `<div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>`}
         ${o.mini ? "" : `<button class="quick" data-add>${o.pick ? "Escolher este" : "Adicionar ao carrinho"}</button>`}
       </div>
     </article>`;
@@ -249,6 +257,16 @@ window.JR = window.JR || {};
           const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
           card.querySelectorAll("a").forEach(a => a.href = href);
           card.querySelectorAll(".dot").forEach(d => d.classList.toggle("on", d === dot));
+        }
+        const ld = e.target.closest("[data-ldot]");
+        if (ld) {
+          e.preventDefault();
+          const i = +card.dataset.v, lens = ld.dataset.ldot;
+          card.dataset.lens = lens;
+          card.querySelector(".media").innerHTML = JR.thumb ? JR.thumb(p.slug, i, lens) : JR.glasses({ shape: p.shape, frame: p.variants[i].frame, lens });
+          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
+          card.querySelectorAll("a").forEach(a => a.href = href);
+          card.querySelectorAll(".ldot").forEach(d => { d.classList.toggle("on", d === ld); d.setAttribute("aria-checked", d === ld); });
         }
         if (e.target.closest("[data-add]")) {
           e.preventDefault();

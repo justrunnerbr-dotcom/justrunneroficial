@@ -29,8 +29,8 @@
 
   const cards = (list, opts) => list.map(([s, v, l]) => JR.card(s, v, l, opts)).join("");
   /* Vitrines iguais ao site no ar (12/10): destaques do Leve 2 + resto do catálogo, combos e lançamentos. */
-  const vit = (id, list) => { const el = $("#" + id); if (el) el.innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, {})).join(""); };
-  vit("vit-leve2", JR.SHOWCASE.leve2.slice(0, 8));
+  const vit = (id, list) => { const el = $("#" + id); if (el) el.innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, { lentes: true })).join(""); };
+  vit("vit-leve2", JR.SHOWCASE.homeLeve2(JR.SHOWCASE.leve2));
   vit("vit-leve3", JR.SHOWCASE.combos);
   vit("vit-lanc", JR.SHOWCASE.lancamentos);
   vit("vit-mais", (JR.SHOWCASE.maisVendidos || []).slice(0, 8));
