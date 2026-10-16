@@ -1730,3 +1730,7 @@ section { position: relative; }
 /* 15/10: fotos dos combos encostavam na borda: margem em volta, no card, no carrinho e na página do produto */
 .card[data-slug="combo"] .media img, #vit-leve3 .card .media img { transform: scale(.84) !important; }
 .is-combo #stage .slide img, .is-combo #thumbs img { transform: scale(.86); }
+/* 15/10: galeria da página do produto quadrada como as fotos (era 1/.92 no computador e 5/4 no celular e cortava embaixo);
+   a foto cabe inteira, sem corte, em qualquer proporção */
+.stage { aspect-ratio: 1 / 1 !important; }
+.stage .slide > img { width: 100%; height: 100%; max-height: 100%; aspect-ratio: auto; object-fit: contain; }
