@@ -21,7 +21,9 @@
     <section class="real-banners" aria-label="Ofertas">
       <!-- Banner da home do site atual (src/components/store/hero.tsx → BANNERS 297/banner_01), 12/10 -->
       <div class="rb-track" id="rb-track">
-        <a href="#leve2"><picture><source media="(max-width: 767px)" srcset="fotos/hero-atual-mobile.jpg"><img src="fotos/hero-atual.jpg" alt="Compre 1 Leve 2: leve 2 óculos pelo preço de 1" fetchpriority="high"></picture></a>
+        <!-- Esquenta Black Friday (16/10): 2 banners do usuário, desktop 1942x809 e mobile 1122x1402. Anterior: fotos/hero-atual(-mobile).jpg -->
+        <a href="#leve2"><picture><source media="(max-width: 767px)" srcset="fotos/banner-esquenta-bf-mobile.jpg" width="1122" height="1402"><img src="fotos/banner-esquenta-bf.jpg" width="1942" height="809" alt="Esquenta Black Friday: compre 1 leve 2. Escolha sua dupla" fetchpriority="high"></picture></a>
+        <a href="colecao.html?cat=leve2"><picture><source media="(max-width: 767px)" srcset="fotos/banner-como-comprar-mobile.jpg" width="1122" height="1402"><img src="fotos/banner-como-comprar.jpg" width="1942" height="809" alt="Compre 1 Leve 2, como aproveitar: adicione 2 óculos no carrinho e pague R$ 297 com frete grátis" loading="lazy"></picture></a>
       </div>
       <div class="rb-dots" id="rb-dots"></div>
     </section>
