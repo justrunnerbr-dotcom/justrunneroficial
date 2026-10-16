@@ -158,6 +158,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro), videos: res })
   }
 
+  // agendarInicio (16/10/2026): data/hora de início (start_time) dos conjuntos de UMA campanha. Lê de volta.
+  const ai = (corpo as { agendarInicio?: { campanhaId: string; ids: string[]; inicio: string } } | null)?.agendarInicio
+  if (ai) {
+    if (!/^\d+$/.test(ai.campanhaId) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-03:00$/.test(ai.inicio) || !Array.isArray(ai.ids) || !ai.ids.length
+      || ai.ids.length > 50 || ai.ids.some(id => !/^\d+$/.test(id))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const ler = (id: string) => fetch(`https://graph.facebook.com/v21.0/${id}?fields=name,campaign_id,start_time`,
+      { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as Promise<{ name?: string; campaign_id?: string; start_time?: string }>
+    const alvo = new Date(ai.inicio).getTime()
+    const res = []
+    for (const id of ai.ids) {
+      const r: Record<string, unknown> = { id }
+      try {
+        const g = await ler(id)
+        if (g.campaign_id !== ai.campanhaId) throw new Error('não pertence à campanha')
+        await metaPostAd(id, { start_time: ai.inicio }, cfg.token)
+        const d = await ler(id)
+        r.nome = d.name; r.inicio = d.start_time; r.confere = !!d.start_time && new Date(d.start_time).getTime() === alvo
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.confere), itens: res })
+  }
+
   // soInstagram (16/10/2026): conjuntos de UMA campanha passam a veicular só no Instagram (feed, stories, reels,
   // explorar). Mantém o resto do público como está. Lê de volta o targeting gravado.
   const si = (corpo as { soInstagram?: { campanhaId: string; ids: string[] } } | null)?.soInstagram
