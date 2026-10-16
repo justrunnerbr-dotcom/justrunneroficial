@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import {
   getMetaCreateConfig, checkAdsManagement, createCampaign, createAdSet, getVideoThumbnail,
-  createStaticVideoAdCreative, createAd, buildUtmTags,
+  createStaticVideoAdCreative, createAd, buildUtmTags, uploadAdImage, createPlacementImageCreative,
 } from '@/lib/admin/meta-create'
 
-// Cria uma campanha de vendas ABO (1 conjunto por vídeo) com vídeos que já existem na conta (14/10/2026).
+// Cria uma campanha de vendas ABO (1 conjunto por vídeo, ou por arte estática no modo "estaticos") com vídeos que já existem na conta (14/10/2026).
 // Tudo nasce PAUSADO (campanha, conjuntos e anúncios): ligar é decisão do usuário no Gerenciador.
 // Protegida pelo CRON_SECRET. Com "teste": true só valida (permissão, conta, vídeos e capas) e não cria nada.
 
@@ -32,6 +32,28 @@ interface Pedido {
   idadeMin?: number
   idadeMax?: number
   conjuntos: { nome: string; videoId: string; orcamentoDia: number; texto: string; titulo: string }[]
+}
+
+interface Estaticos {
+  teste?: boolean
+  conta: string
+  campanha: string
+  link: string
+  paginaId: string
+  instagramId?: string
+  idadeMin?: number
+  idadeMax?: number
+  conjuntos: { nome: string; feedDriveId: string; storiesDriveId: string; orcamentoDia: number; texto: string; titulo: string; descricao: string }[]
+}
+
+/** Baixa uma arte de pasta pública do Drive. Só aceita PNG (o cabeçalho dá a proporção pra conferir feed × stories). */
+async function baixarArte(driveId: string): Promise<Buffer> {
+  const res = await fetch(`https://drive.google.com/uc?export=download&id=${driveId}`, { cache: 'no-store', signal: AbortSignal.timeout(60000) })
+  if (!res.ok) throw new Error(`Drive HTTP ${res.status}`)
+  const b = Buffer.from(await res.arrayBuffer())
+  if (b.length < 1000 || b.readUInt32BE(0) !== 0x89504e47) throw new Error('não é PNG (pasta sem acesso público?)')
+  if (b.length > 8 * 1024 * 1024) throw new Error('arte acima de 8 MB')
+  return b
 }
 
 export async function POST(request: Request) {
@@ -132,6 +154,66 @@ export async function POST(request: Request) {
     }
     const camp = await ler(ms.campanhaId, 'name,status,effective_status')
     return NextResponse.json({ ok: !erroCampanha && res.every(r => !r.erro && r.status === ms.status), erroCampanha, campanha: camp, itens: res })
+  }
+
+  // estaticos (16/10/2026): campanha ABO de imagem, 1 conjunto por arte, cada anúncio com a arte de feed (4:5)
+  // no feed e a de stories (9:16) em stories/reels. As artes vêm de pastas públicas do Drive, pelo id do arquivo.
+  // Tudo nasce PAUSADO. Com "teste": true só baixa e confere as artes, a permissão e o pixel.
+  const est = (corpo as { estaticos?: Estaticos } | null)?.estaticos
+  if (est) {
+    const id = /^[A-Za-z0-9_-]{20,60}$/
+    if (!/^\d+$/.test(est.conta) || !est.campanha || !/^https:\/\/justrunner\.com\.br\//.test(est.link) || !/^\d+$/.test(est.paginaId)
+      || !Array.isArray(est.conjuntos) || !est.conjuntos.length || est.conjuntos.length > 20
+      || est.conjuntos.some(c => !c.nome || !id.test(c.feedDriveId) || !id.test(c.storiesDriveId) || !(c.orcamentoDia >= 6 && c.orcamentoDia <= 500)
+        || !c.texto || !c.titulo || !c.descricao)) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === est.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const problemas: string[] = []
+    if (!(await checkAdsManagement()).ok) problemas.push('token sem ads_management')
+    const pxConta = await fetch(`https://graph.facebook.com/v21.0/act_${est.conta}/adspixels?fields=id`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' })
+      .then(x => x.json()).then((j: { data?: { id: string }[] }) => (j.data ?? []).map(x => x.id)).catch(() => [] as string[])
+    const pixelId = pxConta.includes(cfg.pixelId) ? cfg.pixelId : pxConta[0] ?? ''
+    if (!pixelId) problemas.push('a conta não enxerga nenhum pixel')
+    const artes: Record<string, Buffer> = {}
+    for (const c of est.conjuntos) {
+      for (const [driveId, alvo, nome] of [[c.feedDriveId, 0.8, 'feed'], [c.storiesDriveId, 0.5625, 'stories']] as const) {
+        try {
+          const b = await baixarArte(driveId)
+          const proporcao = b.readUInt32BE(16) / b.readUInt32BE(20)   // largura/altura do cabeçalho PNG
+          if (Math.abs(proporcao - alvo) > 0.02) throw new Error(`proporção ${proporcao.toFixed(3)}, esperado ${alvo}`)
+          artes[driveId] = b
+        } catch (e) { problemas.push(`${c.nome} (${nome}): ${e instanceof Error ? e.message : 'erro'}`) }
+      }
+    }
+    if (est.teste || problemas.length) {
+      return NextResponse.json({ ok: !problemas.length, teste: true, problemas, artes: Object.keys(artes).length, pixel: pixelId })
+    }
+
+    const criados: { conjunto: string; adsetId?: string; creativeId?: string; adId?: string; erro?: string }[] = []
+    const camp = await createCampaign(cfg, { name: est.campanha, objective: 'OUTCOME_SALES', accountId: est.conta })
+    const campaignId = String(camp.id)
+    const urlTags = buildUtmTags()
+    for (const c of est.conjuntos) {
+      const r: (typeof criados)[number] = { conjunto: c.nome }
+      try {
+        const [feed, story] = await Promise.all([
+          uploadAdImage(cfg, { base64: artes[c.feedDriveId].toString('base64'), filename: `${c.nome} - feed.png`, accountId: est.conta }),
+          uploadAdImage(cfg, { base64: artes[c.storiesDriveId].toString('base64'), filename: `${c.nome} - stories.png`, accountId: est.conta }),
+        ])
+        const adset = await createAdSet({ ...cfg, pixelId }, { name: c.nome, campaignId, accountId: est.conta, dailyBudgetBrl: c.orcamentoDia,
+          ageMin: est.idadeMin ?? 18, ageMax: est.idadeMax ?? 65, gender: 'all' })
+        r.adsetId = String(adset.id)
+        const cr = await createPlacementImageCreative(cfg, { name: c.nome, feedHash: feed.hash, storyHash: story.hash, link: est.link,
+          message: c.texto, headline: c.titulo, description: c.descricao, cta: 'SHOP_NOW', pageId: est.paginaId, accountId: est.conta,
+          urlTags, igUserId: est.instagramId })
+        r.creativeId = String(cr.id)
+        const ad = await createAd(cfg, { name: c.nome, adsetId: r.adsetId, creativeId: r.creativeId, accountId: est.conta })
+        r.adId = String(ad.id)
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      criados.push(r)
+    }
+    return NextResponse.json({ ok: criados.every(c => !c.erro), campaignId, criados })
   }
 
   const p = corpo as Pedido | null

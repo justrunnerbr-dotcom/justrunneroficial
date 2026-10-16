@@ -324,6 +324,52 @@ export async function createStaticVideoAdCreative(cfg: MetaCreateConfig, params:
   }, cfg.token)
 }
 
+// 4d. Criativo de imagem com uma arte por posicionamento (16/10/2026): a 4:5 vai
+// pro feed/explorar e a 9:16 pra stories/reels, cada uma no tamanho certo, sem a
+// Meta cortar ou esticar. As regras cobrem todos os posicionamentos do createAdSet.
+// Não usa is_dynamic_creative: é personalização por posicionamento, não teste de variações.
+export async function createPlacementImageCreative(cfg: MetaCreateConfig, params: {
+  name: string
+  feedHash: string
+  storyHash: string
+  link: string
+  message: string
+  headline: string
+  description: string
+  cta: CallToAction
+  pageId: string
+  accountId: string
+  urlTags?: string
+  igUserId?: string
+}) {
+  return metaPost(`act_${params.accountId}/adcreatives`, {
+    name: params.name,
+    object_story_spec: {
+      page_id: params.pageId,
+      ...(params.igUserId ? { instagram_user_id: params.igUserId } : {}),
+    },
+    asset_feed_spec: {
+      images: [
+        { hash: params.feedHash,  adlabels: [{ name: 'jr_feed' }] },
+        { hash: params.storyHash, adlabels: [{ name: 'jr_story' }] },
+      ],
+      bodies:       [{ text: params.message }],
+      titles:       [{ text: params.headline }],
+      descriptions: [{ text: params.description }],
+      link_urls:    [{ website_url: params.link }],
+      call_to_action_types: [params.cta],
+      ad_formats:   ['SINGLE_IMAGE'],
+      asset_customization_rules: [
+        { customization_spec: { publisher_platforms: ['facebook', 'instagram'], facebook_positions: ['feed'], instagram_positions: ['stream', 'explore'] },
+          image_label: { name: 'jr_feed' }, priority: 1 },
+        { customization_spec: { publisher_platforms: ['facebook', 'instagram'], facebook_positions: ['story', 'facebook_reels'], instagram_positions: ['story', 'reels'] },
+          image_label: { name: 'jr_story' }, priority: 2 },
+      ],
+    },
+    ...(params.urlTags ? { url_tags: params.urlTags } : {}),
+  }, cfg.token)
+}
+
 // 5. Criar anúncio
 export async function createAd(cfg: MetaCreateConfig, params: {
   name: string
