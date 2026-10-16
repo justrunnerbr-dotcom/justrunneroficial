@@ -97,6 +97,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro && r.link === t.link), anuncios: res })
   }
 
+  // trocarLinkFeed (16/10/2026): igual ao trocarLink, mas pra anúncios de asset_feed_spec (estáticos por posicionamento):
+  // copia o criativo atual (artes, textos, regras, url_tags) trocando só o link, e põe no mesmo anúncio. Lê de volta.
+  const tlf = (corpo as { trocarLinkFeed?: { conta: string; campanhaId: string; link: string; adIds: string[] } } | null)?.trocarLinkFeed
+  if (tlf) {
+    if (!/^\d+$/.test(tlf.conta) || !/^\d+$/.test(tlf.campanhaId) || !/^https:\/\/justrunner\.com\.br\//.test(tlf.link)
+      || !Array.isArray(tlf.adIds) || !tlf.adIds.length || tlf.adIds.length > 20 || tlf.adIds.some(id => !/^\d+$/.test(id))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === tlf.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const ler = (id: string) => fetch(`https://graph.facebook.com/v21.0/${id}?fields=name,campaign_id,effective_status,creative{name,object_story_spec,asset_feed_spec,url_tags}`,
+      { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as Promise<Record<string, unknown>>
+    type Cr = { name?: string; object_story_spec?: Record<string, unknown>; asset_feed_spec?: Record<string, unknown> & { link_urls?: { website_url?: string }[] }; url_tags?: string }
+    const res = []
+    for (const adId of tlf.adIds) {
+      const r: Record<string, unknown> = { adId }
+      try {
+        const g = await ler(adId)
+        if (g.campaign_id !== tlf.campanhaId) throw new Error('não pertence à campanha')
+        const cr = g.creative as Cr
+        if (!cr?.asset_feed_spec || !cr.object_story_spec) throw new Error('anúncio sem asset_feed_spec')
+        const novo = await fetch(`https://graph.facebook.com/v21.0/act_${tlf.conta}/adcreatives`, { method: 'POST', cache: 'no-store',
+          headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: cr.name ?? String(g.name), object_story_spec: cr.object_story_spec,
+            asset_feed_spec: { ...cr.asset_feed_spec, link_urls: [{ website_url: tlf.link }] }, ...(cr.url_tags ? { url_tags: cr.url_tags } : {}) }),
+        }).then(x => x.json()) as { id?: string; error?: { message?: string } }
+        if (!novo.id) throw new Error(novo.error?.message ?? 'criativo não criado')
+        await metaPostAd(adId, { creative: { creative_id: novo.id } }, cfg.token)
+        const d = await ler(adId)
+        r.nome = d.name; r.status = d.effective_status
+        r.link = (d.creative as Cr)?.asset_feed_spec?.link_urls?.[0]?.website_url
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.link === tlf.link), anuncios: res })
+  }
+
   // mudarStatus: liga/pausa conjuntos e anúncios de UMA campanha. A campanha em si nunca é tocada aqui
   // (cada id precisa ter campaign_id igual ao informado e não pode ser a própria campanha). Devolve o estado lido depois.
   // trocarPixel: troca o pixel (promoted_object) dos conjuntos de UMA campanha. Só aceita pixel que a conta enxerga.
