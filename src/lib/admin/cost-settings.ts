@@ -103,18 +103,13 @@ export function computeGatewayFee(valor: number, paymentMethod: string | null, s
 }
 
 /**
- * A Yampi mudou em 01/08/2026: saiu de 2,5% por pedido para 1,5% + mensalidade de
- * R$ 527. A tabela `cost_settings` guarda só o valor vigente, sem histórico — então
- * a taxa antiga fica aqui. Sem isso, abrir o filtro de julho no admin recalcularia
- * aquele mês com a taxa de hoje e mostraria um custo menor do que foi cobrado de fato
- * (a taxa de 2,5% em julho foi conferida contra dois ciclos de cobrança da Yampi,
- * que bateram ao centavo com a receita de pedidos pagos).
- *
- * Se a data da mudança não for essa, é só corrigir a constante abaixo.
+ * Veio da JHF, onde a Yampi mudou em 01/08/2026 de 2,5% por pedido para 1,5% + mensalidade.
+ * Na Just Runner não: o dono confirmou em 16/10/2026 que paga 2,5% do pedido pago (cost_settings)
+ * e NÃO paga o plano de R$ 527, então a mensalidade é zero e a taxa é a mesma antes e depois.
  */
 export const YAMPI_MUDANCA_ISO   = '2026-08-01'
 export const YAMPI_PCT_ANTERIOR  = 2.5
-export const YAMPI_MENSALIDADE   = 527
+export const YAMPI_MENSALIDADE   = 0
 
 export function computeYampiFee(valor: number, s: CostSettings, dataPedidoISO?: string): number {
   const pct = dataPedidoISO && dataPedidoISO < YAMPI_MUDANCA_ISO ? YAMPI_PCT_ANTERIOR : s.yampi_fee_pct
