@@ -133,6 +133,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro && r.link === tlf.link), anuncios: res })
   }
 
+  // subirVideos (16/10/2026): manda a Meta buscar vídeos de pastas públicas do Drive (file_url) pra biblioteca da conta.
+  // Devolve o id de cada vídeo; a criação da campanha (modo padrão, com "teste": true antes) confere se já processaram.
+  const sv = (corpo as { subirVideos?: { conta: string; videos: { nome: string; driveId: string }[] } } | null)?.subirVideos
+  if (sv) {
+    if (!/^\d+$/.test(sv.conta) || !Array.isArray(sv.videos) || !sv.videos.length || sv.videos.length > 20
+      || sv.videos.some(v => !v.nome || !/^[A-Za-z0-9_-]{20,60}$/.test(v.driveId))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === sv.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const res = []
+    for (const v of sv.videos) {
+      const r: Record<string, unknown> = { nome: v.nome }
+      try {
+        const j = await fetch(`https://graph.facebook.com/v21.0/act_${sv.conta}/advideos`, { method: 'POST', cache: 'no-store',
+          headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: v.nome, file_url: `https://drive.usercontent.google.com/download?id=${v.driveId}&export=download&confirm=t` }),
+        }).then(x => x.json()) as { id?: string; error?: { message?: string } }
+        if (!j.id) throw new Error(j.error?.message ?? 'vídeo não criado')
+        r.videoId = j.id
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro), videos: res })
+  }
+
   // soInstagram (16/10/2026): conjuntos de UMA campanha passam a veicular só no Instagram (feed, stories, reels,
   // explorar). Mantém o resto do público como está. Lê de volta o targeting gravado.
   const si = (corpo as { soInstagram?: { campanhaId: string; ids: string[] } } | null)?.soInstagram
