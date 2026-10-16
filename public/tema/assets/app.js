@@ -181,12 +181,12 @@ window.JR = window.JR || {};
           <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
         <button class="rm" data-rm="${k}">Remover</button>
       </div>`;
-    }).join("") + (tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "") +
-      /* Order bump (15/10): case de R$ 35 enquanto não estiver no carrinho; se cobre o que falta, avisa do frete grátis */
-      (!temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="Case Protetor" loading="lazy">
-        <div><strong>Proteja seu óculos</strong><span>Case Protetor com zíper por <b>${brl(JR.CASE.price)}</b>${falta > 0 && falta <= JR.CASE.price ? ` e seu pedido ganha <b>frete grátis</b>` : ""}.</span>
-        <button class="btn btn-dark" data-case>Adicionar case · ${brl(JR.CASE.price)}</button></div></div>` : "");
-    foot.innerHTML = `
+    }).join("") + (tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
+    /* Order bump (15/10): fixo no rodapé do carrinho, acima do total, pra aparecer no celular mesmo com vários itens */
+    const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="Case Protetor" loading="lazy">
+        <div><strong>Proteja seu óculos</strong><span>Case Protetor com zíper por <b>${brl(JR.CASE.price)}</b>${falta > 0 && falta <= JR.CASE.price ? ` e seu pedido ganha <b>frete grátis</b>` : ""}.</span></div>
+        <button class="btn btn-dark" data-case aria-label="Adicionar case por ${brl(JR.CASE.price)}">+ Adicionar</button></div>` : "";
+    foot.innerHTML = bump + `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
       ${tt.descontoOp ? `<div class="row save"><span>Oferta Progressiva</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
