@@ -32,7 +32,9 @@ const nextConfig: NextConfig = {
       { source: '/produto/:slug', destination: '/tema/colecao.html?cat=leve2', permanent: false },
       { source: '/colecao/:slug', destination: '/tema/colecao.html', permanent: false },
     ]
-    return [...prod, ...col, ...paginas, ...resto]
+    // 15/10: o endereço da home é "/" (o link "Início" do tema levava pra /tema/index.html)
+    const home = [{ source: '/tema/index.html', destination: '/', permanent: false }]
+    return [...home, ...prod, ...col, ...paginas, ...resto]
   },
   images: {
     // Otimização feita pelo Storage do Supabase, não pelo /_next/image da

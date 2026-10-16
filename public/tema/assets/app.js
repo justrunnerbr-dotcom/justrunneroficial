@@ -18,7 +18,7 @@ window.JR = window.JR || {};
   const page = document.body.dataset.page;
   /* Menu igual ao site antigo (13/10): Início · Compre 1 Leve 2 · Combos · Categorias (lista) · Oferta Progressiva */
   const navLinks = [
-    ["Início", "index.html"],
+    ["Início", "/"],
     ["Compre 1 Leve 2", "colecao.html?cat=leve2", "hot"],
     ["Combos", "colecao.html?cat=leve3"],
     ["Categorias", "colecao.html", "cats"],
@@ -35,7 +35,7 @@ window.JR = window.JR || {};
     ? `<div class="nav-dd"><button type="button" class="nav-dd-btn" aria-expanded="false" aria-controls="dd-lentes">${t}<span class="dd-seta" aria-hidden="true"></span></button>
         <div class="dd-panel" id="dd-lentes" role="region" aria-label="Lentes Mais Vendidas">${lentes()}</div></div>`
     : `<a href="${h}" class="${c || ""}">${t}</a>`;
-  const logo = `<a href="index.html" class="logo" aria-label="Just Runner — início"><img src="fotos/logo.png" alt="Just Runner" width="96" height="38"></a>`;
+  const logo = `<a href="/" class="logo" aria-label="Just Runner — início"><img src="fotos/logo.png" alt="Just Runner" width="96" height="38"></a>`;
 
   function renderHeader() {
     const el = $("#header");
@@ -81,8 +81,8 @@ window.JR = window.JR || {};
               <p style="margin:14px 0 0"><a href="https://instagram.com/${JR.CONTACT.instagram}" target="_blank" rel="noopener" style="display:inline-flex;gap:8px;align-items:center"><span style="width:18px;height:18px;display:inline-block">${JR.icon.insta}</span>@${JR.CONTACT.instagram}</a></p>
             </div>
             <div><h4>Loja</h4><ul>
-              <li><a href="index.html#oferta">Compre 1 Leve 2</a></li><li><a href="colecao.html">Todos os modelos</a></li>
-              <li><a href="index.html#estilos">Comprar por estilo</a></li><li><a href="index.html#lentes">Qual lente escolher</a></li>
+              <li><a href="/#oferta">Compre 1 Leve 2</a></li><li><a href="colecao.html">Todos os modelos</a></li>
+              <li><a href="/#estilos">Comprar por estilo</a></li><li><a href="/#lentes">Qual lente escolher</a></li>
               <li><a href="sobre.html">Sobre a Just Runner</a></li></ul></div>
             <div><h4>Ajuda</h4><ul>
               <li><a href="faq.html">Perguntas frequentes</a></li><li><a href="frete-e-entrega.html">Frete e entrega</a></li>
@@ -110,7 +110,7 @@ window.JR = window.JR || {};
         <div class="grid-4" id="pick-grid"></div>
       </div>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
-      ${JR.LOCAL ? `<div class="proto-flag">Protótipo · ${page === "pdp" ? '<a href="index.html">ver Home</a>' : '<a href="produto.html?p=radar-ev">ver PDP</a>'}</div>` : ""}`;
+      ${JR.LOCAL ? `<div class="proto-flag">Protótipo · ${page === "pdp" ? '<a href="/">ver Home</a>' : '<a href="produto.html?p=radar-ev">ver PDP</a>'}</div>` : ""}`;
   }
 
   /* ---------- Toast ---------- */
@@ -169,7 +169,7 @@ window.JR = window.JR || {};
       free ? `<b>Frete grátis garantido:</b> seu pedido passou de R$ 200.` : `Falta <b>${brl(falta)}</b> pra ganhar <b>frete grátis</b>.`;
     meter.innerHTML += `<div class="track"><i style="width:${Math.min(100, (total / (JR.PRICE.freeShipping + 1)) * 100)}%"></i></div>`;
     if (!n) {
-      body.innerHTML = `<div class="empty">${JR.glasses({ shape: "shield", lens: "Espelhada" })}<p>Seu carrinho está vazio.<br>Escolha. Coloque. Vá.</p><a class="btn btn-dark" href="index.html#oferta">Escolher meu estilo ${JR.icon.arrow}</a></div>`;
+      body.innerHTML = `<div class="empty">${JR.glasses({ shape: "shield", lens: "Espelhada" })}<p>Seu carrinho está vazio.<br>Escolha. Coloque. Vá.</p><a class="btn btn-dark" href="/#oferta">Escolher meu estilo ${JR.icon.arrow}</a></div>`;
       foot.innerHTML = "";
       return;
     }

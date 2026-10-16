@@ -134,7 +134,7 @@
         ? `<section class="page-hero lente-hero"><div class="wrap"><span class="kicker">Lentes Mais Vendidas 🔥</span><h1 class="display h-lg">${cat.emoji} ${cat.nome}</h1><p class="lead">${cat.texto}</p><p class="lente-inclui">Inclui as lentes ${cat.inclui}.</p>
             <nav class="lente-chips" aria-label="Outras cores de lente">${JR.LENTES.map(l => `<a href="colecao.html?lente=${l.slug}"${l.slug === cat.lente ? ' aria-current="page"' : ""}><span aria-hidden="true">${l.emoji}</span>${l.nome.replace("Lente ", "")}</a>`).join("")}</nav></div></section>`
         : `<section class="page-hero"><div class="wrap"><h1 class="display h-lg">${cat.nome}</h1>${cat.texto ? `<p class="lead">${cat.texto}</p>` : ""}</div></section>`;
-      $(".filters").insertAdjacentHTML("beforebegin", `<nav class="crumbs cat-crumbs" aria-label="Você está em"><a href="index.html">Início</a><span>›</span><span>${cat.nome}</span></nav>`);
+      $(".filters").insertAdjacentHTML("beforebegin", `<nav class="crumbs cat-crumbs" aria-label="Você está em"><a href="/">Início</a><span>›</span><span>${cat.nome}</span></nav>`);
     }
     const lista = () => (cat && cat.lista) ? cat.lista() : JR.PRODUCTS.filter(p => !p.combo && p.style !== "acessorio").flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]));
     const lensCount = slug => new Set(JR.bySlug(slug).variants.flatMap(v => v.lenses).filter(JR.isLens)).size;
