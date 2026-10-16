@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { DateRange } from '@/lib/admin/date-range'
+import { fetchAllRows } from '@/lib/admin/supabase-pagination'
 import {
   type SourceResult,
   sourceOk,
@@ -798,6 +799,68 @@ export async function getMetaCrossDataByField(
   }
 }
 
+// ── Venda real por campanha › conjunto › anúncio (chave hierárquica) ─────────
+// Base da página Gerenciador › Pedidos. As chaves são HIERÁRQUICAS: o mesmo
+// nome de anúncio vive em vários conjuntos, e juntar só pelo nome daria a
+// cada um as vendas de todos.
+
+export interface MetaUtmCross {
+  campaign: Record<string, MetaCrossRow>
+  adset:    Record<string, MetaCrossRow>
+  ad:       Record<string, MetaCrossRow>
+  totalOrders:  number
+  totalRevenue: number
+}
+
+// "+" vira espaço no caminho até o pedido (a Meta não codifica o "+" do nome e
+// a decodificação o lê como espaço). Os dois lados passam pela mesma normalização.
+export function utmKey(...parts: (string | null | undefined)[]): string {
+  return parts.map(p => String(p ?? '').toLowerCase().replace(/\+/g, ' ').replace(/\s+/g, ' ').trim()).join(' › ')
+}
+
+export async function getMetaUtmCross(db: SupabaseClient, range: DateRange): Promise<MetaUtmCross> {
+  type Row = { utm_campaign: string | null; utm_term: string | null; utm_content: string | null; total?: number | string | null }
+  // Paginado: a leitura simples para em 1000 linhas.
+  const [sessions, orders] = await Promise.all([
+    fetchAllRows<Row>((from, to) => db.from('sessions')
+      .select('utm_campaign, utm_term, utm_content')
+      .eq('store_id', STORE_ID)
+      .or(META_SOURCE_FILTER)
+      .gte('started_at', range.startISO)
+      .lt('started_at',  range.endISO)
+      .order('started_at')
+      .range(from, to)),
+    fetchAllRows<Row>((from, to) => db.from('orders')
+      .select('total, utm_campaign, utm_term, utm_content')
+      .eq('store_id', STORE_ID)
+      .or(META_SOURCE_FILTER)
+      .in('status', PAID_STATUSES)
+      .gte('created_at', range.startISO)
+      .lt('created_at',  range.endISO)
+      .order('created_at')
+      .range(from, to)),
+  ])
+
+  const out: MetaUtmCross = { campaign: {}, adset: {}, ad: {}, totalOrders: 0, totalRevenue: 0 }
+  const bump = (map: Record<string, MetaCrossRow>, k: string, sess: number, ord: number, rev: number) => {
+    const r = map[k] ??= { sessions: 0, orders: 0, revenue: 0 }
+    r.sessions += sess; r.orders += ord; r.revenue += rev
+  }
+  const add = (x: Row, sess: number, ord: number, rev: number) => {
+    bump(out.campaign, utmKey(x.utm_campaign), sess, ord, rev)
+    bump(out.adset,    utmKey(x.utm_campaign, x.utm_term), sess, ord, rev)
+    bump(out.ad,       utmKey(x.utm_campaign, x.utm_term, x.utm_content), sess, ord, rev)
+  }
+  for (const x of sessions) add(x, 1, 0, 0)
+  for (const x of orders) {
+    const rev = parseFloat(String(x.total ?? 0)) || 0
+    add(x, 0, 1, rev)
+    out.totalOrders++
+    out.totalRevenue += rev
+  }
+  return out
+}
+
 function diagnoseCampaign(
   spend: number,
   ctr: number,
@@ -1163,6 +1226,8 @@ export async function getMetaAccountCampaigns(
   accountId: string,
   since: string,
   until: string,
+  /** true: erro da Meta sobe em vez de virar lista vazia (pra não ir pro cache). */
+  strict = false,
 ): Promise<MetaCampaignDetail[]> {
   const token = process.env.META_ACCESS_TOKEN
   if (!token) return []
@@ -1199,8 +1264,14 @@ export async function getMetaAccountCampaigns(
     type CampaignRow = { id: string; name: string; status: string; objective: string; daily_budget?: string; lifetime_budget?: string }
     type InsightRow  = Record<string, unknown>
 
-    const campaigns = ((await campaignsRes.json()) as { data?: CampaignRow[] }).data ?? []
-    const insights  = ((await insightsRes.json()) as { data?: InsightRow[] }).data ?? []
+    const campaignsJson = await campaignsRes.json() as { data?: CampaignRow[]; error?: { message?: string } }
+    const insightsJson  = await insightsRes.json()  as { data?: InsightRow[];  error?: { message?: string } }
+    // Só no modo strict: o comportamento antigo (erro vira lista/gasto vazio)
+    // continua igual pra quem já chamava sem o flag.
+    const apiError = campaignsJson.error ?? insightsJson.error
+    if (strict && apiError) throw new Error(apiError.message ?? 'Graph API error')
+    const campaigns = campaignsJson.data ?? []
+    const insights  = insightsJson.data ?? []
 
     const insightMap: Record<string, InsightRow> = {}
     for (const row of insights) insightMap[String(row.campaign_id ?? '')] = row
@@ -1254,9 +1325,38 @@ export async function getMetaAccountCampaigns(
     })
 
     return results.sort((a, b) => b.spend - a.spend)
-  } catch {
+  } catch (err) {
+    if (strict) throw err
     return []
   }
+}
+
+// ── Gasto diário de uma conta ────────────────────────────────────────────────
+// Uma chamada leve (nível conta, um registro por dia) — base do "CPA do dia"
+// da página Gerenciador › Pedidos. Erro sobe (quem chama decide o fallback).
+
+async function graphAll<T>(url: string, token: string): Promise<T[]> {
+  const out: T[] = []
+  let next: string | null = url
+  for (let page = 0; next && page < 50; page++) {
+    const res: Response = await fetch(next, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+    const json = await res.json() as { data?: T[]; paging?: { next?: string }; error?: { message?: string } }
+    if (json.error) throw new Error(json.error.message ?? 'Graph API error')
+    out.push(...(json.data ?? []))
+    next = json.paging?.next ?? null
+  }
+  return out
+}
+
+export async function getMetaAccountDailySpend(accountId: string, since: string, until: string): Promise<{ date: string; spend: number }[]> {
+  const token = process.env.META_ACCESS_TOKEN
+  if (!token) throw new Error('META_ACCESS_TOKEN ausente')
+  const rows = await graphAll<{ date_start?: string; spend?: string }>(
+    `https://graph.facebook.com/${META_API_VER}/act_${accountId}/insights?${new URLSearchParams({
+      fields: 'spend', level: 'account', time_increment: '1', limit: '500',
+      time_range: JSON.stringify({ since, until: toMetaUntil(until) }),
+    })}`, token)
+  return rows.map(r => ({ date: String(r.date_start ?? ''), spend: parseFloat(String(r.spend ?? '0')) || 0 }))
 }
 
 // ── Campaign → Ad Sets ────────────────────────────────────────────────────────

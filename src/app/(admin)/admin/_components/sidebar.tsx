@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Package, FolderOpen, Home, Image,
   Search, BarChart3, Settings, Megaphone, ExternalLink,
   LogOut, ShoppingBag, Users, Zap, Bell, Moon, Sun, Radio, BrainCircuit, MousePointerClick, Bot, MessageCircle, UserX, MessageSquare, Wallet, Menu, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Activity, ScrollText, Sparkles, ClipboardCheck, ListChecks,
+  ReceiptText,
 } from 'lucide-react'
 
 type AdminStyle = 'prizm' | 'max' | 'carbon'
@@ -66,6 +67,7 @@ const NAV_GROUPS = [
       { label: 'Análise Suprema',   href: '/admin/analise-suprema',   icon: Sparkles },
       { label: 'Commerce Brain',    href: '/admin/brain',             icon: BrainCircuit },
       { label: 'Gestor de Tráfego', href: '/admin/gestor-trafego',    icon: MousePointerClick },
+      { label: 'Pedidos · Lucro',   href: '/admin/gerenciador/pedidos', icon: ReceiptText },
       { label: 'Meta Ads',          href: '/admin/meta-ads',          icon: Megaphone },
       { label: 'Agente Meta Ads',   href: '/admin/meta-ads/agente',   icon: Bot },
       { label: 'Analytics',         href: '/admin/analytics',         icon: BarChart3 },
@@ -81,6 +83,8 @@ const NAV_GROUPS = [
     ],
   },
 ]
+
+const ALL_HREFS = NAV_GROUPS.flatMap(g => g.items.map(i => i.href))
 
 export function Sidebar({ area = 'full' }: { area?: AdminArea }) {
   const pathname = usePathname()
@@ -171,9 +175,13 @@ export function Sidebar({ area = 'full' }: { area?: AdminArea }) {
     router.refresh()
   }
 
+  // Ativo = o item de href mais longo que casa com a página. Sem isso,
+  // "Gerenciador" (/admin/gerenciador) acendia junto em /admin/gerenciador/pedidos.
   function isActive(href: string) {
     if (href === '/admin') return pathname === href
-    return pathname.startsWith(href)
+    const matches = (h: string) => pathname === h || pathname.startsWith(`${h}/`)
+    if (!matches(href)) return false
+    return !ALL_HREFS.some(h => h.length > href.length && h.startsWith(href) && matches(h))
   }
 
   return (
