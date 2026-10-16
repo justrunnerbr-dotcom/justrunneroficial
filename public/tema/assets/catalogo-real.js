@@ -217,7 +217,12 @@
       if (g.length) grupos.push(g);
     })));
     const resto = grupos.flatMap((g, gi) => g.map((x, j) => ({ x, k: (j + .5) / g.length + gi * 1e-3 }))).sort((a, b) => a.k - b.k).map(o => o.x);
-    return semVizinho([...topo, ...resto], topo.length);
+    /* 15/10: Minute Preta (4ª mais vendida) sobe pro 5º lugar, logo depois dos 4 do banner, com a lente Preta */
+    const mi = JR.bySlug("minute"), mv = mi ? mi.variants.findIndex(v => v.name === "Preta") : -1;
+    const mp = mv >= 0 ? ["minute", mv, mi.variants[mv].lenses.includes("Preta") ? "Preta" : mi.variants[mv].lenses[0]] : null;
+    const lista = [...topo, ...resto].filter(x => !mp || x.join("|") !== mp.join("|"));
+    if (mp) lista.splice(4, 0, mp);
+    return semVizinho(lista, 5);
   })();
 
   /* ---------- Checkout real da Yampi ---------- */
