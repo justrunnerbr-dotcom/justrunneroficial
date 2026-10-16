@@ -174,7 +174,7 @@ export async function POST(request: Request) {
       try {
         const g = await ler(id)
         if (g.campaign_id !== ai.campanhaId) throw new Error('não pertence à campanha')
-        await metaPostAd(id, { start_time: ai.inicio }, cfg.token)
+        await metaPostAd(id, { start_time: Math.round(alvo / 1000) }, cfg.token)   // unix: a Meta recusou o ISO com -03:00 ("Invalid parameter")
         const d = await ler(id)
         r.nome = d.name; r.inicio = d.start_time; r.confere = !!d.start_time && new Date(d.start_time).getTime() === alvo
       } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
