@@ -110,6 +110,13 @@ export function paymentMethodOf(d: YampiOrderResource['data']): string | null {
   return 'credit_card'
 }
 
+/** Parcelas da transação paga (ou da primeira). Pix/boleto vêm como 1. */
+export function installmentsOf(d: YampiOrderResource['data']): number | null {
+  const tr = d.transactions?.data ?? []
+  const n = (tr.find(t => t.status === 'paid') ?? tr[0])?.installments
+  return typeof n === 'number' && n >= 1 && n <= 24 ? n : null
+}
+
 export async function upsertYampiOrder(
   db: SupabaseClient,
   resource: YampiOrderResource,
@@ -192,6 +199,7 @@ export async function upsertYampiOrder(
       // estimava todo pedido como cartão em 3x (~9,1%): um Pix de R$ 287 aparecia com R$ 26 de taxa.
       // Sem transação no payload, não mexe no que já está gravado.
       ...(paymentMethodOf(d) ? { payment_method: paymentMethodOf(d) } : {}),
+      ...(installmentsOf(d) ? { installments: installmentsOf(d) } : {}),
       utm_source:       d.utm_source ?? null,
       utm_medium:       d.utm_medium ?? null,
       utm_campaign:     d.utm_campaign ?? null,

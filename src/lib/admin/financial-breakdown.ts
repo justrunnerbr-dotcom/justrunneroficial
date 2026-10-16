@@ -153,7 +153,7 @@ export async function loadOrderEconomics(range: DateRange): Promise<{ orders: Or
 
   type OrderRow = {
     id: string; total: string | number | null; shipping_amount: string | number | null
-    payment_method: string | null; created_at: string
+    payment_method: string | null; installments: number | null; created_at: string
     session_id: string | null; customer_id: string | null
     utm_source: string | null; gclid: string | null; shipping_state: string | null
   }
@@ -162,7 +162,7 @@ export async function loadOrderEconomics(range: DateRange): Promise<{ orders: Or
   const [orders, costs, settings, manual] = await Promise.all([
     pageAll<OrderRow>((from, to) =>
       db.from('orders')
-        .select('id, total, shipping_amount, payment_method, created_at, session_id, customer_id, utm_source, gclid, shipping_state')
+        .select('id, total, shipping_amount, payment_method, installments, created_at, session_id, customer_id, utm_source, gclid, shipping_state')
         .eq('store_id', STORE_ID)
         .in('status', APPROVED_STATUSES)
         .gte('created_at', range.startISO).lt('created_at', range.endISO)
@@ -210,7 +210,8 @@ export async function loadOrderEconomics(range: DateRange): Promise<{ orders: Or
       productCost: items.reduce((s, it) => s + (it.unitCost ?? 0) * it.quantity, 0),
       freightCost: computeFreightCost(shippingAmount, settings),
       freightPaidByCustomer: shippingAmount > 0 ? shippingAmount : 0,
-      gatewayFee:  computeGatewayFee(total, o.payment_method, settings),
+      // parcelas reais da transação Yampi (desde 16/10/2026); sem o dado, cai no default_installments
+      gatewayFee:  computeGatewayFee(total, o.payment_method, settings, o.installments ?? undefined),
       // a data manda na taxa: a Yampi mudou de 2,5% pra 1,5% em 01/08/2026
       yampiFee:    computeYampiFee(total, settings, o.created_at ?? undefined),
       missingCost: items.length === 0 || items.some(it => it.unitCost === null),
