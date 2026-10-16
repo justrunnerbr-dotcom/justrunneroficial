@@ -206,6 +206,20 @@
     ].map(([sl, cor, l]) => { const p = JR.bySlug(sl); const i = p ? p.variants.findIndex(v => v.name === cor) : -1; return i < 0 ? null : [sl, i, p.variants[i].lenses.includes(l) ? l : p.variants[i].lenses[0]]; }).filter(Boolean)
   };
 
+  /* Categoria Mais vendidos (15/10): os 12 da vitrine primeiro e depois todas as lentes das armações do ranking de vendas
+     (src/lib/best-sellers.ts), na ordem de venda, espalhadas pra não ficar a mesma armação em sequência. A home segue com os 8 primeiros. */
+  JR.SHOWCASE.maisVendidosTodos = (() => {
+    const topo = JR.SHOWCASE.maisVendidos || [], ja = new Set(topo.map(([s, i, l]) => s + "|" + i + "|" + l));
+    const grupos = [];
+    RANK.forEach(ps => naoCombo.forEach(p => p.variants.forEach((v, i) => {
+      if (JR.REAL_LENS[p.slug][v.name].productSlug !== ps) return;
+      const g = v.lenses.map(l => [p.slug, i, l]).filter(x => !ja.has(x.join("|")));
+      if (g.length) grupos.push(g);
+    })));
+    const resto = grupos.flatMap((g, gi) => g.map((x, j) => ({ x, k: (j + .5) / g.length + gi * 1e-3 }))).sort((a, b) => a.k - b.k).map(o => o.x);
+    return semVizinho([...topo, ...resto], topo.length);
+  })();
+
   /* ---------- Checkout real da Yampi ---------- */
   const STORE_TOKEN = "BDMGAOde7Xbg3YDZxV5e7IJb5rkqTGKHZJ2SaUtU";   // token público, o mesmo do site
   /* UTMs do pedido: igual ao site no ar (src/lib/yampi.ts → attributionParams): URL atual ou o que ficou guardado
