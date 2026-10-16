@@ -133,6 +133,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro && r.link === tlf.link), anuncios: res })
   }
 
+  // soInstagram (16/10/2026): conjuntos de UMA campanha passam a veicular só no Instagram (feed, stories, reels,
+  // explorar). Mantém o resto do público como está. Lê de volta o targeting gravado.
+  const si = (corpo as { soInstagram?: { campanhaId: string; ids: string[] } } | null)?.soInstagram
+  if (si) {
+    if (!/^\d+$/.test(si.campanhaId) || !Array.isArray(si.ids) || !si.ids.length || si.ids.length > 50 || si.ids.some(id => !/^\d+$/.test(id))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const ler = (id: string) => fetch(`https://graph.facebook.com/v21.0/${id}?fields=name,campaign_id,targeting`,
+      { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as Promise<{ name?: string; campaign_id?: string; targeting?: Record<string, unknown> }>
+    const res = []
+    for (const id of si.ids) {
+      const r: Record<string, unknown> = { id }
+      try {
+        const g = await ler(id)
+        if (g.campaign_id !== si.campanhaId || !g.targeting) throw new Error('não pertence à campanha')
+        const t = { ...g.targeting }
+        delete t.facebook_positions; delete t.messenger_positions; delete t.audience_network_positions
+        t.publisher_platforms = ['instagram']
+        t.instagram_positions = ['stream', 'story', 'reels', 'explore']
+        await metaPostAd(id, { targeting: t }, cfg.token)
+        const d = await ler(id)
+        r.nome = d.name; r.plataformas = d.targeting?.publisher_platforms; r.posicoes = d.targeting?.instagram_positions
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && JSON.stringify(r.plataformas) === '["instagram"]'), itens: res })
+  }
+
   // mudarStatus: liga/pausa conjuntos e anúncios de UMA campanha. A campanha em si nunca é tocada aqui
   // (cada id precisa ter campaign_id igual ao informado e não pode ser a própria campanha). Devolve o estado lido depois.
   // trocarPixel: troca o pixel (promoted_object) dos conjuntos de UMA campanha. Só aceita pixel que a conta enxerga.
