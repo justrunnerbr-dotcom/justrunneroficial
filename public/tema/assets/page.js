@@ -103,7 +103,7 @@
 
   /* ---------- Coleção ---------- */
   if (page === "colecao") {
-    const qs = new URLSearchParams(location.search);
+    const qs = JR.Q || new URLSearchParams(location.search);
     /* 13/10: sem os filtros Todos/Performance/Sportstyle/Everyday. Cada página é uma vitrine ou uma categoria do menu. */
     const BANNER_CAT = { radar: "radarev", minute: "minute", "eye-jacket": "eyejacket", flak: "flak", plantaris: "plantaris", hstn: "hstn",
       "half-jacket": "halfjacket", encoder: "encoder", "straight-jacket": "straightjacket" };

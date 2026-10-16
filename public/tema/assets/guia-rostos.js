@@ -132,7 +132,7 @@ new IntersectionObserver((entries, io) => {
 }, { threshold: .2 }).observe(section);
 
 // Modelo da página (?p=slug). Sem família no guia, a seção some.
-const pageModel = new URLSearchParams(location.search).get("p") || "radar-ev";
+const pageModel = (window.JR && JR.Q ? JR.Q : new URLSearchParams(location.search)).get("p") || "radar-ev";
 fetch(BASE + "oculos.json").then(r => r.ok ? r.json() : {}).catch(() => ({})).then(data => {
   for (const [id, d] of Object.entries(data)) if (MODELS[id]) Object.assign(MODELS[id], d);
   if (MODELS[pageModel]) render(pageModel); else section.remove();

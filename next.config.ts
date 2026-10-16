@@ -1,15 +1,22 @@
 import type { NextConfig } from 'next'
-import temaRedirects from './src/lib/tema-redirects.json'
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Tema novo (12/10/2026): o site da loja é o estático em public/tema/ (gerado do protótipo do sócio).
-  // A home "/" mostra ele; links antigos de produto, coleção e páginas de texto (anúncios, Google, catálogo da
-  // Meta) redirecionam pro equivalente. 307 (temporário) pra dar pra voltar atrás sem o Google gravar.
-  // Admin, quiz, /obrigado, /busca e as APIs seguem no Next. Mapa gerado por scripts/_prototipo-catalogo.mjs.
+  // A home "/" mostra ele, e desde 16/10 produto, coleção e páginas de texto também, nos endereços do site antigo
+  // (anúncios, Google, catálogo da Meta seguem valendo). Admin, quiz, /obrigado, /busca e as APIs seguem no Next.
   async rewrites() {
     return {
-      beforeFiles: [{ source: '/', destination: '/tema/index.html' }],
+      // 16/10: endereços bonitos. O .html do tema é entregue no endereço do site antigo e o tema lê o produto/categoria
+      // pelo caminho (JR.Q em public/tema/assets/catalogo-real.js). Produto que saiu do catálogo: o tema manda pra Compre 1 Leve 2.
+      beforeFiles: [
+        { source: '/', destination: '/tema/index.html' },
+        { source: '/produto/:slug', destination: '/tema/produto.html' },
+        { source: '/colecao', destination: '/tema/colecao.html' },
+        { source: '/colecao/:slug', destination: '/tema/colecao.html' },
+        ...['faq', 'sobre', 'contato', 'trocas-e-devolucoes', 'politica-de-privacidade', 'frete-e-entrega']
+          .map(pg => ({ source: `/${pg}`, destination: `/tema/${pg}.html` })),
+      ],
       afterFiles: [
         { source: '/tema', destination: '/tema/index.html' },
         { source: '/tema/', destination: '/tema/index.html' },
@@ -18,23 +25,8 @@ const nextConfig: NextConfig = {
     }
   },
   async redirects() {
-    const prod = Object.entries(temaRedirects.produtos as Record<string, { p: string; cor: string; op?: number }>).map(([slug, { p, cor, op }]) => ({
-      source: `/produto/${slug}`, destination: `/tema/produto.html?p=${p}&cor=${encodeURIComponent(cor)}${op ? '&op=1' : ''}`, permanent: false,
-    }))
-    const col = Object.entries(temaRedirects.colecoes).map(([slug, dest]) => ({
-      source: `/colecao/${slug}`, destination: `/tema/${dest}`, permanent: false,
-    }))
-    const paginas = [['/colecao', 'colecao.html'], ['/faq', 'faq.html'], ['/sobre', 'sobre.html'], ['/contato', 'contato.html'],
-      ['/trocas-e-devolucoes', 'trocas-e-devolucoes.html'], ['/politica-de-privacidade', 'politica-de-privacidade.html']]
-      .map(([source, dest]) => ({ source, destination: `/tema/${dest}`, permanent: false }))
-    // produto/coleção que não existe mais no catálogo: cai na lista de todos os óculos
-    const resto = [
-      { source: '/produto/:slug', destination: '/tema/colecao.html?cat=leve2', permanent: false },
-      { source: '/colecao/:slug', destination: '/tema/colecao.html', permanent: false },
-    ]
     // 15/10: o endereço da home é "/" (o link "Início" do tema levava pra /tema/index.html)
-    const home = [{ source: '/tema/index.html', destination: '/', permanent: false }]
-    return [...home, ...prod, ...col, ...paginas, ...resto]
+    return [{ source: '/tema/index.html', destination: '/', permanent: false }]
   },
   images: {
     // Otimização feita pelo Storage do Supabase, não pelo /_next/image da

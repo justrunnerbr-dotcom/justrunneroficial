@@ -293,4 +293,60 @@
     "estilo-2": { src: "fotos/cat-eyejacket-mobile.jpg", alt: "Sportstyle" },
     "estilo-3": { src: "fotos/cat-hstn-mobile.jpg", alt: "Everyday" }
   };
+
+  /* ---------- Endereços bonitos (16/10) ----------
+     No site no ar: /produto/minute-preta?l=Azul, /colecao/radar, /colecao/lente-preta, /faq... (os mesmos endereços do site antigo,
+     que anúncios, Google e catálogo da Meta já usam). O Next (next.config.ts) entrega o .html do tema nesses endereços e aqui
+     o tema lê o produto/categoria pelo caminho. No localhost (servidor simples) seguem os .html com ?p=…&c=…. */
+  const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
+  const ALIAS_CAT = Object.fromEntries(Object.entries(CAT_ALIAS).map(([c, s]) => [s, c]));
+  const PAGINAS = { "faq.html": "/faq", "sobre.html": "/sobre", "contato.html": "/contato", "trocas-e-devolucoes.html": "/trocas-e-devolucoes",
+    "politica-de-privacidade.html": "/politica-de-privacidade", "frete-e-entrega.html": "/frete-e-entrega", "colecao.html": "/colecao" };
+  const psDe = (slug, i) => { const p = JR.bySlug(slug), v = p && p.variants[i]; return v && JR.REAL_LENS[slug][v.name] && JR.REAL_LENS[slug][v.name].productSlug; };
+  /* Parâmetros da página: os da URL (?p=…) + os que vêm do caminho (/produto/minute-preta-op → p=minute, c=<cor>, op=1). */
+  JR.Q = (() => {
+    const q = new URLSearchParams(location.search);
+    const m = location.pathname.match(/^\/(produto|colecao)\/([^/?#]+)/);
+    if (m && m[1] === "produto") {
+      let ps = decodeURIComponent(m[2]); const op = /-op$/.test(ps); if (op) ps = ps.slice(0, -3);
+      for (const p of JR.PRODUCTS) { const i = p.variants.findIndex((v, k) => psDe(p.slug, k) === ps); if (i >= 0) { q.set("p", p.slug); q.set("c", i); if (op) q.set("op", "1"); q.set("_ok", "1"); break; } }
+      if (!q.get("_ok") && !LOCAL) location.replace("/colecao/compre-1-leve-2");   // produto que saiu do catálogo
+    }
+    if (m && m[1] === "colecao") {
+      const s = decodeURIComponent(m[2]);
+      if (/^lente-/.test(s)) q.set("lente", s.slice(6)); else q.set("cat", ALIAS_CAT[s] || s);
+    }
+    return q;
+  })();
+  /* href do tema (produto.html?p=…, colecao.html?cat=…) → endereço bonito. Endereço que não reconhece volta igual. */
+  JR.bonita = href => {
+    if (!href || LOCAL || /^(https?:|mailto:|tel:|#|\/)/.test(href)) return href;
+    const [semHash, hash = ""] = href.split("#"), [arq, busca = ""] = semHash.split("?"), q = new URLSearchParams(busca), h = hash ? "#" + hash : "";
+    if (arq === "produto.html") {
+      const ps = psDe(q.get("p"), +q.get("c") || 0); if (!ps) return href;
+      const extra = new URLSearchParams(), pr = JR.bySlug(q.get("p")), c = +q.get("c") || 0;
+      /* Eye Jacket e Eye Jacket Redux: várias cores no mesmo produto do site antigo → a cor vai no endereço */
+      if (pr.variants.filter((v, k) => psDe(pr.slug, k) === ps).length > 1) extra.set("cor", pr.variants[c].name);
+      if (q.get("l")) extra.set("l", q.get("l"));
+      return `/produto/${ps}${q.get("op") === "1" ? "-op" : ""}${extra.toString() ? "?" + extra : ""}${h}`;
+    }
+    if (arq === "colecao.html") {
+      if (q.get("lente")) return `/colecao/lente-${q.get("lente")}${h}`;
+      if (q.get("cat")) return `/colecao/${CAT_ALIAS[q.get("cat")] || q.get("cat")}${h}`;
+      return "/colecao" + h;
+    }
+    if (arq === "index.html") return "/" + h;
+    return PAGINAS[arq] ? PAGINAS[arq] + (busca ? "?" + busca : "") + h : href;
+  };
+  if (!LOCAL) {
+    const arruma = a => { const h = a.getAttribute("href"), b = JR.bonita(h); if (b !== h) a.setAttribute("href", b); };
+    const varre = root => { if (root.matches && root.matches("a[href]")) arruma(root); root.querySelectorAll && root.querySelectorAll("a[href]").forEach(arruma); };
+    new MutationObserver(ms => ms.forEach(m => m.type === "attributes" ? arruma(m.target) : m.addedNodes.forEach(varre)))
+      .observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["href"] });
+    document.addEventListener("DOMContentLoaded", () => varre(document));
+    /* Link antigo /tema/produto.html?p=… aberto direto: a barra de endereço passa a mostrar o endereço bonito */
+    if (/^\/tema\//.test(location.pathname)) { const arq = location.pathname.slice(6) || "index.html", b = JR.bonita(arq + location.search + location.hash);
+      if (b !== arq + location.search + location.hash) history.replaceState(history.state, "", b); }
+  }
 })();

@@ -3,7 +3,7 @@
   const { $, $$, icon, brl } = JR;
   JR.boot();
 
-  const qs = new URLSearchParams(location.search);
+  const qs = JR.Q || new URLSearchParams(location.search);
   const product = JR.bySlug(qs.get("p")) || JR.bySlug("radar-ev");
   JR.currentProduct = product;   // usado por reviews.js
   const state = { v: 0, lens: null, slide: 0, qty: 1 };
@@ -182,6 +182,10 @@
     });
   });
   function syncUrl() {
+    /* 16/10: no site no ar o endereço fica bonito (/produto/minute-preta?l=Azul) */
+    const rel = `produto.html?p=${product.slug}&c=${state.v}&l=${encodeURIComponent(state.lens)}${qs.get("op") === "1" ? "&op=1" : ""}`;
+    const b = JR.bonita ? JR.bonita(rel) : rel;
+    if (b !== rel) return history.replaceState(null, "", b);
     const u = new URL(location.href);
     u.searchParams.set("p", product.slug); u.searchParams.set("c", state.v); u.searchParams.set("l", state.lens);
     history.replaceState(null, "", u);
