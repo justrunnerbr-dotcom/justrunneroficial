@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     const base = `https://graph.facebook.com/${VER}/act_${q.get('conta')}`
     const [px, cj] = await Promise.all([
       todas(`${base}/adspixels?${new URLSearchParams({ fields: 'id,name,last_fired_time', limit: '50' })}`, token),
-      todas(`${base}/adsets?${new URLSearchParams({ fields: 'name,effective_status,created_time,promoted_object', limit: '200' })}`, token),
+      todas(`${base}/adsets?${new URLSearchParams({ fields: 'name,campaign_id,status,effective_status,daily_budget,created_time,promoted_object', limit: '200' })}`, token),
     ])
     return NextResponse.json({ ok: !px.erro && !cj.erro, erros: [px.erro, cj.erro].filter(Boolean), pixels: px.data, conjuntos: cj.data })
   }
