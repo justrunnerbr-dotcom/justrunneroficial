@@ -151,17 +151,24 @@
 
   /* ---------- Encontre seu Just Runner (15/10): modelos escolhidos pelo usuário por esporte ----------
      Entra toda cor × lente dos modelos (volume), a mais vendida de cada modelo primeiro e o resto espalhado sem vizinho igual. */
+  /* 15/10 (2ª lista do usuário, "Óculos Modalidades"). Item = "modelo", "modelo:Cor da armação" ou "modelo::cor da lente" (JR.LENTES). */
   JR.ESTILOS = {
-    bike:      ["radar-ev", "encoder", "sutro"],
-    corrida:   ["flak", "eye-jacket", "eye-jacket-redux", "radar-ev"],
-    beach:     ["flak", "radar-ev", "half-jacket"],
-    lifestyle: ["plantaris", "minute", "dartboard", "monster-dog", "hstn", "soto", "straight-jacket"],
-    trail:     ["radar-ev", "flak", "eye-jacket", "encoder", "m-frame", "sutro"]   // 15/10: Radar + 5 esportivos, pra não parecer só Radar
+    bike:      ["sutro", "sphaera", "encoder", "radar-ev"],
+    trail:     ["eye-jacket-redux", "eye-jacket::roxa", "radar-ev", "flak"],
+    corrida:   ["radar-ev", "eye-jacket", "minute", "hstn"],
+    beach:     ["flak:Branca", "half-jacket", "m-frame", "radar-ev", "sutro"],
+    lifestyle: ["plantaris", "straight-jacket", "dartboard", "soto", "monster-dog", "holbrook"]
   };
+
   /* Dentro do modelo, rodízio de cores (cor mais vendida primeiro): Radar com 47 variações não gruda 5 lentes da mesma cor. */
   JR.estiloLista = cat => {
-    const modelos = [...new Set(JR.ESTILOS[cat] || [])].map(JR.bySlug).filter(Boolean).map(p => {
-      const cores = p.variants.map((v, i) => v.lenses.map(l => [p.slug, i, l])).sort((a, b) => rankDe(a[0]) - rankDe(b[0]));
+    const modelos = [...new Set(JR.ESTILOS[cat] || [])].map(item => {
+      const [slug, cor, lente] = item.split(":"), p = JR.bySlug(slug);
+      if (!p) return null;
+      const cores = p.variants.map((v, i) => cor && v.name !== cor ? [] : v.lenses.filter(l => !lente || (JR.lenteDe(l) || {}).slug === lente).map(l => [p.slug, i, l]))
+        .filter(c => c.length).sort((a, b) => rankDe(a[0]) - rankDe(b[0]));
+      return cores.length ? cores : null;
+    }).filter(Boolean).map(cores => {
       const fila = []; for (let n = 0; cores.some(c => c[n]); n++) cores.forEach(c => c[n] && fila.push(c[n]));
       return fila;
     }).sort((a, b) => rankDe(a[0]) - rankDe(b[0]));

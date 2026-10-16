@@ -62,6 +62,7 @@
     const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong>${product.combo ? "<span>kit com 3 óculos</span>" : ""}`;   // sem o "Leve 2" verde (13/10)
     $("#add").textContent = `Adicionar · ${brl(product.combo ? pr * state.qty : Math.ceil(state.qty / 2) * pr)}`;
     $("#add-pair").hidden = $(".pair-box").hidden = !!product.combo;
+    { const h = $("#add-pair").nextElementSibling; if (h && h.classList.contains("helper")) h.hidden = !!product.combo; }   // "pague só um" não vale pro combo
   }
 
   /* ---------- Galeria ---------- */
@@ -107,6 +108,35 @@
     if (e.target.closest(".prev")) go(state.slide - 1);
     if (e.target.closest(".next")) go(state.slide + 1);
   });
+  /* ---------- Zoom da foto (15/10): clique/toque na foto abre em tela cheia; no computador o zoom segue o mouse,
+     no celular um toque amplia e dá pra arrastar. Esc, ✕ ou clique fora fecha. ---------- */
+  const zoom = document.createElement("div");
+  zoom.className = "zoom"; zoom.hidden = true; zoom.setAttribute("role", "dialog"); zoom.setAttribute("aria-label", "Foto ampliada");
+  zoom.innerHTML = `<button class="zoom-x" aria-label="Fechar">✕</button><div class="zoom-box"><img alt=""></div><p class="zoom-dica">Toque ou clique para ampliar</p>`;
+  document.body.appendChild(zoom);
+  const zImg = zoom.querySelector("img"), zBox = zoom.querySelector(".zoom-box");
+  const fechaZoom = () => { zoom.hidden = true; zoom.classList.remove("in"); document.documentElement.style.overflow = ""; };
+  $("#stage").addEventListener("click", e => {
+    if (e.target.closest(".nav-arrow")) return;
+    const img = $("#stage .slide.on img");
+    if (!img) return;
+    zImg.src = img.currentSrc || img.src; zImg.alt = img.alt;
+    zoom.hidden = false; zoom.classList.remove("in"); zBox.scrollTo(0, 0); document.documentElement.style.overflow = "hidden";
+  });
+  zBox.addEventListener("click", e => {
+    if (e.target !== zImg) return fechaZoom();
+    const r = zImg.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    zoom.classList.toggle("in");
+    if (zoom.classList.contains("in")) requestAnimationFrame(() => zBox.scrollTo(fx * zBox.scrollWidth - zBox.clientWidth / 2, fy * zBox.scrollHeight - zBox.clientHeight / 2));
+  });
+  zBox.addEventListener("mousemove", e => {
+    if (!zoom.classList.contains("in") || matchMedia("(hover: none)").matches) return;
+    const r = zBox.getBoundingClientRect();
+    zBox.scrollTo((e.clientX - r.left) / r.width * (zBox.scrollWidth - zBox.clientWidth), (e.clientY - r.top) / r.height * (zBox.scrollHeight - zBox.clientHeight));
+  });
+  zoom.querySelector(".zoom-x").onclick = fechaZoom;
+  addEventListener("keydown", e => { if (e.key === "Escape" && !zoom.hidden) fechaZoom(); });
+
   let x0 = null;
   $("#stage").addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
   $("#stage").addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(state.slide + (dx < 0 ? 1 : -1)); x0 = null; });
