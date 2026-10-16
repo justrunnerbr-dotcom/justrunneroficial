@@ -41,6 +41,9 @@ export interface YampiOrderResource {
     token?: string
     status?: { data?: { alias: string } }
     payments?: unknown
+    transactions?: {
+      data?: Array<{ status?: string; installments?: number; payment?: { data?: { alias?: string } } }>
+    }
     value_total?: string | number
     value_products?: string | number
     value_discount?: string | number
@@ -95,6 +98,16 @@ export function normalizePhone(phone: YampiPhone): string | null {
   const digits = raw.replace(/\D/g, '')
   if (digits.length <= 11) return `55${digits}`
   return digits
+}
+
+/** 'pix' | 'boleto' | 'credit_card' a partir da transação paga (ou da primeira), no formato que computeGatewayFee espera. */
+export function paymentMethodOf(d: YampiOrderResource['data']): string | null {
+  const tr = d.transactions?.data ?? []
+  const alias = (tr.find(t => t.status === 'paid') ?? tr[0])?.payment?.data?.alias?.toLowerCase()
+  if (!alias) return null
+  if (alias === 'pix') return 'pix'
+  if (alias === 'billet' || alias === 'boleto') return 'boleto'
+  return 'credit_card'
 }
 
 export async function upsertYampiOrder(
@@ -175,7 +188,10 @@ export async function upsertYampiOrder(
       discount_amount:  discount,
       shipping_amount:  shipping,
       total,
-      payment_method:   null,
+      // Forma de pagamento da transação paga (16/10/2026). Antes ia sempre null e o admin
+      // estimava todo pedido como cartão em 3x (~9,1%): um Pix de R$ 287 aparecia com R$ 26 de taxa.
+      // Sem transação no payload, não mexe no que já está gravado.
+      ...(paymentMethodOf(d) ? { payment_method: paymentMethodOf(d) } : {}),
       utm_source:       d.utm_source ?? null,
       utm_medium:       d.utm_medium ?? null,
       utm_campaign:     d.utm_campaign ?? null,
