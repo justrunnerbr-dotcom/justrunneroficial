@@ -18,8 +18,8 @@ interface TrocaLink {
 async function metaPostAd(adId: string, body: Record<string, unknown>, token: string) {
   const res = await fetch(`https://graph.facebook.com/v21.0/${adId}`, { method: 'POST', cache: 'no-store',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  const j = await res.json().catch(() => ({})) as { error?: { message?: string } }
-  if (!res.ok || j.error) throw new Error(j.error?.message ?? `HTTP ${res.status}`)
+  const j = await res.json().catch(() => ({})) as { error?: { message?: string; error_user_title?: string; error_user_msg?: string } }
+  if (!res.ok || j.error) throw new Error([j.error?.message ?? `HTTP ${res.status}`, j.error?.error_user_title, j.error?.error_user_msg].filter(Boolean).join(' | '))
 }
 
 interface Pedido {
