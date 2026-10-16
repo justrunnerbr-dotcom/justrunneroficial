@@ -224,6 +224,8 @@ window.JR = window.JR || {};
       `<button class="ldot ${l === lens ? "on" : ""}" role="radio" aria-checked="${l === lens}" data-ldot="${l}" aria-label="Lente ${l}" title="Lente ${l}"><i style="background:${v.frame}"></i><i style="background:${cor(l)}"></i></button>`).join("")}${
       v.lenses.length > MAX_LDOT ? `<a class="more" href="${href}">+${v.lenses.length - MAX_LDOT}</a>` : ""}</div>`;
   };
+  /* 15/10: lente no card, abaixo do nome. Cada lente é um card na categoria e todos se chamavam só "Minute Preta". */
+  JR.cardLente = l => !l || l === "Único" ? "" : (JR.isLens(l.split(/\s*[+·]\s*/)[0]) ? `Lente ${l}` : l);
   JR.card = (slug, vIdx = 0, lens, o = {}) => {
     const p = JR.bySlug(slug), v = p.variants[vIdx];
     lens = lens || v.lenses[0];
@@ -240,7 +242,7 @@ window.JR = window.JR || {};
       ${o.tag ? `<span class="tag ${o.tag === "Novo" ? "new" : ""}">${o.tag}</span>` : ""}
       <a class="media" href="${href}" aria-label="${p.name}">${JR.thumb ? JR.thumb(slug, vIdx, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens })}</a>
       <div class="info">
-        <a class="name" href="${href}">${JR.cardName(p, v)}</a>
+        <a class="name" href="${href}">${JR.cardName(p, v)}</a>${p.combo ? "" : `<div class="card-lente">${JR.cardLente(lens)}</div>`}
         ${o.mini ? "" : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · Oferta Progressiva</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
           return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
         ${o.lentes && !p.combo && v.lenses.length > 1 ? JR.lenteDots(p, vIdx, lens, href) : `<div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>`}
@@ -266,6 +268,7 @@ window.JR = window.JR || {};
           const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
           card.querySelectorAll("a").forEach(a => a.href = href);
           card.querySelectorAll(".dot").forEach(d => d.classList.toggle("on", d === dot));
+          const cl = card.querySelector(".card-lente"); if (cl) cl.textContent = JR.cardLente(lens);
         }
         const ld = e.target.closest("[data-ldot]");
         if (ld) {
@@ -276,6 +279,7 @@ window.JR = window.JR || {};
           const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
           card.querySelectorAll("a").forEach(a => a.href = href);
           card.querySelectorAll(".ldot").forEach(d => { d.classList.toggle("on", d === ld); d.setAttribute("aria-checked", d === ld); });
+          const cl = card.querySelector(".card-lente"); if (cl) cl.textContent = JR.cardLente(lens);
         }
         if (e.target.closest("[data-add]")) {
           e.preventDefault();
