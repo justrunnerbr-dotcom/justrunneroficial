@@ -40,6 +40,12 @@
       })
     };
   });
+  /* Case Protetor (15/10): order bump do carrinho, R$ 35. Só existe na Yampi (produto 46425569, SKU CASE-PROTETOR),
+     fora do Supabase; style "acessorio" deixa ele fora de vitrines e categorias. */
+  JR.CASE = { slug: "case", id: "306394762", sku: "CASE-PROTETOR", price: 35, foto: "fotos/case.jpg" };
+  JR.REAL_LENS.case = { "Padrão": { productSlug: "case", lenses: { "Único": { id: JR.CASE.id, sku: JR.CASE.sku, price: JR.CASE.price, photos: [JR.CASE.foto] } } } };
+  JR.PRODUCTS.push({ slug: "case", name: "Case Protetor", line: "Case", shape: "wrap", style: "acessorio", combo: false, interchangeable: false,
+    variants: [{ name: "Padrão", lenses: ["Único"], frame: "#16181c" }] });
   JR.bySlug = slug => JR.PRODUCTS.find(p => p.slug === slug);
   JR.CATEGORIAS = REAL.categorias || [];   // menu "Categorias", na ordem do site antigo
   JR.realLens = (slug, vIdx, lens) => {

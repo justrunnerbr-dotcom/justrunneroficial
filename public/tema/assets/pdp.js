@@ -21,6 +21,7 @@
   $$("[data-i]").forEach(s => s.outerHTML = icon[s.dataset.i]);
   $("#crumbs").innerHTML = `<a href="index.html">Início</a><span>›</span><a href="index.html#oferta">Compre 1 Leve 2</a><span>›</span><span>${product.name}</span>`;
   $("#p-name").textContent = product.name;
+  document.body.classList.toggle("is-combo", !!product.combo);   // 15/10: margem nas fotos do combo (CSS)
   $("#p-sub").textContent = product.combo ? "Kit com 3 óculos de sol esportivos"
     : product.style === "acessorio" ? "Lentes extras para o seu Radar EV"
     : `Óculos de sol esportivo polarizado para ${USE || "treino e dia a dia"}`;

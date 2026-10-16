@@ -145,7 +145,9 @@ window.JR = window.JR || {};
     if (opts.open !== false) openCart();
     const n = units();
     const tt = JR.cartTotals ? JR.cartTotals(cart) : null;
-    if (n === 1 && !JR.isCombo?.(slug)) JR.toast("Adicionado. Leve mais um: o 2º óculos sai grátis.");
+    if (slug === "case") JR.toast("Case adicionado ao carrinho.");
+    else if (opts.op) JR.toast(tt && tt.opQtd >= 2 ? "Oferta Progressiva aplicada: R$ 53 de desconto." : "Adicionado. Leve 2 da Oferta Progressiva por R$ 297.");
+    else if (n === 1 && !JR.isCombo?.(slug)) JR.toast("Adicionado. Leve mais um: o 2º óculos sai grátis.");
     else if (tt && tt.desconto && tt.oculos % 2 === 0) JR.toast(`Leve 2 pelo preço de 1 aplicado: ${brl(tt.desconto)} de desconto.`);
     else JR.toast("Adicionado ao carrinho.");
   };
@@ -160,8 +162,11 @@ window.JR = window.JR || {};
     const tt = JR.cartTotals ? JR.cartTotals(cart) : { subtotal: n * JR.PRICE.one, total: JR.total(n), desconto: n * JR.PRICE.one - JR.total(n), oculos: n };
     const full = tt.subtotal, total = tt.total, saving = tt.desconto;
     const free = total > JR.PRICE.freeShipping;
+    /* 15/10: quanto falta pro frete grátis (Oferta Progressiva de R$ 175 fica abaixo dos R$ 200) */
+    const falta = Math.max(0, JR.PRICE.freeShipping - total);
+    const temCase = cart.some(i => i.slug === "case");
     meter.innerHTML = n === 0 ? "Frete grátis em compras acima de R$ 200." :
-      free ? `<b>Frete grátis garantido:</b> seu pedido passou de R$ 200.` : `Falta pouco: leve o 2º óculos e ganhe <b>frete grátis</b>.`;
+      free ? `<b>Frete grátis garantido:</b> seu pedido passou de R$ 200.` : `Falta <b>${brl(falta)}</b> pra ganhar <b>frete grátis</b>.`;
     meter.innerHTML += `<div class="track"><i style="width:${Math.min(100, (total / (JR.PRICE.freeShipping + 1)) * 100)}%"></i></div>`;
     if (!n) {
       body.innerHTML = `<div class="empty">${JR.glasses({ shape: "shield", lens: "Espelhada" })}<p>Seu carrinho está vazio.<br>Escolha. Coloque. Vá.</p><a class="btn btn-dark" href="index.html#oferta">Escolher meu estilo ${JR.icon.arrow}</a></div>`;
@@ -172,11 +177,15 @@ window.JR = window.JR || {};
       const p = JR.bySlug(i.slug), v = p.variants[i.v];
       return `<div class="line">
         <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}${i.op ? "&op=1" : ""}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
-        <div><div class="ln">${p.name}</div><div class="lv">Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.op ? " · Oferta Progressiva" : ""}</div>
+        <div><div class="ln">${p.name}</div><div class="lv">${p.slug === "case" ? "Acessório · protege seu óculos" : `Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.op ? " · Oferta Progressiva" : ""}`}</div>
           <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
         <button class="rm" data-rm="${k}">Remover</button>
       </div>`;
-    }).join("") + (tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
+    }).join("") + (tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "") +
+      /* Order bump (15/10): case de R$ 35 enquanto não estiver no carrinho; se cobre o que falta, avisa do frete grátis */
+      (!temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="Case Protetor" loading="lazy">
+        <div><strong>Proteja seu óculos</strong><span>Case Protetor com zíper por <b>${brl(JR.CASE.price)}</b>${falta > 0 && falta <= JR.CASE.price ? ` e seu pedido ganha <b>frete grátis</b>` : ""}.</span>
+        <button class="btn btn-dark" data-case>Adicionar case · ${brl(JR.CASE.price)}</button></div></div>` : "");
     foot.innerHTML = `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
@@ -307,6 +316,7 @@ window.JR = window.JR || {};
       const rm = t.closest("[data-rm]");
       if (rm) { cart.splice(+rm.dataset.rm, 1); save(); renderCart(); }
       if (t.closest("[data-pick]")) JR.openPicker(cart[cart.length - 1]?.slug);
+      if (t.closest("[data-case]")) JR.addToCart("case", 0, "Único", 1);
       if (t.closest("[data-checkout]") && JR.meta) { const tt = JR.cartTotals ? JR.cartTotals(cart) : { total: 0 };
         JR.meta("InitiateCheckout", { content_ids: cart.map(i => JR.skuOf(i.slug, i.v, i.lens, i.op)).filter(Boolean), value: tt.total, currency: "BRL", num_items: cart.reduce((a, i) => a + i.qty, 0) }); }
       if (t.closest("[data-checkout]")) { const u = JR.checkoutUrl && JR.checkoutUrl(cart); if (u) location.href = u; else JR.toast("Não consegui montar o checkout: atualize a página e tente de novo."); }
