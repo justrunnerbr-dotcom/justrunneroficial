@@ -107,7 +107,9 @@
     /* 13/10: sem os filtros Todos/Performance/Sportstyle/Everyday. Cada página é uma vitrine ou uma categoria do menu. */
     const BANNER_CAT = { radar: "radarev", minute: "minute", "eye-jacket": "eyejacket", flak: "flak", plantaris: "plantaris", hstn: "hstn",
       "half-jacket": "halfjacket", encoder: "encoder", "straight-jacket": "straightjacket" };
-    const corDe = slugs => JR.PRODUCTS.filter(p => slugs.includes(p.slug)).flatMap(p => p.variants.map((v, i) => [p.slug, i, v.lenses[0]]));
+    /* categoria do modelo: toda cor × toda lente. 1ª volta = uma de cada cor (1ª lente), depois as outras lentes revezando entre as cores */
+    const corDe = slugs => { const filas = JR.PRODUCTS.filter(p => slugs.includes(p.slug)).flatMap(p => p.variants.map((v, i) => v.lenses.map(l => [p.slug, i, l])));
+      const out = []; for (let r = 0; filas.some(f => f[r]); r++) filas.forEach(f => f[r] && out.push(f[r])); return out; };
     const CATS = {
       corrida:   { nome: "Corrida",      banner: "fotos/banner-cat-corrida.jpg",   alt: "Corrida: leveza e proteção para acompanhar cada treino" },
       bike:      { nome: "Bike",         banner: "fotos/banner-cat-bike.jpg",      alt: "Bike" },
