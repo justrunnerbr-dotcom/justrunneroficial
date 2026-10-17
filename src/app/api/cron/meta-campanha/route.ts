@@ -270,6 +270,88 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: !erroCampanha && res.every(r => !r.erro && r.status === ms.status), erroCampanha, campanha: camp, itens: res })
   }
 
+  // buscarInteresses (16/10/2026): só leitura. Procura interesses de público na Meta (id, nome, tamanho, caminho).
+  const bi = (corpo as { buscarInteresses?: { termos: string[] } } | null)?.buscarInteresses
+  if (bi) {
+    if (!Array.isArray(bi.termos) || !bi.termos.length || bi.termos.length > 30 || bi.termos.some(t => typeof t !== 'string' || !t.trim())) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const res: Record<string, unknown> = {}
+    for (const t of bi.termos) {
+      const j = await fetch(`https://graph.facebook.com/v21.0/search?type=adinterest&limit=8&locale=pt_BR&q=${encodeURIComponent(t)}`,
+        { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as { data?: Record<string, unknown>[]; error?: { message?: string } }
+      res[t] = j.error ? { erro: j.error.message } : (j.data ?? []).map(d => ({ id: d.id, nome: d.name,
+        tamanho: [d.audience_size_lower_bound, d.audience_size_upper_bound], caminho: d.path }))
+    }
+    return NextResponse.json({ ok: true, interesses: res })
+  }
+
+  // cbo (16/10/2026): campanha de vendas CBO (orçamento na campanha), 1 conjunto por público de interesses e,
+  // em cada conjunto, 1 anúncio por vídeo (um criativo por anúncio, mesma copy em todos). Tudo nasce PAUSADO.
+  // Com "teste": true só confere permissão, pixel, capas dos vídeos e ids de interesse.
+  const cbo = (corpo as { cbo?: {
+    teste?: boolean; conta: string; campanha: string; orcamentoDia: number; link: string; paginaId: string; instagramId?: string
+    idadeMin?: number; idadeMax?: number; soInstagram?: boolean
+    videos: { nome: string; videoId: string }[]; texto: string; titulo: string
+    conjuntos: { nome: string; interesses: { id: string; name: string }[] }[]
+  } } | null)?.cbo
+  if (cbo) {
+    if (!/^\d+$/.test(cbo.conta) || !cbo.campanha || !/^https:\/\/justrunner\.com\.br\//.test(cbo.link) || !/^\d+$/.test(cbo.paginaId)
+      || !(cbo.orcamentoDia >= 6 && cbo.orcamentoDia <= 1000) || !cbo.texto || !cbo.titulo
+      || !Array.isArray(cbo.videos) || !cbo.videos.length || cbo.videos.length > 10 || cbo.videos.some(v => !v.nome || !/^\d+$/.test(v.videoId))
+      || !Array.isArray(cbo.conjuntos) || !cbo.conjuntos.length || cbo.conjuntos.length > 20
+      || cbo.conjuntos.some(c => !c.nome || !Array.isArray(c.interesses) || !c.interesses.length || c.interesses.some(i => !/^\d+$/.test(i.id) || !i.name))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === cbo.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const problemas: string[] = []
+    if (!(await checkAdsManagement()).ok) problemas.push('token sem ads_management')
+    const pxConta = await fetch(`https://graph.facebook.com/v21.0/act_${cbo.conta}/adspixels?fields=id`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' })
+      .then(x => x.json()).then((j: { data?: { id: string }[] }) => (j.data ?? []).map(x => x.id)).catch(() => [] as string[])
+    const pixelId = pxConta.includes(cfg.pixelId) ? cfg.pixelId : pxConta[0] ?? ''
+    if (!pixelId) problemas.push('a conta não enxerga nenhum pixel')
+    const capas: Record<string, string> = {}
+    for (const v of cbo.videos) {
+      try { capas[v.videoId] = await getVideoThumbnail(cfg, v.videoId) } catch (e) { problemas.push(`${v.nome}: ${e instanceof Error ? e.message : 'sem capa'}`) }
+    }
+    if (cbo.teste || problemas.length) {
+      return NextResponse.json({ ok: !problemas.length, teste: true, problemas, videosComCapa: Object.keys(capas).length, pixel: pixelId })
+    }
+
+    const camp = await createCampaign(cfg, { name: cbo.campanha, objective: 'OUTCOME_SALES', accountId: cbo.conta, cboDailyBudgetBrl: cbo.orcamentoDia })
+    const campaignId = String(camp.id)
+    const urlTags = buildUtmTags()
+    // um criativo por vídeo, reaproveitado nos conjuntos (o anúncio é que é por conjunto)
+    const criativos: Record<string, string> = {}
+    const criados: { conjunto: string; adsetId?: string; anuncios: { nome: string; adId?: string; erro?: string }[]; erro?: string }[] = []
+    for (const c of cbo.conjuntos) {
+      const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
+      try {
+        const adset = await createAdSet({ ...cfg, pixelId }, { name: c.nome, campaignId, accountId: cbo.conta, isCbo: true,
+          ageMin: cbo.idadeMin ?? 18, ageMax: cbo.idadeMax ?? 65, gender: 'all', interests: c.interesses, soInstagram: cbo.soInstagram })
+        r.adsetId = String(adset.id)
+        for (const v of cbo.videos) {
+          const a: (typeof r.anuncios)[number] = { nome: v.nome }
+          try {
+            if (!criativos[v.videoId]) {
+              const cr = await createStaticVideoAdCreative(cfg, { name: v.nome, videoId: v.videoId, thumbnailUrl: capas[v.videoId], link: cbo.link,
+                message: cbo.texto, title: cbo.titulo, cta: 'SHOP_NOW', pageId: cbo.paginaId, accountId: cbo.conta, urlTags, igUserId: cbo.instagramId })
+              criativos[v.videoId] = String(cr.id)
+            }
+            const ad = await createAd(cfg, { name: v.nome, adsetId: r.adsetId, creativeId: criativos[v.videoId], accountId: cbo.conta })
+            a.adId = String(ad.id)
+          } catch (e) { a.erro = e instanceof Error ? e.message : 'erro' }
+          r.anuncios.push(a)
+        }
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      criados.push(r)
+    }
+    // lê de volta campanha e conjuntos
+    const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json())
+    const lido = await ler(`${campaignId}?fields=name,status,daily_budget,bid_strategy,adsets{name,status,targeting{flexible_spec,publisher_platforms},ads{name,status}}`)
+    return NextResponse.json({ ok: criados.every(c => !c.erro && c.anuncios.every(a => !a.erro)), campaignId, criados, lido })
+  }
+
   // estaticos (16/10/2026): campanha ABO de imagem, 1 conjunto por arte, cada anúncio com a arte de feed (4:5)
   // no feed e a de stories (9:16) em stories/reels. As artes vêm de pastas públicas do Drive, pelo id do arquivo.
   // Tudo nasce PAUSADO. Com "teste": true só baixa e confere as artes, a permissão e o pixel.

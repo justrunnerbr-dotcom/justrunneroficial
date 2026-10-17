@@ -105,6 +105,10 @@ export async function createAdSet(cfg: MetaCreateConfig, params: {
   isDynamicCreative?: boolean
   /** true quando a campanha-mãe é CBO — bid_strategy fica só na campanha, não aqui */
   isCbo?: boolean
+  /** Interesses do público (ids de /search?type=adinterest), em OU dentro do mesmo flexible_spec */
+  interests?: { id: string; name: string }[]
+  /** Só Instagram (feed, stories, reels, explorar) */
+  soInstagram?: boolean
 }) {
   const genders = params.gender === 'all' ? undefined : params.gender === 'male' ? [1] : [2]
   return metaPost(`act_${params.accountId}/adsets`, {
@@ -123,8 +127,11 @@ export async function createAdSet(cfg: MetaCreateConfig, params: {
       age_min: params.ageMin,
       age_max: params.ageMax,
       ...(genders ? { genders } : {}),
-      publisher_platforms: ['facebook', 'instagram'],
-      facebook_positions:  ['feed', 'story', 'facebook_reels'],
+      ...(params.interests?.length ? { flexible_spec: [{ interests: params.interests }] } : {}),
+      ...(params.soInstagram ? { publisher_platforms: ['instagram'] } : {
+        publisher_platforms: ['facebook', 'instagram'],
+        facebook_positions:  ['feed', 'story', 'facebook_reels'],
+      }),
       instagram_positions: ['stream', 'story', 'reels', 'explore'],
       targeting_automation: { advantage_audience: 0 },
     },
