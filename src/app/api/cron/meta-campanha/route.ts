@@ -352,6 +352,52 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: criados.every(c => !c.erro && c.anuncios.every(a => !a.erro)), campaignId, criados, lido })
   }
 
+  // adicionarAnuncios (16/10/2026): põe mais vídeos (1 anúncio por vídeo, PAUSADO) em conjuntos que já existem numa campanha.
+  // Cada conjunto precisa ser da campanha informada. Com "teste": true só confere conjuntos e capas. Lê de volta.
+  const aa = (corpo as { adicionarAnuncios?: {
+    teste?: boolean; conta: string; campanhaId: string; adsetIds: string[]; link: string; paginaId: string; instagramId?: string
+    videos: { nome: string; videoId: string }[]; texto: string; titulo: string
+  } } | null)?.adicionarAnuncios
+  if (aa) {
+    if (!/^\d+$/.test(aa.conta) || !/^\d+$/.test(aa.campanhaId) || !/^https:\/\/justrunner\.com\.br\//.test(aa.link) || !/^\d+$/.test(aa.paginaId)
+      || !aa.texto || !aa.titulo || !Array.isArray(aa.adsetIds) || !aa.adsetIds.length || aa.adsetIds.length > 20 || aa.adsetIds.some(id => !/^\d+$/.test(id))
+      || !Array.isArray(aa.videos) || !aa.videos.length || aa.videos.length > 10 || aa.videos.some(v => !v.nome || !/^\d+$/.test(v.videoId))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === aa.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json())
+    const problemas: string[] = []
+    for (const id of aa.adsetIds) {
+      const g = await ler(`${id}?fields=campaign_id`) as { campaign_id?: string }
+      if (g.campaign_id !== aa.campanhaId) problemas.push(`${id}: não pertence à campanha`)
+    }
+    const capas: Record<string, string> = {}
+    for (const v of aa.videos) {
+      try { capas[v.videoId] = await getVideoThumbnail(cfg, v.videoId) } catch (e) { problemas.push(`${v.nome}: ${e instanceof Error ? e.message : 'sem capa'}`) }
+    }
+    if (aa.teste || problemas.length) return NextResponse.json({ ok: !problemas.length, teste: true, problemas, videosComCapa: Object.keys(capas).length })
+
+    const urlTags = buildUtmTags()
+    const criativos: Record<string, string> = {}
+    const criados: { adsetId: string; nome: string; adId?: string; erro?: string }[] = []
+    for (const adsetId of aa.adsetIds) {
+      for (const v of aa.videos) {
+        const r: (typeof criados)[number] = { adsetId, nome: v.nome }
+        try {
+          if (!criativos[v.videoId]) {
+            const cr = await createStaticVideoAdCreative(cfg, { name: v.nome, videoId: v.videoId, thumbnailUrl: capas[v.videoId], link: aa.link,
+              message: aa.texto, title: aa.titulo, cta: 'SHOP_NOW', pageId: aa.paginaId, accountId: aa.conta, urlTags, igUserId: aa.instagramId })
+            criativos[v.videoId] = String(cr.id)
+          }
+          r.adId = String((await createAd(cfg, { name: v.nome, adsetId, creativeId: criativos[v.videoId], accountId: aa.conta })).id)
+        } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+        criados.push(r)
+      }
+    }
+    const lido = await ler(`${aa.campanhaId}?fields=name,status,daily_budget,adsets{name,status,ads{name,status,effective_status}}`)
+    return NextResponse.json({ ok: criados.every(c => !c.erro), criados, lido })
+  }
+
   // estaticos (16/10/2026): campanha ABO de imagem, 1 conjunto por arte, cada anúncio com a arte de feed (4:5)
   // no feed e a de stories (9:16) em stories/reels. As artes vêm de pastas públicas do Drive, pelo id do arquivo.
   // Tudo nasce PAUSADO. Com "teste": true só baixa e confere as artes, a permissão e o pixel.
