@@ -184,9 +184,9 @@ window.JR = window.JR || {};
     }).join("") + (tt.opQtd === 1 ? `<div class="upsell"><strong>Leve 2 por R$ 297</strong>Adicione mais 1 óculos: os 2 saem por R$ 297 (R$ 53 de desconto) e o frete fica grátis.<br><a class="btn btn-green" href="colecao.html?cat=leve2">Escolher meu segundo óculos ${JR.icon.arrow}</a></div>`   /* 19/10: leva pra categoria Compre 1 Leve 2 */
       : !JR.OP_PADRAO && tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
     /* Order bump (15/10): fixo no rodapé do carrinho, acima do total, pra aparecer no celular mesmo com vários itens */
-    const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="Case Protetor" loading="lazy">
-        <div><strong>Proteja seu óculos</strong><span>Case Protetor com zíper por <b>${brl(JR.CASE.price)}</b>${falta > 0 && falta <= JR.CASE.price ? ` e seu pedido ganha <b>frete grátis</b>` : ""}.</span></div>
-        <button class="btn btn-dark" data-case aria-label="Adicionar case por ${brl(JR.CASE.price)}">+ Adicionar</button></div>` : "";
+    const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="" loading="lazy">
+        <div><strong>Case com zíper</strong><span>${brl(JR.CASE.price)}</span></div>
+        <button class="btn btn-outline-dark" data-case aria-label="Adicionar case com zíper por ${brl(JR.CASE.price)}">+ Adicionar</button></div>` : "";   /* 19/10: versão enxuta (pedido do dono) */
     foot.innerHTML = bump + `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
