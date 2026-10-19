@@ -19,3 +19,6 @@
   .emuso-trilho img { scroll-snap-align: start; }
   .emuso-trilho img.emuso-copia { display: none; }
 }
+/* 19/10: comparador + pilares em seção própria abaixo da faixa; a margem do comparador vazava e mostrava o fundo preto */
+.pdp-mid { padding-top: 8px; }
+.pdp-mid .compare-wrap { margin-top: 0; }
