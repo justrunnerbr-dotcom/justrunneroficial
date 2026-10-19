@@ -1,0 +1,21 @@
+/* Quem corre de Just Runner (19/10): faixa de fotos de clientes rolando na PDP */
+.emuso { padding: 56px 0 48px; background: #fff; color: var(--paper-ink); overflow: hidden; }
+.emuso .wrap { margin-bottom: 24px; }
+.emuso h2 { margin: 0; }
+.emuso-faixa { overflow: hidden; outline: none; }
+.emuso-trilho { display: flex; gap: 10px; width: max-content; animation: emuso-rola 140s linear infinite; }
+.emuso-faixa:hover .emuso-trilho, .emuso-faixa:focus-within .emuso-trilho, .emuso-faixa:focus .emuso-trilho { animation-play-state: paused; }
+.emuso-trilho img { height: 360px; width: auto; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-lg, 14px); display: block; background: #f3f2ee; }
+@keyframes emuso-rola { to { transform: translateX(calc(-50% - 5px)); } }
+@media (max-width: 749px) {
+  .emuso { padding: 40px 0 32px; }
+  .emuso-trilho img { height: 260px; }
+  .emuso-trilho { animation-duration: 110s; }
+}
+/* Quem pede menos movimento: faixa parada, rolagem na mão */
+@media (prefers-reduced-motion: reduce) {
+  .emuso-faixa { overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 var(--gutter, 16px); }
+  .emuso-trilho { animation: none; }
+  .emuso-trilho img { scroll-snap-align: start; }
+  .emuso-trilho img.emuso-copia { display: none; }
+}
