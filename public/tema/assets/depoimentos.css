@@ -1,0 +1,41 @@
+/* 19/10: aba lateral "Avaliações" + janela "A opinião de quem já usa" (referência que o dono mandou).
+   Só mídia real de clientes (Drive do dono). Nome, data, nota e texto aparecem só quando vierem preenchidos. */
+.dep-tab { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 80; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 18px 10px; background: #000; color: #fff; border-radius: 14px 0 0 14px; font: 600 15px/1 var(--display, sans-serif); letter-spacing: .02em;
+  writing-mode: vertical-rl; box-shadow: -4px 6px 18px rgba(0,0,0,.18); cursor: pointer; border: 0; }
+.dep-tab svg { width: 18px; height: 18px; transform: rotate(90deg); }
+.dep-tab:hover { padding-right: 14px; }
+.dep-tab:focus-visible { outline: 2px solid #fff; outline-offset: -5px; }
+body.dep-aberto { overflow: hidden; }
+.dep-fundo { position: fixed; inset: 0; z-index: 210; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .2s ease; }
+.dep-janela { position: fixed; z-index: 220; left: 50%; top: 50%; width: min(96vw, 1240px); height: min(92vh, 1000px); transform: translate(-50%, -48%); opacity: 0;
+  transition: opacity .2s ease, transform .2s ease; background: #fff; color: #111; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+.dep-aberto .dep-fundo { opacity: 1; }
+.dep-aberto .dep-janela { opacity: 1; transform: translate(-50%, -50%); }
+.dep-topo { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #eee; }
+.dep-topo h2 { margin: 0; text-align: center; font: 500 clamp(17px, 2vw, 22px)/1.2 var(--display, sans-serif); }
+.dep-fechar { width: 44px; height: 44px; border-radius: 10px; background: #f2f2f2; border: 0; display: grid; place-items: center; cursor: pointer; }
+.dep-fechar svg { width: 20px; height: 20px; }
+.dep-corpo { overflow-y: auto; padding: 18px; overscroll-behavior: contain; }
+.dep-sub { margin: 0 0 16px; font-size: 14px; color: #555; }
+.dep-grade { columns: 5 220px; column-gap: 14px; }
+.dep-card { break-inside: avoid; margin: 0 0 14px; border: 1px solid #e8e8e8; border-radius: 12px; overflow: hidden; background: #fff; }
+.dep-midia { position: relative; background: #111; }
+.dep-midia video, .dep-midia img { display: block; width: 100%; height: auto; }
+.dep-som { position: absolute; right: 10px; bottom: 10px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; display: grid; place-items: center; cursor: pointer; }
+.dep-som svg { width: 18px; height: 18px; }
+.dep-info { padding: 12px 14px 14px; }
+.dep-nome { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.dep-data { font-size: 13px; color: #777; margin-top: 2px; }
+.dep-nota { color: #111; letter-spacing: 2px; margin: 6px 0 4px; }
+.dep-texto { margin: 4px 0 0; font-size: 15px; line-height: 1.4; }
+.dep-produto { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; font-size: 14px; color: #333; }
+@media (max-width: 749px) {
+  .dep-tab { padding: 14px 8px; font-size: 13px; }
+  .dep-janela { width: 100vw; height: 100dvh; border-radius: 0; }
+  .dep-grade { columns: 2; column-gap: 8px; }
+  .dep-card { margin-bottom: 8px; }
+  .dep-corpo { padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .dep-janela, .dep-fundo { transition: none; } }
+.dep-selo { position: absolute; left: 10px; top: 10px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,.72); color: #fff; font: 600 11px/1.2 var(--display, sans-serif); letter-spacing: .03em; }
