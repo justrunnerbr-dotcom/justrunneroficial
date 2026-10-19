@@ -63,6 +63,11 @@
   JR.skuOf = (slug, vIdx, lens, op) => { const l = JR.realLens(slug, vIdx, lens) || {}; return op && l.op ? l.op.sku : l.sku; };
   JR.minPrice = slug => { const p = JR.bySlug(slug); return Math.min(...p.variants.flatMap((v, i) => v.lenses.map(l => JR.priceOf(slug, i, l)))); };
   JR.isCombo = slug => !!(JR.bySlug(slug) || {}).combo;
+  /* 19/10 (pedido do dono): preço de entrada R$ 175 em todo o site. Vende a versão JROP (Oferta Progressiva:
+     1 por R$ 175, 2 por R$ 297 com R$ 53 de desconto aplicado pela Yampi). Combos e Kit de Lentes (sem JROP) seguem no preço deles.
+     Desligar = false volta tudo pro R$ 297 com 2º grátis. "pedido" = escolha explícita (true/false); sem ela vale o padrão. */
+  JR.OP_PADRAO = true;
+  JR.querOp = (slug, vIdx, lens, pedido) => !!((pedido ?? JR.OP_PADRAO) && !JR.isCombo(slug) && JR.opOf(slug, vIdx, lens));
   /* Mesmas contas do src/lib/cart-store.ts: Leve 2 (JR-, cada 2º grátis, do mais caro pro mais barato; combo fora)
      + Oferta Progressiva (JROP-, desconto fixo de R$ 53 a partir de 2 óculos). */
   JR.cartTotals = items => {

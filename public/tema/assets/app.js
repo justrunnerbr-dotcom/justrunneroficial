@@ -105,7 +105,7 @@ window.JR = window.JR || {};
         <div class="drawer-foot" id="drawer-foot"></div>
       </aside>
       <div class="modal" id="pick-modal" role="dialog" aria-modal="true" aria-labelledby="pick-title">
-        <div class="modal-head"><div><h3 id="pick-title">Escolha seu segundo estilo</h3><p>Leve 2 pelo preço de 1: o 2º óculos sai grátis.</p></div>
+        <div class="modal-head"><div><h3 id="pick-title">Escolha seu segundo estilo</h3><p>${JR.OP_PADRAO ? "Leve 2 por R$ 297, com frete grátis." : "Leve 2 pelo preço de 1: o 2º óculos sai grátis."}</p></div>
         <button class="icon-btn" data-close-modal aria-label="Fechar" style="color:#111">${JR.icon.close}</button></div>
         <div class="grid-4" id="pick-grid"></div>
       </div>
@@ -134,7 +134,7 @@ window.JR = window.JR || {};
     const p = JR.bySlug(slug);
     const v = p.variants[vIdx] || p.variants[0];
     lens = lens && v.lenses.includes(lens) ? lens : v.lenses[0];
-    const op = !!(opts.op && JR.opOf && JR.opOf(slug, vIdx, lens));   // Oferta Progressiva só se a lente tiver versão JROP
+    const op = JR.querOp ? JR.querOp(slug, vIdx, lens, opts.op) : false;   // versão JROP (R$ 175) quando existe; padrão do site desde 19/10
     const found = cart.find(i => i.slug === slug && i.v === vIdx && i.lens === lens && !!i.op === op);
     if (found) found.qty += qty; else cart.push(op ? { slug, v: vIdx, lens, qty, op: true } : { slug, v: vIdx, lens, qty });
     { const l = JR.realLens && JR.realLens(slug, vIdx, lens);
@@ -146,8 +146,8 @@ window.JR = window.JR || {};
     const n = units();
     const tt = JR.cartTotals ? JR.cartTotals(cart) : null;
     if (slug === "case") JR.toast("Case adicionado ao carrinho.");
-    else if (opts.op) JR.toast(tt && tt.opQtd >= 2 ? "Oferta Progressiva aplicada: R$ 53 de desconto." : "Adicionado. Leve 2 da Oferta Progressiva por R$ 297.");
-    else if (n === 1 && !JR.isCombo?.(slug)) JR.toast("Adicionado. Leve mais um: o 2º óculos sai grátis.");
+    else if (op) JR.toast(tt && tt.opQtd >= 2 ? "Leve 2 aplicado: R$ 53 de desconto." : "Adicionado. Leve mais 1: os 2 saem por R$ 297, com frete grátis.");
+    else if (n === 1 && !JR.isCombo?.(slug) && !JR.OP_PADRAO) JR.toast("Adicionado. Leve mais um: o 2º óculos sai grátis.");
     else if (tt && tt.desconto && tt.oculos % 2 === 0) JR.toast(`Leve 2 pelo preço de 1 aplicado: ${brl(tt.desconto)} de desconto.`);
     else JR.toast("Adicionado ao carrinho.");
   };
@@ -177,11 +177,12 @@ window.JR = window.JR || {};
       const p = JR.bySlug(i.slug), v = p.variants[i.v];
       return `<div class="line">
         <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}${i.op ? "&op=1" : ""}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
-        <div><div class="ln">${p.name}</div><div class="lv">${p.slug === "case" ? "Acessório · protege seu óculos" : `Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.op ? " · Oferta Progressiva" : ""}`}</div>
+        <div><div class="ln">${p.name}</div><div class="lv">${p.slug === "case" ? "Acessório · protege seu óculos" : `Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.op && !JR.OP_PADRAO ? " · Oferta Progressiva" : ""}`}</div>
           <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
         <button class="rm" data-rm="${k}">Remover</button>
       </div>`;
-    }).join("") + (tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
+    }).join("") + (tt.opQtd === 1 ? `<div class="upsell"><strong>Leve 2 por R$ 297</strong>Adicione mais 1 óculos: os 2 saem por R$ 297 (R$ 53 de desconto) e o frete fica grátis.<br><button class="btn btn-green" data-pick>Escolher meu segundo óculos ${JR.icon.arrow}</button></div>`
+      : !JR.OP_PADRAO && tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
     /* Order bump (15/10): fixo no rodapé do carrinho, acima do total, pra aparecer no celular mesmo com vários itens */
     const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="Case Protetor" loading="lazy">
         <div><strong>Proteja seu óculos</strong><span>Case Protetor com zíper por <b>${brl(JR.CASE.price)}</b>${falta > 0 && falta <= JR.CASE.price ? ` e seu pedido ganha <b>frete grátis</b>` : ""}.</span></div>
@@ -189,7 +190,7 @@ window.JR = window.JR || {};
     foot.innerHTML = bump + `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
-      ${tt.descontoOp ? `<div class="row save"><span>Oferta Progressiva</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
+      ${tt.descontoOp ? `<div class="row save"><span>${JR.OP_PADRAO ? "Desconto Leve 2" : "Oferta Progressiva"}</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
       <div class="row"><span>Frete</span><span>${free ? "Grátis" : "calculado no checkout"}</span></div>
       <div class="row total"><span>Total</span><span>${brl(total)}</span></div>
       <div class="row" style="justify-content:flex-end"><small>Parcele em até 12x</small></div>
@@ -229,8 +230,8 @@ window.JR = window.JR || {};
   JR.card = (slug, vIdx = 0, lens, o = {}) => {
     const p = JR.bySlug(slug), v = p.variants[vIdx];
     lens = lens || v.lenses[0];
-    const op = !!(o.op && JR.opOf && JR.opOf(slug, vIdx, lens));
-    const href = `produto.html?p=${slug}&c=${vIdx}&l=${encodeURIComponent(lens)}${op ? "&op=1" : ""}`;
+    const op = JR.querOp ? JR.querOp(slug, vIdx, lens, o.op) : false;
+    const href = `produto.html?p=${slug}&c=${vIdx}&l=${encodeURIComponent(lens)}${op && !JR.OP_PADRAO ? "&op=1" : ""}`;
     const dots = p.variants.slice(0, 5).map((x, i) =>
       `<button class="dot ${i === vIdx ? "on" : ""}" style="background:${x.frame}" data-dot="${i}" aria-label="Armação ${x.name}" title="${x.name}"></button>`).join("");
     const lensCount = new Set(p.variants.flatMap(x => x.lenses).filter(JR.isLens)).size;
@@ -243,8 +244,8 @@ window.JR = window.JR || {};
       <a class="media" href="${href}" aria-label="${p.name}">${JR.thumb ? JR.thumb(slug, vIdx, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens })}</a>
       <div class="info">
         <a class="name" href="${href}">${JR.cardName(p, v)}</a>${p.combo ? "" : `<div class="card-lente">${JR.cardLente(lens)}</div>`}
-        ${o.mini ? "" : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · Oferta Progressiva</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
-          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
+        ${o.mini ? "" : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · ${JR.OP_PADRAO ? "Parcele em até 12x" : "Oferta Progressiva"}</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
+          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 || JR.OP_PADRAO ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
         ${o.lentes && !p.combo && v.lenses.length > 1 ? JR.lenteDots(p, vIdx, lens, href) : `<div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>`}
         ${o.mini ? "" : `<button class="quick" data-add>${o.pick ? "Escolher este" : "Adicionar ao carrinho"}</button>`}
       </div>
@@ -265,7 +266,7 @@ window.JR = window.JR || {};
           card.dataset.v = i; card.dataset.lens = lens;
           const nm = card.querySelector(".name"); if (nm) nm.textContent = JR.cardName(p, v);
           card.querySelector(".media").innerHTML = JR.thumb ? JR.thumb(p.slug, i, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens });
-          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
+          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op && !JR.OP_PADRAO ? "&op=1" : ""}`;
           card.querySelectorAll("a").forEach(a => a.href = href);
           card.querySelectorAll(".dot").forEach(d => d.classList.toggle("on", d === dot));
           const cl = card.querySelector(".card-lente"); if (cl) cl.textContent = JR.cardLente(lens);
@@ -276,7 +277,7 @@ window.JR = window.JR || {};
           const i = +card.dataset.v, lens = ld.dataset.ldot;
           card.dataset.lens = lens;
           card.querySelector(".media").innerHTML = JR.thumb ? JR.thumb(p.slug, i, lens) : JR.glasses({ shape: p.shape, frame: p.variants[i].frame, lens });
-          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op ? "&op=1" : ""}`;
+          const href = `produto.html?p=${p.slug}&c=${i}&l=${encodeURIComponent(lens)}${card.dataset.op && !JR.OP_PADRAO ? "&op=1" : ""}`;
           card.querySelectorAll("a").forEach(a => a.href = href);
           card.querySelectorAll(".ldot").forEach(d => { d.classList.toggle("on", d === ld); d.setAttribute("aria-checked", d === ld); });
           const cl = card.querySelector(".card-lente"); if (cl) cl.textContent = JR.cardLente(lens);
@@ -284,7 +285,7 @@ window.JR = window.JR || {};
         if (e.target.closest("[data-add]")) {
           e.preventDefault();
           const inModal = !!card.closest("#pick-modal");
-          JR.addToCart(p.slug, +card.dataset.v, card.dataset.lens, 1, { op: !!card.dataset.op });
+          JR.addToCart(p.slug, +card.dataset.v, card.dataset.lens, 1, { op: !!card.dataset.op });   // card já decidiu (data-op) pelo JR.querOp
           if (inModal) $("#pick-modal").classList.remove("open");
         }
       });

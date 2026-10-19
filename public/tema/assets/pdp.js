@@ -26,7 +26,7 @@
     : product.style === "acessorio" ? "Lentes extras para o seu Radar EV"
     : `Óculos de sol esportivo polarizado para ${USE || "treino e dia a dia"}`;
   /* Selo do topo conforme a oferta: combo, Oferta Progressiva (?op=1) ou Compre 1 Leve 2 */
-  { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("op") === "1" ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
+  { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("op") === "1" && !JR.OP_PADRAO ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
 
   /* (b) confiança junto do botão: só sinais reais */
   $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 12x"], ["truck", "Frete grátis acima de R$ 200"]]
@@ -45,16 +45,17 @@
   });
   /* Preço do site no ar (12/10): o da cor e lente escolhidas, com o "de" riscado; combos são kit de 3 a R$ 327.
      ?op=1 (Oferta Progressiva, 13/10): usa a versão JROP da lente quando ela existe: 1 por R$ 175, 2 por R$ 297. */
-  const OP_PAGINA = qs.get("op") === "1";
+  const OP_PAGINA = qs.get("op") === "1" || (JR.OP_PADRAO && qs.get("op") !== "0");   // 19/10: R$ 175 é o padrão
   const emOp = () => OP_PAGINA && !!JR.opOf(product.slug, state.v, state.lens);
   function renderPreco() {
     if (emOp()) {
       const pr = JR.priceOf(product.slug, state.v, state.lens, true);
       $("#p-price").innerHTML = brl(pr);
-      $("#p-inst").innerHTML = "Oferta Progressiva · 2 óculos por R$ 297";
+      $("#p-inst").innerHTML = JR.OP_PADRAO ? "<b>2 por R$ 297</b> · Parcele em até 12x" : "Oferta Progressiva · 2 óculos por R$ 297";
       const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong><span>2 por R$ 297</span>`;
       $("#add").textContent = `Adicionar · ${brl(state.qty >= 2 ? pr * state.qty - 53 : pr * state.qty)}`;
-      $("#add-pair").hidden = $(".pair-box").hidden = true;
+      $("#add-pair").hidden = $(".pair-box").hidden = !JR.OP_PADRAO;   // 19/10: com R$ 175 padrão, o botão do 2º óculos volta (2 por R$ 297)
+      { const h = $("#add-pair").nextElementSibling; if (h && h.classList.contains("helper")) h.hidden = !JR.OP_PADRAO; }
       return;
     }
     const l = JR.realLens(product.slug, state.v, state.lens) || {}, pr = l.price || JR.PRICE.one;
@@ -62,8 +63,8 @@
     $("#p-inst").innerHTML = "Parcele em até 12x";
     const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong>${product.combo ? "<span>kit com 3 óculos</span>" : ""}`;   // sem o "Leve 2" verde (13/10)
     $("#add").textContent = `Adicionar · ${brl(product.combo ? pr * state.qty : Math.ceil(state.qty / 2) * pr)}`;
-    $("#add-pair").hidden = $(".pair-box").hidden = !!product.combo;
-    { const h = $("#add-pair").nextElementSibling; if (h && h.classList.contains("helper")) h.hidden = !!product.combo; }   // "pague só um" não vale pro combo
+    $("#add-pair").hidden = $(".pair-box").hidden = !!product.combo || JR.OP_PADRAO;   // kit (sem R$ 175): sem "2º grátis" no site
+    { const h = $("#add-pair").nextElementSibling; if (h && h.classList.contains("helper")) h.hidden = !!product.combo || JR.OP_PADRAO; }   // "pague só um" não vale pro combo
   }
 
   /* ---------- Galeria ---------- */
