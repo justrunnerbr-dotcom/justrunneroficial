@@ -33,16 +33,19 @@
     .map(([i, t]) => `<li>${icon[i]}${t}</li>`).join("");
 
   /* (c) prazo por CEP: mostra a política oficial; valor exato do frete fica no checkout */
-  const cepIn = $("#cep");
-  cepIn.addEventListener("input", () => { const d = cepIn.value.replace(/\D/g, "").slice(0, 8); cepIn.value = d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d; });
-  $("#cep-form").addEventListener("submit", e => {
-    e.preventDefault();
-    const d = cepIn.value.replace(/\D/g, "");
-    const out = $("#cep-out");
-    if (d.length !== 8) { out.textContent = "Digite os 8 números do CEP."; out.className = "err"; cepIn.focus(); return; }
-    out.className = "";
-    out.innerHTML = `<b>${JR.POLICY.delivery}</b> após a confirmação do pagamento. Frete grátis acima de R$ 200; abaixo disso, o valor aparece no checkout.`;
-  });
+  /* 19/10: o formulário de CEP saiu da PDP; o código só roda se ele voltar */
+  if ($("#cep-form")) {
+    const cepIn = $("#cep");
+    cepIn.addEventListener("input", () => { const d = cepIn.value.replace(/\D/g, "").slice(0, 8); cepIn.value = d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d; });
+    $("#cep-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const d = cepIn.value.replace(/\D/g, "");
+      const out = $("#cep-out");
+      if (d.length !== 8) { out.textContent = "Digite os 8 números do CEP."; out.className = "err"; cepIn.focus(); return; }
+      out.className = "";
+      out.innerHTML = `<b>${JR.POLICY.delivery}</b> após a confirmação do pagamento. Frete grátis acima de R$ 200; abaixo disso, o valor aparece no checkout.`;
+    });
+  }
   /* Preço do site no ar (12/10): o da cor e lente escolhidas, com o "de" riscado; combos são kit de 3 a R$ 327.
      ?op=1 (Oferta Progressiva, 13/10): usa a versão JROP da lente quando ela existe: 1 por R$ 175, 2 por R$ 297. */
   const OP_PAGINA = qs.get("op") === "1" || (JR.OP_PADRAO && qs.get("op") !== "0");   // 19/10: R$ 175 é o padrão
