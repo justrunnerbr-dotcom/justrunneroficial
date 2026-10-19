@@ -11,14 +11,21 @@
     mudo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM22 9l-6 6M16 9l6 6"/></svg>',
     som: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
   };
-  box.innerHTML = [1, 2, 3].map(n => `<div class="dd-card"><video src="${BASE}${n}-${tam}.mp4" poster="${BASE}${n}-capa.jpg" muted loop playsinline preload="none" aria-label="Vídeo de cliente ${n}"></video>
+  box.innerHTML = [1, 2, 3].map(n => `<div class="dd-card"><video src="${BASE}${n}-${tam}.mp4" poster="${BASE}${n}-capa.jpg" muted autoplay loop playsinline webkit-playsinline preload="metadata" aria-label="Vídeo de cliente ${n}"></video>
     <span class="dd-play">${ico.play}</span><button type="button" class="dd-som" aria-label="Ligar o som">${ico.mudo}</button></div>`).join("");
   const cards = [...box.querySelectorAll(".dd-card")];
   const vids = cards.map(c => c.querySelector("video"));
+  vids.forEach(v => { v.muted = true; v.defaultMuted = true; });
+  /* 19/10: iPhone em Modo de Pouca Energia recusa vídeo automático; aí começa no 1º toque/rolagem do cliente na página */
+  let visivel = false, bloqueado = false;
+  const tocar = v => v.play().catch(() => { bloqueado = true; });
+  const destravar = () => { if (bloqueado && visivel) vids.forEach(v => { v.muted = true; tocar(v); }); };
+  ["touchstart", "touchend", "click", "scroll"].forEach(ev => window.addEventListener(ev, destravar, { passive: true }));
   vids.forEach(v => { v.onplay = () => v.parentElement.classList.add("tocando"); v.onpause = () => v.parentElement.classList.remove("tocando"); });
   const mudo = (v, sim) => { v.muted = sim; const b = v.parentElement.querySelector(".dd-som"); b.innerHTML = sim ? ico.mudo : ico.som; b.setAttribute("aria-label", sim ? "Ligar o som" : "Desligar o som"); };
   new IntersectionObserver(([e]) => vids.forEach(v => {
-    if (e.isIntersecting) { if (v.preload === "none") v.preload = "auto"; v.play().catch(() => {}); } else { v.pause(); mudo(v, true); }
+    visivel = e.isIntersecting;
+    if (e.isIntersecting) { if (v.preload !== "auto") v.preload = "auto"; tocar(v); } else { v.pause(); mudo(v, true); }
   }), { threshold: 0.25 }).observe(box);
   box.addEventListener("click", e => {
     const card = e.target.closest(".dd-card"); if (!card) return;

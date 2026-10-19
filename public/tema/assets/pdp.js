@@ -263,8 +263,8 @@
     const box = $("#video");
     box.classList.add("has-video");
     box.insertAdjacentHTML("afterbegin", `
-      <video class="v-bg" src="${VIDEO}" muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1"></video>
-      <video class="v-main" src="${VIDEO}" muted loop playsinline preload="metadata" aria-label="Just Runner em movimento"></video>`);
+      <video class="v-bg" src="${VIDEO}" muted autoplay loop playsinline webkit-playsinline preload="metadata" aria-hidden="true" tabindex="-1"></video>
+      <video class="v-main" src="${VIDEO}" muted autoplay loop playsinline webkit-playsinline preload="metadata" aria-label="Just Runner em movimento"></video>`);
     const [bg, main] = box.querySelectorAll("video");
     const both = fn => [bg, main].forEach(fn);
     if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => {

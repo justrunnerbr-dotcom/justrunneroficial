@@ -13,13 +13,13 @@
   .emuso-trilho img { height: 260px; }
   .emuso-trilho { animation-duration: 110s; }
 }
-/* Quem pede menos movimento: faixa parada, rolagem na mão */
-@media (prefers-reduced-motion: reduce) {
-  .emuso-faixa { overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 var(--gutter, 16px); }
-  .emuso-trilho { animation: none; }
-  .emuso-trilho img { scroll-snap-align: start; }
-  .emuso-trilho img.emuso-copia { display: none; }
-}
+/* 19/10: anda sempre, mesmo com "Reduzir movimento" no celular (pedido do dono: no iPhone dele ficava parado) */
+
 /* 19/10: comparador + pilares em seção própria abaixo da faixa; a margem do comparador vazava e mostrava o fundo preto */
 .pdp-mid { padding-top: 8px; }
 .pdp-mid .compare-wrap { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) {
+  /* vence o "* { animation: none !important }" geral do style.css só pra esta faixa */
+  .emuso .emuso-trilho { animation: emuso-rola 140s linear infinite !important; }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 749px) { .emuso .emuso-trilho { animation-duration: 110s !important; } }
