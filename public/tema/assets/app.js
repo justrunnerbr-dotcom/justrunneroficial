@@ -181,7 +181,7 @@ window.JR = window.JR || {};
           <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
         <button class="rm" data-rm="${k}">Remover</button>
       </div>`;
-    }).join("") + (tt.opQtd === 1 ? `<div class="upsell"><strong>Leve 2 por R$ 297</strong>Adicione mais 1 óculos: os 2 saem por R$ 297 (R$ 53 de desconto) e o frete fica grátis.<br><button class="btn btn-green" data-pick>Escolher meu segundo óculos ${JR.icon.arrow}</button></div>`
+    }).join("") + (tt.opQtd === 1 ? `<div class="upsell"><strong>Leve 2 por R$ 297</strong>Adicione mais 1 óculos: os 2 saem por R$ 297 (R$ 53 de desconto) e o frete fica grátis.<br><a class="btn btn-green" href="colecao.html?cat=leve2">Escolher meu segundo óculos ${JR.icon.arrow}</a></div>`   /* 19/10: leva pra categoria Compre 1 Leve 2 */
       : !JR.OP_PADRAO && tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
     /* Order bump (15/10): fixo no rodapé do carrinho, acima do total, pra aparecer no celular mesmo com vários itens */
     const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="Case Protetor" loading="lazy">
