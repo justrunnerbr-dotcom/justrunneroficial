@@ -1,11 +1,11 @@
 /* 19/10: "Design em detalhes" — 3 vídeos de clientes (Drive do dono) no Supabase Storage, iguais em todas as PDPs.
-   Celular carrega a versão 320x568 (-272), computador a 540x960 (-540). Tocam sem som quando a seção aparece;
+   Usa a versão 320x568 (-272); a -540 fica no Storage se a seção voltar a ser larga. Tocam sem som quando a seção aparece;
    tocar no vídeo pausa/retoma; o botão liga o som de um (e desliga dos outros). */
 (function () {
   const box = document.getElementById("dd-grade");
   if (!box) return;
   const BASE = "https://jprxiyxxdncfyeblcebb.supabase.co/storage/v1/object/public/products/design-em-detalhes/";
-  const tam = matchMedia("(max-width: 749px)").matches ? "272" : "540";
+  const tam = "272";   // 19/10: na coluna de compra o card tem ~145px; a versão leve (320x568) basta em qualquer tela
   const ico = {
     play: '<svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>',
     mudo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM22 9l-6 6M16 9l6 6"/></svg>',
