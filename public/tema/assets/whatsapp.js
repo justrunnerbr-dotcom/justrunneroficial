@@ -12,7 +12,7 @@
   const mensagem = () => { const p = produto(); return p ? `Olá! Tenho uma dúvida sobre o ${p} da Just Runner.` : "Olá! Tenho uma dúvida sobre os óculos da Just Runner."; };
 
   const btn = document.createElement("button");
-  btn.type = "button"; btn.className = "wa-btn"; btn.innerHTML = ico;
+  btn.type = "button"; btn.className = "wa-btn"; btn.innerHTML = `${ico}<span>Fale no WhatsApp</span>`;
   btn.setAttribute("aria-label", "Falar com a Just Runner no WhatsApp"); btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-controls", "wa-pop");
   const pop = document.createElement("div");
   pop.className = "wa-pop"; pop.id = "wa-pop"; pop.hidden = true; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "Conversa no WhatsApp");

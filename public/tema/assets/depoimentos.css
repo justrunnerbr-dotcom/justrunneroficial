@@ -1,9 +1,9 @@
 /* 19/10: aba lateral "Avaliações" + janela "A opinião de quem já usa" (referência que o dono mandou).
    Só mídia real de clientes (Drive do dono). Nome, data, nota e texto aparecem só quando vierem preenchidos. */
-.dep-tab { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 80; display: flex; flex-direction: column; align-items: center; gap: 10px;
+.dep-tab { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 80; display: flex; flex-direction: row; align-items: center; gap: 8px;
   padding: 18px 10px; background: #000; color: #fff; border-radius: 14px 0 0 14px; font: 600 15px/1 var(--display, sans-serif); letter-spacing: .02em;
   writing-mode: vertical-rl; box-shadow: -4px 6px 18px rgba(0,0,0,.18); cursor: pointer; border: 0; }
-.dep-tab svg { width: 18px; height: 18px; transform: rotate(90deg); }
+.dep-tab svg { width: 17px; height: 17px; transform: rotate(90deg); flex: none; }  /* 19/10: estrela na mesma linha do texto (vertical) */
 .dep-tab:hover { padding-right: 14px; }
 .dep-tab:focus-visible { outline: 2px solid #fff; outline-offset: -5px; }
 body.dep-aberto { overflow: hidden; }
