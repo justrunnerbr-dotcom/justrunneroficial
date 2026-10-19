@@ -4,7 +4,8 @@
 .emuso h2 { margin: 0; }
 .emuso-faixa { overflow: hidden; outline: none; }
 .emuso-trilho { display: flex; gap: 10px; width: max-content; animation: emuso-rola 140s linear infinite; }
-.emuso-faixa:hover .emuso-trilho, .emuso-faixa:focus-within .emuso-trilho, .emuso-faixa:focus .emuso-trilho { animation-play-state: paused; }
+/* 19/10: não pausa no mouse (pedido do dono); só pausa quando focada pelo teclado */
+.emuso-faixa:focus-visible .emuso-trilho { animation-play-state: paused; }
 .emuso-trilho img { height: 360px; width: auto; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-lg, 14px); display: block; background: #f3f2ee; }
 @keyframes emuso-rola { to { transform: translateX(calc(-50% - 5px)); } }
 @media (max-width: 749px) {
