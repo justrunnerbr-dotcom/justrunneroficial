@@ -13,7 +13,10 @@
   const variant = () => product.variants[state.v];
   state.lens = variant().lenses.includes(qs.get("l")) ? qs.get("l") : variant().lenses[0];
   { const l0 = JR.realLens(product.slug, state.v, state.lens) || {};
-    JR.meta && JR.meta("ViewContent", { content_ids: [l0.sku || product.slug], content_name: product.name, content_category: product.name, value: l0.price || JR.PRICE.one, currency: "BRL", content_type: "product" }); }
+    /* 19/10: com o R$ 175 padrão, a Meta recebe o SKU e o preço que o cliente vê (JROP), igual ao AddToCart */
+    const pedidoOp = qs.get("op") === "1" ? true : qs.get("op") === "0" ? false : undefined;
+    const vOp = JR.querOp && JR.querOp(product.slug, state.v, state.lens, pedidoOp) ? l0.op : null;
+    JR.meta && JR.meta("ViewContent", { content_ids: [(vOp || l0).sku || product.slug], content_name: product.name, content_category: product.name, value: (vOp || l0).price || JR.PRICE.one, currency: "BRL", content_type: "product" }); }
 
   /* (a) título e subtítulo descritivos: "o que é?" + busca orgânica */
   const USE = { performance: "corrida e treino", sportstyle: "treino e rua", everyday: "treino e dia a dia" }[product.style];
