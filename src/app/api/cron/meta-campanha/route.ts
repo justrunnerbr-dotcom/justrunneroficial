@@ -270,6 +270,127 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: !erroCampanha && res.every(r => !r.erro && r.status === ms.status), erroCampanha, campanha: camp, itens: res })
   }
 
+  // 19/10/2026 — reestruturação da conta (verba R$ 250/dia). Todos leem de volta o que gravaram.
+  const g = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' })
+    .then(x => x.json()) as Promise<Record<string, unknown> & { error?: { message?: string } }>
+  const contaOk = (acc: unknown) => cfg.accounts.some(a => a.id === String(acc ?? '').replace(/^act_/, ''))
+
+  // estado: só leitura. Status e orçamento (R$) de campanhas e dos conjuntos delas.
+  const est0 = (corpo as { estado?: { campanhas: string[] } } | null)?.estado
+  if (est0) {
+    if (!Array.isArray(est0.campanhas) || !est0.campanhas.length || est0.campanhas.length > 30 || est0.campanhas.some(id => !/^\d+$/.test(id))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const reais = (v: unknown) => v == null ? null : Number(v) / 100
+    const res = []
+    for (const id of est0.campanhas) {
+      const c = await g(`${id}?fields=name,objective,status,effective_status,daily_budget,account_id,adsets.limit(60){name,status,effective_status,daily_budget}`)
+      if (c.error) { res.push({ id, erro: c.error.message }); continue }
+      res.push({ id, nome: c.name, objetivo: c.objective, status: c.status, efetivo: c.effective_status, orcamentoDia: reais(c.daily_budget),
+        conjuntos: ((c.adsets as { data?: Record<string, unknown>[] })?.data ?? []).map(a => ({ id: a.id, nome: a.name, status: a.status, efetivo: a.effective_status, orcamentoDia: reais(a.daily_budget) })) })
+    }
+    return NextResponse.json({ ok: true, campanhas: res })
+  }
+
+  // orcamento: troca o orçamento diário (R$) de campanha CBO ou de conjunto ABO. Só da conta configurada.
+  const orc = (corpo as { orcamento?: { itens: { id: string; reais: number }[] } } | null)?.orcamento
+  if (orc) {
+    if (!Array.isArray(orc.itens) || !orc.itens.length || orc.itens.length > 30 || orc.itens.some(i => !/^\d+$/.test(i.id) || !(i.reais >= 6 && i.reais <= 1000))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const res = []
+    for (const it of orc.itens) {
+      const r: Record<string, unknown> = { id: it.id, pedido: it.reais }
+      try {
+        const a = await g(`${it.id}?fields=name,account_id,daily_budget`)
+        if (a.error) throw new Error(a.error.message)
+        if (!contaOk(a.account_id)) throw new Error('fora da conta configurada')
+        if (a.daily_budget == null) throw new Error('sem orçamento diário nesse nível (CBO fica na campanha, ABO no conjunto)')
+        r.nome = a.name; r.antes = Number(a.daily_budget) / 100
+        await metaPostAd(it.id, { daily_budget: Math.round(it.reais * 100) }, cfg.token)
+        const d = await g(`${it.id}?fields=daily_budget`); r.depois = Number(d.daily_budget) / 100
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.depois === r.pedido), itens: res })
+  }
+
+  // statusCampanha: liga/pausa campanhas inteiras (só da conta configurada).
+  const sc = (corpo as { statusCampanha?: { ids: string[]; status: 'ACTIVE' | 'PAUSED' } } | null)?.statusCampanha
+  if (sc) {
+    if (!['ACTIVE', 'PAUSED'].includes(sc.status) || !Array.isArray(sc.ids) || !sc.ids.length || sc.ids.length > 30 || sc.ids.some(id => !/^\d+$/.test(id))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    const res = []
+    for (const id of sc.ids) {
+      const r: Record<string, unknown> = { id }
+      try {
+        const c = await g(`${id}?fields=name,account_id,objective`)
+        if (c.error) throw new Error(c.error.message)
+        if (!contaOk(c.account_id) || !c.objective) throw new Error('não é campanha da conta configurada')
+        r.nome = c.name
+        await metaPostAd(id, { status: sc.status }, cfg.token)
+        const d = await g(`${id}?fields=status,effective_status`); r.status = d.status; r.efetivo = d.effective_status
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.status === sc.status), itens: res })
+  }
+
+  // mensagens: campanha de engajamento com anúncios que abrem conversa no Direct do Instagram (1 conjunto ABO,
+  // só Instagram, 1 anúncio por vídeo). Tudo nasce PAUSADO. Com "teste": true só confere permissão e capas.
+  const msg = (corpo as { mensagens?: {
+    teste?: boolean; conta: string; campanha: string; conjunto: string; orcamentoDia: number; paginaId: string; instagramId: string
+    idadeMin?: number; idadeMax?: number; texto: string; videos: { nome: string; videoId: string }[]
+  } } | null)?.mensagens
+  if (msg) {
+    if (!/^\d+$/.test(msg.conta) || !msg.campanha || !msg.conjunto || !/^\d+$/.test(msg.paginaId) || !/^\d+$/.test(msg.instagramId)
+      || !(msg.orcamentoDia >= 6 && msg.orcamentoDia <= 500) || !msg.texto
+      || !Array.isArray(msg.videos) || !msg.videos.length || msg.videos.length > 10 || msg.videos.some(v => !v.nome || !/^\d+$/.test(v.videoId))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === msg.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const problemas: string[] = []
+    if (!(await checkAdsManagement()).ok) problemas.push('token sem ads_management')
+    const capas: Record<string, string> = {}
+    for (const v of msg.videos) {
+      try { capas[v.videoId] = await getVideoThumbnail(cfg, v.videoId) } catch (e) { problemas.push(`${v.nome}: ${e instanceof Error ? e.message : 'sem capa'}`) }
+    }
+    if (msg.teste || problemas.length) return NextResponse.json({ ok: !problemas.length, teste: true, problemas, videosComCapa: Object.keys(capas).length })
+
+    const post = async (path: string, body: Record<string, unknown>) => {
+      const res = await fetch(`https://graph.facebook.com/v21.0/${path}`, { method: 'POST', cache: 'no-store',
+        headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const j = await res.json().catch(() => ({})) as { id?: string; error?: { message?: string; error_user_title?: string; error_user_msg?: string } }
+      if (!res.ok || j.error || !j.id) throw new Error([j.error?.message ?? `HTTP ${res.status}`, j.error?.error_user_title, j.error?.error_user_msg].filter(Boolean).join(' | '))
+      return j.id
+    }
+    const out: Record<string, unknown> = {}
+    try {
+      out.campaignId = await post(`act_${msg.conta}/campaigns`, { name: msg.campanha, objective: 'OUTCOME_ENGAGEMENT', status: 'PAUSED',
+        special_ad_categories: [], is_adset_budget_sharing_enabled: false })
+      out.adsetId = await post(`act_${msg.conta}/adsets`, { name: msg.conjunto, campaign_id: out.campaignId, status: 'PAUSED',
+        daily_budget: Math.round(msg.orcamentoDia * 100), billing_event: 'IMPRESSIONS', optimization_goal: 'CONVERSATIONS',
+        bid_strategy: 'LOWEST_COST_WITHOUT_CAP', destination_type: 'INSTAGRAM_DIRECT', promoted_object: { page_id: msg.paginaId },
+        targeting: { geo_locations: { countries: ['BR'] }, age_min: msg.idadeMin ?? 18, age_max: msg.idadeMax ?? 65,
+          publisher_platforms: ['instagram'], instagram_positions: ['stream', 'story', 'reels'], targeting_automation: { advantage_audience: 0 } } })
+      const anuncios = []
+      for (const v of msg.videos) {
+        const a: Record<string, unknown> = { nome: v.nome }
+        try {
+          a.creativeId = await post(`act_${msg.conta}/adcreatives`, { name: v.nome, object_story_spec: { page_id: msg.paginaId, instagram_user_id: msg.instagramId,
+            video_data: { video_id: v.videoId, image_url: capas[v.videoId], message: msg.texto,
+              call_to_action: { type: 'INSTAGRAM_MESSAGE', value: { app_destination: 'INSTAGRAM_DIRECT' } } } } })
+          a.adId = await post(`act_${msg.conta}/ads`, { name: v.nome, adset_id: out.adsetId, creative: { creative_id: a.creativeId }, status: 'PAUSED' })
+        } catch (e) { a.erro = e instanceof Error ? e.message : 'erro' }
+        anuncios.push(a)
+      }
+      out.anuncios = anuncios
+    } catch (e) { out.erro = e instanceof Error ? e.message : 'erro' }
+    if (out.campaignId) out.lido = await g(`${out.campaignId}?fields=name,objective,status,adsets{name,status,daily_budget,optimization_goal,destination_type,ads{name,status,effective_status}}`)
+    return NextResponse.json({ ok: !out.erro && (out.anuncios as { erro?: string }[] | undefined)?.every(a => !a.erro), ...out })
+  }
+
   // buscarInteresses (16/10/2026): só leitura. Procura interesses de público na Meta (id, nome, tamanho, caminho).
   const bi = (corpo as { buscarInteresses?: { termos: string[] } } | null)?.buscarInteresses
   if (bi) {
