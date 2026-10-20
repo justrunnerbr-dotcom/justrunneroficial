@@ -270,21 +270,28 @@ export async function getRecoveredOrders(since: string, until: string): Promise<
   return results
 }
 
+// 19/10/2026: mensagem por etapa em que a pessoa parou + oferta atual (1 por R$ 175, 2 por R$ 297 com frete
+// grátis). Sem urgência inventada. Carrinho antigo com 1 óculos de R$ 297 (SKU JR-) leva pra loja, não pro
+// carrinho salvo: o carrinho salvo cobraria R$ 297 por 1, e o site hoje vende por R$ 175.
 export function buildWhatsappMessage(cart: AbandonedCart): string {
+  const limpa = (t: string) => t.replace(/^\[JR(?: OP| COMBO)?\]\s*/, '').replace(/\s{2,}/g, ' · ').trim()
   const first = cart.items[0]
   const extra = cart.items.length - 1
   const productText = extra > 0
-    ? `${first?.title ?? 'um produto'} e mais ${extra} ${extra === 1 ? 'item' : 'itens'}`
-    : (first?.title ?? 'um produto')
-
+    ? `${limpa(first?.title ?? 'um produto')} e mais ${extra} ${extra === 1 ? 'item' : 'itens'}`
+    : limpa(first?.title ?? 'um produto')
   const firstName = cart.customerName?.split(' ')[0] ?? ''
+  const oculos = cart.items.filter(i => !/COMBO|CASE/i.test(`${i.sku ?? ''} ${i.title}`)).reduce((a, i) => a + i.quantity, 0)
+  const soCombo = oculos === 0
+  const umAntigo = oculos === 1 && cart.items.length === 1 && /^JR-/.test(cart.items[0]?.sku ?? '')
+  const link = umAntigo ? 'https://justrunner.com.br/colecao/compre-1-leve-2' : (cart.checkoutUrl ?? 'https://justrunner.com.br')
 
-  let msg = `Oi ${firstName}! Vi que você deixou ${productText} no carrinho da Just Runner 👀\n\n`
-  msg += `Separei pra você — é só finalizar por aqui:\n${cart.checkoutUrl ?? 'https://justrunner.com.br'}\n\n`
-  if (cart.items.length > 1) {
-    msg += 'Seu Compre 1 Leve 2 ainda pode estar disponível enquanto durar o estoque promocional.\n\n'
-  }
-  msg += 'Qualquer dúvida, posso te ajudar por aqui.'
+  let msg = `Oi ${firstName}! Aqui é da Just Runner 🕶️ Vi que você separou ${productText} e não finalizou.\n\n`
+  if (cart.abandonedStep === 'shippment') msg += 'Ficou alguma dúvida na parte da entrega, prazo ou frete? Me conta que eu te ajudo.\n\n'
+  else if (cart.abandonedStep === 'payment') msg += 'Travou alguma coisa no pagamento? Dá pra pagar no Pix ou em até 12x no cartão.\n\n'
+  else msg += 'Ficou com alguma dúvida? Me conta que eu te ajudo.\n\n'
+  if (!soCombo) msg += oculos >= 2 ? 'Seus 2 óculos saem por R$ 297, com frete grátis.\n\n' : 'Hoje é 1 óculos por R$ 175, ou 2 por R$ 297 com frete grátis.\n\n'
+  msg += `${umAntigo ? 'É só escolher por aqui' : 'Seu carrinho está salvo, é só finalizar por aqui'}:\n${link}`
   return msg
 }
 
