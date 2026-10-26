@@ -12,7 +12,8 @@ create table if not exists ig_automations (
   trigger_dm              boolean not null default false,
 
   keywords                text[] not null default '{}',
-  match_type              text not null default 'contains' check (match_type in ('contains', 'exact', 'any')),
+  match_type              text not null default 'contains'
+    check (match_type in ('contains', 'exact', 'any')),
   specific_media_id       text,
 
   public_replies          text[] not null default '{}',
@@ -37,7 +38,8 @@ create table if not exists ig_followups (
   id              uuid primary key default gen_random_uuid(),
   automation_id   uuid not null references ig_automations(id) on delete cascade,
   step            int not null,
-  kind            text not null check (kind in ('link', 'reminder')),
+  kind            text not null
+    check (kind in ('link', 'reminder')),
   message         text,
   button_label    text,
   button_url      text,
@@ -64,12 +66,14 @@ create table if not exists ig_queue (
   automation_id         uuid references ig_automations(id),
   followup_id           uuid references ig_followups(id),
 
-  send_type             text not null check (send_type in ('private_reply', 'dm', 'comment_reply')),
+  send_type             text not null
+    check (send_type in ('private_reply', 'dm', 'comment_reply')),
   recipient_comment_id  text,
   recipient_ig_id       text,
   payload               jsonb not null,
 
-  status                text not null default 'pending' check (status in ('pending', 'sending', 'sent', 'failed', 'skipped')),
+  status                text not null default 'pending'
+    check (status in ('pending', 'sending', 'sent', 'failed', 'skipped')),
   scheduled_for         timestamptz not null default now(),
   claimed_at            timestamptz,
   attempts              int not null default 0,
