@@ -11,7 +11,11 @@ export async function GET(request: Request) {
   const errorParam = url.searchParams.get('error')
 
   if (errorParam || !code) {
-    return NextResponse.redirect(`${origin}/admin/instagram?erro=${encodeURIComponent(errorParam ?? 'sem_code')}`)
+    // mostra tudo o que a Meta mandou (error_reason/error_description etc.):
+    // em 26/10/2026 a volta chegou sem code e sem error, e só "sem_code" não dizia nada
+    const veio = [...url.searchParams].map(([k, v]) => `${k}=${v}`).join(' · ')
+    const motivo = errorParam ? `${errorParam}${veio ? ` (${veio})` : ''}` : `sem_code${veio ? ` (${veio})` : ' (a volta não trouxe nenhum parâmetro)'}`
+    return NextResponse.redirect(`${origin}/admin/instagram?erro=${encodeURIComponent(motivo)}`)
   }
 
   try {
