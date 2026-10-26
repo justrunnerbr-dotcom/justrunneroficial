@@ -8,6 +8,7 @@ export const ROTINAS: { nome: string; minutos: number }[] = [
   { nome: 'yampi-sync',        minutos: 10 },
   { nome: 'analytics-refresh', minutos: 5 },
   { nome: 'ig-drain',          minutos: 1 },
+  { nome: 'ig-stories',        minutos: 5 },
 ]
 
 export async function marcarRotina(db: SupabaseClient, nome: string, detalhe?: string): Promise<void> {
