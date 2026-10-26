@@ -29,6 +29,10 @@
       "schedule": "10 4 * * *"
     },
     {
+      "path": "/api/cron/ig-refresh-token",
+      "schedule": "0 6 * * 2"
+    },
+    {
       "path": "/api/cron/media-backfill",
       "schedule": "50 4 * * 0"
     }
