@@ -34,5 +34,14 @@ $$;
 revoke all on function public.jr_chamar_rota(text) from public, anon, authenticated;
 
 -- Agendamentos (reagendar com o mesmo nome substitui o anterior).
-select cron.schedule('jr-yampi-sync',        '*/10 * * * *', $$select public.jr_chamar_rota('/api/cron/yampi-sync')$$);
-select cron.schedule('jr-analytics-refresh', '*/5 * * * *',  $$select public.jr_chamar_rota('/api/cron/analytics-refresh')$$);
+-- linhas curtas: colada no SQL Editor, a linha longa foi cortada (26/10/2026)
+select cron.schedule(
+  'jr-yampi-sync',
+  '*/10 * * * *',
+  'select public.jr_chamar_rota(''/api/cron/yampi-sync'')'
+);
+select cron.schedule(
+  'jr-analytics-refresh',
+  '*/5 * * * *',
+  'select public.jr_chamar_rota(''/api/cron/analytics-refresh'')'
+);
