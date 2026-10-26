@@ -5,6 +5,11 @@
 
 const GRAPH_BASE = 'https://graph.instagram.com/v25.0'
 
+// Tem que ser igual, letra por letra, ao redirect registrado no app CLAUDE APP-IG.
+// Fixo no domínio sem www: o site também abre em www e aí a Meta recusa
+// ("Invalid redirect_uri", visto em 26/10/2026).
+export const IG_REDIRECT_URI = 'https://justrunner.com.br/api/ig/oauth/callback'
+
 function requireEnv(name: string): string {
   const v = process.env[name]
   if (!v) throw new Error(`Env var ${name} faltando`)

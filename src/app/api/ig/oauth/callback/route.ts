@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { exchangeCodeForShortToken, exchangeForLongLivedToken, getProfile, subscribeWebhooks } from '@/lib/ig/instagram'
+import { exchangeCodeForShortToken, exchangeForLongLivedToken, getProfile, subscribeWebhooks, IG_REDIRECT_URI } from '@/lib/ig/instagram'
 import { getAdminSupabase } from '@/lib/admin-client'
 
 export const runtime = 'nodejs'
@@ -15,8 +15,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const redirectUri = `${origin}/api/ig/oauth/callback`
-    const short = await exchangeCodeForShortToken(code, redirectUri)
+    const short = await exchangeCodeForShortToken(code, IG_REDIRECT_URI)
     const long = await exchangeForLongLivedToken(short.access_token)
     const profile = await getProfile(long.access_token)
 
