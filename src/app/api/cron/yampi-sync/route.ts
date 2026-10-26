@@ -3,15 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 import { upsertYampiOrder, type YampiOrderResource } from '@/lib/yampi/sync'
 import { refreshDailyAnalytics } from '@/lib/admin/daily-analytics'
 
-// Rede de segurança frequente (porte da JHF): o webhook da Yampi sincroniza em
+// Rede de segurança frequente (porte da JHF), chamada pelo pg_cron do Supabase
+// (Vercel Hobby só agenda 1×/dia): o webhook da Yampi sincroniza em
 // tempo real, mas já caiu 2 vezes (21/07 e 19/08/2026) e o vigia diário só
-// pega no dia seguinte. Aqui: os 100 pedidos mais recentes (upsert idempotente,
+// pega no dia seguinte. Aqui: os LOTE pedidos mais recentes (upsert idempotente,
 // sem evento da Meta — Purchase/CAPI é só do webhook) e o daily_analytics de
 // hoje e ontem, pro dashboard não esperar o cron da madrugada.
 
 export const maxDuration = 60
 
 const TZ = 'America/Sao_Paulo'
+// 100 pedidos em sequência passaram de 60 s (504 em 26/10/2026); a cada 10 min,
+// 25 é de sobra pro volume da loja
+const LOTE = 25
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
@@ -27,7 +31,7 @@ export async function GET(request: Request) {
   }
 
   const res = await fetch(
-    `https://api.dooki.com.br/v2/${alias}/orders?limit=100&include=items,customer,transactions,status,shipping_address&orderBy=id&sortedBy=desc&page=1`,
+    `https://api.dooki.com.br/v2/${alias}/orders?limit=${LOTE}&include=items,customer,transactions,status,shipping_address&orderBy=id&sortedBy=desc&page=1`,
     { headers: { 'User-Token': token, 'User-Secret-Key': secretKey } },
   )
   if (!res.ok) return NextResponse.json({ ok: false, error: `orders ${res.status}` }, { status: 502 })
