@@ -1,5 +1,6 @@
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getMetaLiveSpend } from '@/lib/admin/meta-ads'
+import { ROTINAS } from '@/lib/admin/rotinas'
 
 // Alertas proativos.
 //
@@ -155,16 +156,42 @@ async function checarRitmo(hoje: string, amanha: string): Promise<Alerta[]> {
   return alertas
 }
 
+// ── Rotinas do pg_cron paradas ───────────────────────────────────────────────
+// Na JHF o pg_cron parou uma vez sem ninguém ver. Aqui cada rota grava o último
+// sucesso; 3 intervalos sem batida (mínimo 30 min) já é parada, não atraso.
+async function checarRotinas(): Promise<Alerta[]> {
+  const db = getAdminSupabase()
+  const { data, error } = await db.from('rotinas_heartbeat').select('rotina, ultimo_ok')
+  if (error) return [] // tabela ainda não criada: rotinas não agendadas
+  const ultimo = new Map((data ?? []).map(r => [r.rotina as string, new Date(r.ultimo_ok as string).getTime()]))
+  const alertas: Alerta[] = []
+  for (const r of ROTINAS) {
+    const t = ultimo.get(r.nome)
+    const limite = Math.max(3 * r.minutos, 30) * 60_000
+    if (t && Date.now() - t <= limite) continue
+    alertas.push({
+      chave:      `rotina-${r.nome}`,
+      severidade: 'critico',
+      titulo:     `Rotina ${r.nome} parada`,
+      detalhe:    t
+        ? `Última execução bem-sucedida em ${new Date(t).toLocaleString('pt-BR', { timeZone: TZ })} (devia rodar a cada ${r.minutos} min). Conferir o pg_cron no Supabase: select * from cron.job_run_details order by start_time desc limit 20;`
+        : `Nunca rodou com sucesso (devia rodar a cada ${r.minutos} min). Conferir o pg_cron no Supabase e o segredo jr_cron_secret no Vault.`,
+    })
+  }
+  return alertas
+}
+
 export async function detectarAlertas(): Promise<Alerta[]> {
   const agora   = agoraSP()
   const hoje    = isoDiaSP(agora)
   const amanhaD = new Date(agora); amanhaD.setDate(amanhaD.getDate() + 1)
   const amanha  = isoDiaSP(amanhaD)
 
-  const [fontes, ritmo] = await Promise.all([
+  const [fontes, ritmo, rotinas] = await Promise.all([
     checarFontes(hoje, amanha),
     checarRitmo(hoje, amanha),
+    checarRotinas(),
   ])
 
-  return [...fontes, ...ritmo]
+  return [...rotinas, ...fontes, ...ritmo]
 }

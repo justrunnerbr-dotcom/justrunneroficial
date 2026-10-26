@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { upsertYampiOrder, type YampiOrderResource } from '@/lib/yampi/sync'
 import { refreshDailyAnalytics } from '@/lib/admin/daily-analytics'
+import { marcarRotina } from '@/lib/admin/rotinas'
 
 // Rede de segurança frequente (porte da JHF), chamada pelo pg_cron do Supabase
 // (Vercel Hobby só agenda 1×/dia): o webhook da Yampi sincroniza em
@@ -50,6 +51,7 @@ export async function GET(request: Request) {
 
   const dias = [0, 1].map((i) => new Date(Date.now() - i * 86400000).toLocaleDateString('en-CA', { timeZone: TZ }))
   await refreshDailyAnalytics(db, dias)
+  if (falhas.length === 0) await marcarRotina(db, 'yampi-sync', `${gravados}/${data?.length ?? 0} pedidos`)
 
   return NextResponse.json({ ok: falhas.length === 0, conferidos: data?.length ?? 0, gravados, falhas, dias })
 }

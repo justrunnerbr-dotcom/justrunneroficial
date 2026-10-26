@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { refreshDailyAnalytics } from '@/lib/admin/daily-analytics'
+import { marcarRotina } from '@/lib/admin/rotinas'
 
 const TZ = 'America/Sao_Paulo'
 
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
   }
 
   const results = await refreshDailyAnalytics(db, dates)
+  if (!datesParam) await marcarRotina(db, 'analytics-refresh')
 
   return NextResponse.json({ ok: true, results })
 }
