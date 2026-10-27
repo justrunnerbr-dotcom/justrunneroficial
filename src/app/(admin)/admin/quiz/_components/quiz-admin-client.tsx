@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Download, Lightbulb, ListChecks, LayoutGrid, FlaskConical } from 'lucide-react'
 import {
-  bars, fieldBars, cross, insights, toCsv, sampleRows, answersOf, bonusNome, SEGMENTS,
+  bars, fieldBars, cross, insights, toCsv, sampleRows, answersOf, bonusNome, SEGMENTS, UNICAS_DESDE, diaSP,
   type QuizRow, type Bar, type Cross,
 } from '@/lib/quiz/analise'
 import { labelOf } from '@/lib/quiz/perguntas'
@@ -12,6 +12,7 @@ const card: React.CSSProperties = { background: 'var(--admin-card)', border: '1p
 const small: React.CSSProperties = { fontSize: '11px', color: 'var(--admin-text-muted)' }
 const fmtPct = (v: number) => `${Math.round(v * 100)}%`
 const fmtInt = (n: number) => n.toLocaleString('pt-BR')
+const fmtDia = (d: string) => { const [, m, dd] = d.split('-'); return `${dd}/${m}` }
 const fmtDate = (iso: string) => new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
 type Tab = 'geral' | 'insights' | 'respostas'
@@ -100,8 +101,23 @@ function Section({ title, sub, wide, children }: { title: string; sub?: string; 
 export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: string | null }) {
   const [exemplo, setExemplo] = useState(false)
   const [tab, setTab] = useState<Tab>('geral')
+  // Filtros da tela inteira (gráficos, insights, lista e CSV): só respostas no
+  // formato de resposta única (desde 12/10) e/ou um dia específico.
+  const [soUnicas, setSoUnicas] = useState(false)
+  const [dia, setDia] = useState<string | null>(null)
   const exemplos = useMemo(() => sampleRows(), [])
-  const rows = exemplo ? exemplos : reais
+  const todas = exemplo ? exemplos : reais
+  const doPeriodo = useMemo(() => soUnicas ? todas.filter(r => r.created_at >= UNICAS_DESDE) : todas, [todas, soUnicas])
+  const rows = useMemo(() => dia ? doPeriodo.filter(r => diaSP(r.created_at) === dia) : doPeriodo, [doPeriodo, dia])
+  const porDia = useMemo(() => {
+    const m = new Map<string, { total: number; completos: number; cupons: number }>()
+    for (const r of doPeriodo) {
+      const d = diaSP(r.created_at), x = m.get(d) ?? { total: 0, completos: 0, cupons: 0 }
+      x.total++; if (r.completo) x.completos++; if (r.cupom) x.cupons++
+      m.set(d, x)
+    }
+    return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0]))
+  }, [doPeriodo])
   const comResposta = useMemo(() => rows.filter(r => Object.keys(r.respostas ?? {}).length > 0), [rows])
   const ins = useMemo(() => insights(comResposta), [comResposta])
 
@@ -129,7 +145,7 @@ export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: 
             border: `1px solid ${exemplo ? 'var(--admin-accent)' : 'var(--admin-border)'}`,
             background: exemplo ? 'rgba(var(--admin-accent-rgb), 0.12)' : 'var(--admin-card)', color: exemplo ? 'var(--admin-accent)' : 'var(--admin-text-sec)',
           }}><FlaskConical size={14} /> {exemplo ? 'Vendo dados de exemplo' : 'Ver com dados de exemplo'}</button>
-          <button type="button" onClick={() => baixar(exemplo ? 'quiz-exemplo.csv' : 'quiz-respostas.csv', toCsv(rows))} style={{
+          <button type="button" onClick={() => baixar(exemplo ? 'quiz-exemplo.csv' : `quiz-respostas${soUnicas ? '-unicas' : ''}${dia ? `-${dia}` : ''}.csv`, toCsv(rows))} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             border: '1px solid var(--admin-border)', background: 'var(--admin-card)', color: 'var(--admin-text-sec)',
           }}><Download size={14} /> CSV</button>
@@ -138,6 +154,24 @@ export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: 
 
       {erro && <div role="alert" style={{ ...card, marginTop: 16, borderColor: 'var(--admin-red)', fontSize: 13 }}>{erro}</div>}
       {exemplo && <div style={{ ...card, marginTop: 16, fontSize: 12, borderColor: 'var(--admin-accent)', color: 'var(--admin-text-sec)' }}>Dados de exemplo gerados aqui ({fmtInt(rows.length)} respostas fictícias) — não são clientes reais. Clique de novo pra voltar às respostas reais.</div>}
+
+
+      <div style={{ ...card, marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+        <span style={{ ...small, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', fontSize: 10 }}>Período</span>
+        {([[false, 'Todas as respostas'], [true, 'Só resposta única (desde 12/10 20h)']] as const).map(([v, t]) => (
+          <button key={t} type="button" onClick={() => setSoUnicas(v)} aria-pressed={soUnicas === v} style={{
+            padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            border: `1px solid ${soUnicas === v ? 'var(--admin-accent)' : 'var(--admin-border)'}`,
+            background: soUnicas === v ? 'rgba(var(--admin-accent-rgb), 0.12)' : 'var(--admin-card)', color: soUnicas === v ? 'var(--admin-accent)' : 'var(--admin-text-sec)',
+          }}>{t}</button>
+        ))}
+        <span style={{ ...small, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', fontSize: 10, marginLeft: 8 }}>Dia</span>
+        <input type="date" value={dia ?? ''} onChange={e => setDia(e.target.value || null)} style={{
+          padding: '5px 10px', borderRadius: 8, fontSize: 12, border: '1px solid var(--admin-border)', background: 'var(--admin-card)', color: 'var(--admin-text-main)',
+        }} />
+        {dia && <button type="button" onClick={() => setDia(null)} style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'none', border: 0, color: 'var(--admin-accent)' }}>Ver todos os dias</button>}
+        <span style={{ ...small, marginLeft: 'auto' }}>{fmtInt(rows.length)} de {fmtInt(todas.length)} respostas{dia ? ` · ${fmtDia(dia)}` : ''}</span>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginTop: 16 }}>
         {[
@@ -169,6 +203,34 @@ export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: 
 
       {tab === 'geral' && (
         <>
+          <Section wide title="Por dia" sub={`${soUnicas ? 'Desde 12/10 20h (resposta única)' : 'Todas as respostas'} · clique num dia pra ver só ele.`}>
+            <div style={{ ...card, padding: 0, overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', color: 'var(--admin-text-muted)' }}>
+                    {['Dia', 'Respostas', 'Com contato', 'Bônus escolhido'].map(h => (
+                      <th key={h} style={{ padding: '9px 12px', fontWeight: 600, borderBottom: '1px solid var(--admin-border)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {porDia.map(([d, x]) => (
+                    <tr key={d} onClick={() => setDia(dia === d ? null : d)} style={{
+                      cursor: 'pointer', borderBottom: '1px solid var(--admin-border)', color: 'var(--admin-text-sec)',
+                      background: dia === d ? 'rgba(var(--admin-accent-rgb), 0.10)' : undefined,
+                    }}>
+                      <td style={{ padding: '7px 12px', fontWeight: 600, color: 'var(--admin-text-main)' }}>{fmtDia(d)}</td>
+                      <td style={{ padding: '7px 12px', fontFamily: 'monospace' }}>{fmtInt(x.total)}</td>
+                      <td style={{ padding: '7px 12px', fontFamily: 'monospace' }}>{fmtInt(x.completos)}</td>
+                      <td style={{ padding: '7px 12px', fontFamily: 'monospace' }}>{fmtInt(x.cupons)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {porDia.length === 0 && <p style={{ ...small, padding: 14, margin: 0 }}>Nenhuma resposta no período.</p>}
+            </div>
+          </Section>
+
           <Section title="Quem respondeu">
             <BarList title="Já comprou na Just Runner?" data={b('status_cliente', true)} />
             <BarList title="Como conheceu a loja" data={b('origem')} />
@@ -180,7 +242,7 @@ export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: 
           </Section>
 
           <Section title="Por que não compram">
-            <BarList title="O que impediu (ou quase impediu)" data={b('impedimentos')} note="Uma por pessoa desde 12/10 (antes eram até 3)." />
+            <BarList title="O que impediu (ou quase impediu)" data={b('impedimentos')} note={soUnicas ? 'Uma por pessoa: só respostas desde 12/10 20h.' : 'Antes de 12/10 20h eram até 3 por pessoa; filtre "Só resposta única" pra comparar.'} />
             <BarList title="O que daria segurança" data={b('seguranca')} note="Só aparece pra quem marcou confiança, qualidade, troca, firmeza ou lente." />
           </Section>
 

@@ -23,6 +23,16 @@ export interface QuizRow {
   utm_campaign: string | null
 }
 
+/**
+ * Desde quando impedimento e segurança têm resposta única (antes: até 3 e 2).
+ * Commit 1fda653 de 12/10/2026; a 1ª resposta já no formato novo é das 20:36
+ * (horário de Brasília) e a última com 2+ impedimentos, das 14:37.
+ */
+export const UNICAS_DESDE = '2026-10-12T22:29:00Z'
+
+/** Dia da resposta no horário de Brasília, no formato AAAA-MM-DD. */
+export const diaSP = (iso: string) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+
 export interface Bar { value: string; label: string; count: number; pct: number }
 
 const arr = (v: unknown): string[] => Array.isArray(v) ? v.map(String) : typeof v === 'string' && v ? [v] : []
