@@ -59,8 +59,11 @@
   JR.PRICE = { one: 297, pair: 297, combo: 327, freeShipping: 200, installments: 12 };
   /* op = item da Oferta Progressiva (SKU JROP-, R$ 175): mesma cor/lente, outro id na Yampi. */
   JR.opOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.op; };
-  JR.priceOf = (slug, vIdx, lens, op) => { const l = JR.realLens(slug, vIdx, lens); return l ? (op && l.op ? l.op.price : l.price) : JR.PRICE.one; };
-  JR.skuOf = (slug, vIdx, lens, op) => { const l = JR.realLens(slug, vIdx, lens) || {}; return op && l.op ? l.op.sku : l.sku; };
+  /* oe = item da Oferta Exclusiva (SKU JROE-, R$ 147,90, 26/10): mesma ideia, só nos modelos escolhidos pelo dono, sem desconto por quantidade. */
+  JR.oeOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.oe; };
+  const versao = (l, op, oe) => (oe && l.oe) || (op && l.op) || l;
+  JR.priceOf = (slug, vIdx, lens, op, oe) => { const l = JR.realLens(slug, vIdx, lens); return l ? versao(l, op, oe).price : JR.PRICE.one; };
+  JR.skuOf = (slug, vIdx, lens, op, oe) => { const l = JR.realLens(slug, vIdx, lens) || {}; return versao(l, op, oe).sku; };
   JR.minPrice = slug => { const p = JR.bySlug(slug); return Math.min(...p.variants.flatMap((v, i) => v.lenses.map(l => JR.priceOf(slug, i, l)))); };
   JR.isCombo = slug => !!(JR.bySlug(slug) || {}).combo;
   /* 19/10 (pedido do dono): preço de entrada R$ 175 em todo o site. Vende a versão JROP (Oferta Progressiva:
@@ -71,11 +74,11 @@
   /* Mesmas contas do src/lib/cart-store.ts: Leve 2 (JR-, cada 2º grátis, do mais caro pro mais barato; combo fora)
      + Oferta Progressiva (JROP-, desconto fixo de R$ 53 a partir de 2 óculos). */
   JR.cartTotals = items => {
-    const linhas = items.map(i => ({ ...i, price: JR.priceOf(i.slug, i.v, i.lens, i.op) }));
+    const linhas = items.map(i => ({ ...i, price: JR.priceOf(i.slug, i.v, i.lens, i.op, i.oe) }));
     const subtotal = linhas.reduce((a, i) => a + i.price * i.qty, 0);
-    const eleg = linhas.filter(i => !i.op && !JR.isCombo(i.slug) && i.price >= 90).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
+    const eleg = linhas.filter(i => !i.op && !i.oe && !JR.isCombo(i.slug) && i.price >= 90).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
     let desconto = 0; for (let k = 1; k < eleg.length; k += 2) desconto += eleg[k];
-    const opQtd = linhas.filter(i => i.op).reduce((a, i) => a + i.qty, 0);
+    const opQtd = linhas.filter(i => i.op && !i.oe).reduce((a, i) => a + i.qty, 0);
     const descontoOp = opQtd >= 2 ? 53 : 0;
     return { subtotal, desconto, descontoOp, total: subtotal - desconto - descontoOp, oculos: eleg.length, opQtd };
   };
@@ -200,6 +203,12 @@
     combos: (JR.bySlug("combo") || { variants: [] }).variants.map((v, i) => ["combo", i, v.lenses[0]]),
     /* Oferta Progressiva: cada cor que tem versão JROP, na 1ª lente com JROP */
     oferta: naoCombo.flatMap(p => p.variants.map((v, i) => { const l = v.lenses.find(x => (JR.REAL_LENS[p.slug][v.name].lenses[x] || {}).op); return l ? [p.slug, i, l] : null; })).filter(Boolean),
+    /* Oferta Exclusiva (26/10): toda cor × lente com versão JROE, uma lente de cada armação por vez (não fica a mesma armação em sequência) */
+    exclusiva: (() => {
+      const filas = naoCombo.flatMap(p => p.variants.map((v, i) => v.lenses.filter(x => (JR.REAL_LENS[p.slug][v.name].lenses[x] || {}).oe).map(x => [p.slug, i, x]))).filter(f => f.length);
+      const out = []; for (let k = 0; out.length < filas.reduce((a, f) => a + f.length, 0); k++) filas.forEach(f => f[k] && out.push(f[k]));
+      return out;
+    })(),
     all: naoCombo.map(p => [p.slug, 0, p.variants[0].lenses[0]]),
     /* Mais vendidos (13/10): os 4 do banner escolhidos pelo usuário + os 8 seguintes do ranking de vendas
        da Yampi (src/lib/best-sellers.ts), cada um como armação/produto do site antigo. */
@@ -243,7 +252,7 @@
     } catch (e) { return ""; }
   };
   JR.checkoutUrl = items => {
-    const lines = items.map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && (i.op && l.op ? l.op : l), q: i.qty }; }).filter(x => x.l);
+    const lines = items.map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && versao(l, i.op, i.oe), q: i.qty }; }).filter(x => x.l);
     if (!lines.length) return null;
     return `https://${REAL.checkoutDomain}/cart/items?` +
       lines.map(x => `product_option_id%5B%5D=${x.l.id}&quantity%5B%5D=${x.q}`).join("&") +
@@ -304,7 +313,7 @@
      que anúncios, Google e catálogo da Meta já usam). O Next (next.config.ts) entrega o .html do tema nesses endereços e aqui
      o tema lê o produto/categoria pelo caminho. No localhost (servidor simples) seguem os .html com ?p=…&c=…. */
   const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
+  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "exclusiva": "oferta-exclusiva", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
   const ALIAS_CAT = Object.fromEntries(Object.entries(CAT_ALIAS).map(([c, s]) => [s, c]));
   const PAGINAS = { "faq.html": "/faq", "sobre.html": "/sobre", "contato.html": "/contato", "trocas-e-devolucoes.html": "/trocas-e-devolucoes",
     "politica-de-privacidade.html": "/politica-de-privacidade", "frete-e-entrega.html": "/frete-e-entrega", "colecao.html": "/colecao" };
@@ -314,8 +323,8 @@
     const q = new URLSearchParams(location.search);
     const m = location.pathname.match(/^\/(produto|colecao)\/([^/?#]+)/);
     if (m && m[1] === "produto") {
-      let ps = decodeURIComponent(m[2]); const op = /-op$/.test(ps); if (op) ps = ps.slice(0, -3);
-      for (const p of JR.PRODUCTS) { const i = p.variants.findIndex((v, k) => psDe(p.slug, k) === ps); if (i >= 0) { q.set("p", p.slug); q.set("c", i); if (op) q.set("op", "1"); q.set("_ok", "1"); break; } }
+      let ps = decodeURIComponent(m[2]); const op = /-op$/.test(ps), oe = /-oe$/.test(ps); if (op || oe) ps = ps.slice(0, -3);
+      for (const p of JR.PRODUCTS) { const i = p.variants.findIndex((v, k) => psDe(p.slug, k) === ps); if (i >= 0) { q.set("p", p.slug); q.set("c", i); if (op) q.set("op", "1"); if (oe) q.set("oe", "1"); q.set("_ok", "1"); break; } }
       if (!q.get("_ok") && !LOCAL) location.replace("/colecao/compre-1-leve-2");   // produto que saiu do catálogo
     }
     if (m && m[1] === "colecao") {
@@ -334,7 +343,7 @@
       /* Eye Jacket e Eye Jacket Redux: várias cores no mesmo produto do site antigo → a cor vai no endereço */
       if (pr.variants.filter((v, k) => psDe(pr.slug, k) === ps).length > 1) extra.set("cor", pr.variants[c].name);
       if (q.get("l")) extra.set("l", q.get("l"));
-      return `/produto/${ps}${q.get("op") === "1" ? "-op" : ""}${extra.toString() ? "?" + extra : ""}${h}`;
+      return `/produto/${ps}${q.get("oe") === "1" ? "-oe" : q.get("op") === "1" ? "-op" : ""}${extra.toString() ? "?" + extra : ""}${h}`;
     }
     if (arq === "colecao.html") {
       if (q.get("lente")) return `/colecao/lente-${q.get("lente")}${h}`;

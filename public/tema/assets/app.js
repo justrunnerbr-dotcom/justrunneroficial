@@ -23,7 +23,8 @@ window.JR = window.JR || {};
     ["Combos", "colecao.html?cat=leve3"],
     ["Categorias", "colecao.html", "cats"],
     ["Lentes Mais Vendidas 🔥", "colecao.html?lente=preta", "lentes"],
-    ["Oferta Progressiva", "colecao.html?cat=oferta"]
+    ["Oferta Progressiva", "colecao.html?cat=oferta"],
+    ["Oferta Exclusiva", "colecao.html?cat=exclusiva"]
   ];
   const cats = () => `<a href="colecao.html?cat=mais-vendidos" class="dd-hot">Mais vendidos</a>` + (JR.CATEGORIAS || []).map(c => `<a href="colecao.html?cat=${c.slug}">${c.nome}</a>`).join("");
   /* Lentes Mais Vendidas (13/10, igual à JHF): uma página por cor de lente (JR.LENTES em catalogo-real.js) */
@@ -134,18 +135,20 @@ window.JR = window.JR || {};
     const p = JR.bySlug(slug);
     const v = p.variants[vIdx] || p.variants[0];
     lens = lens && v.lenses.includes(lens) ? lens : v.lenses[0];
-    const op = JR.querOp ? JR.querOp(slug, vIdx, lens, opts.op) : false;   // versão JROP (R$ 175) quando existe; padrão do site desde 19/10
-    const found = cart.find(i => i.slug === slug && i.v === vIdx && i.lens === lens && !!i.op === op);
-    if (found) found.qty += qty; else cart.push(op ? { slug, v: vIdx, lens, qty, op: true } : { slug, v: vIdx, lens, qty });
+    const oe = !!(opts.oe && JR.oeOf && JR.oeOf(slug, vIdx, lens));   // Oferta Exclusiva (JROE, R$ 147,90): só quando a página/card pediu
+    const op = oe ? false : JR.querOp ? JR.querOp(slug, vIdx, lens, opts.op) : false;   // versão JROP (R$ 175) quando existe; padrão do site desde 19/10
+    const found = cart.find(i => i.slug === slug && i.v === vIdx && i.lens === lens && !!i.op === op && !!i.oe === oe);
+    if (found) found.qty += qty; else cart.push(oe ? { slug, v: vIdx, lens, qty, oe: true } : op ? { slug, v: vIdx, lens, qty, op: true } : { slug, v: vIdx, lens, qty });
     { const l = JR.realLens && JR.realLens(slug, vIdx, lens);
-      JR.meta && JR.meta("AddToCart", { content_ids: [JR.skuOf ? JR.skuOf(slug, vIdx, lens, op) : (l ? l.sku : slug)], content_name: JR.cardName ? JR.cardName(p, v) : p.name, content_category: p.name,
-        value: (JR.priceOf ? JR.priceOf(slug, vIdx, lens, op) : JR.PRICE.one) * qty, currency: "BRL", content_type: "product", num_items: qty }); }
+      JR.meta && JR.meta("AddToCart", { content_ids: [JR.skuOf ? JR.skuOf(slug, vIdx, lens, op, oe) : (l ? l.sku : slug)], content_name: JR.cardName ? JR.cardName(p, v) : p.name, content_category: p.name,
+        value: (JR.priceOf ? JR.priceOf(slug, vIdx, lens, op, oe) : JR.PRICE.one) * qty, currency: "BRL", content_type: "product", num_items: qty }); }
     save(); renderCart();
     const c = $("#cart-count"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump");
     if (opts.open !== false) openCart();
     const n = units();
     const tt = JR.cartTotals ? JR.cartTotals(cart) : null;
     if (slug === "case") JR.toast("Case adicionado ao carrinho.");
+    else if (oe) JR.toast("Adicionado: Oferta Exclusiva por R$ 147,90.");
     else if (op) JR.toast(tt && tt.opQtd >= 2 ? "Leve 2 aplicado: R$ 53 de desconto." : "Adicionado. Leve mais 1: os 2 saem por R$ 297, com frete grátis.");
     else if (n === 1 && !JR.isCombo?.(slug) && !JR.OP_PADRAO) JR.toast("Adicionado. Leve mais um: o 2º óculos sai grátis.");
     else if (tt && tt.desconto && tt.oculos % 2 === 0) JR.toast(`Leve 2 pelo preço de 1 aplicado: ${brl(tt.desconto)} de desconto.`);
@@ -176,8 +179,8 @@ window.JR = window.JR || {};
     body.innerHTML = cart.map((i, k) => {
       const p = JR.bySlug(i.slug), v = p.variants[i.v];
       return `<div class="line">
-        <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}${i.op ? "&op=1" : ""}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
-        <div><div class="ln">${p.name}</div><div class="lv">${p.slug === "case" ? "Acessório · protege seu óculos" : `Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.op && !JR.OP_PADRAO ? " · Oferta Progressiva" : ""}`}</div>
+        <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}${i.oe ? "&oe=1" : i.op ? "&op=1" : ""}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
+        <div><div class="ln">${p.name}</div><div class="lv">${p.slug === "case" ? "Acessório · protege seu óculos" : `Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.oe ? " · Oferta Exclusiva" : i.op && !JR.OP_PADRAO ? " · Oferta Progressiva" : ""}`}</div>
           <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
         <button class="rm" data-rm="${k}">Remover</button>
       </div>`;
@@ -230,8 +233,9 @@ window.JR = window.JR || {};
   JR.card = (slug, vIdx = 0, lens, o = {}) => {
     const p = JR.bySlug(slug), v = p.variants[vIdx];
     lens = lens || v.lenses[0];
-    const op = JR.querOp ? JR.querOp(slug, vIdx, lens, o.op) : false;
-    const href = `produto.html?p=${slug}&c=${vIdx}&l=${encodeURIComponent(lens)}${op && !JR.OP_PADRAO ? "&op=1" : ""}`;
+    const oe = !!(o.oe && JR.oeOf && JR.oeOf(slug, vIdx, lens));
+    const op = oe ? false : JR.querOp ? JR.querOp(slug, vIdx, lens, o.op) : false;
+    const href = `produto.html?p=${slug}&c=${vIdx}&l=${encodeURIComponent(lens)}${oe ? "&oe=1" : op && !JR.OP_PADRAO ? "&op=1" : ""}`;
     const dots = p.variants.slice(0, 5).map((x, i) =>
       `<button class="dot ${i === vIdx ? "on" : ""}" style="background:${x.frame}" data-dot="${i}" aria-label="Armação ${x.name}" title="${x.name}"></button>`).join("");
     const lensCount = new Set(p.variants.flatMap(x => x.lenses).filter(JR.isLens)).size;
@@ -239,14 +243,14 @@ window.JR = window.JR || {};
        têm nome de lente (Cooper, Full Black…): conta todas como opções em vez de mostrar "1 lente" ou nada. */
     const totalOpc = new Set(p.variants.flatMap(x => x.lenses)).size;
     const opcoes = p.variants.length === 1 && totalOpc > lensCount ? `${totalOpc} opções` : lensCount ? `${lensCount} ${lensCount > 1 ? "lentes" : "lente"}` : "";
-    return `<article class="card ${o.mini ? "mini" : ""}" data-slug="${slug}" data-v="${vIdx}" data-lens="${lens}"${op ? ' data-op="1"' : ""}>
+    return `<article class="card ${o.mini ? "mini" : ""}" data-slug="${slug}" data-v="${vIdx}" data-lens="${lens}"${oe ? ' data-oe="1"' : op ? ' data-op="1"' : ""}>
       ${o.tag ? `<span class="tag ${o.tag === "Novo" ? "new" : ""}">${o.tag}</span>` : ""}
       <a class="media" href="${href}" aria-label="${p.name}">${JR.thumb ? JR.thumb(slug, vIdx, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens })}</a>
       <div class="info">
         <a class="name" href="${href}">${JR.cardName(p, v)}</a>${p.combo ? "" : `<div class="card-lente">${JR.cardLente(lens)}</div>`}
-        ${o.mini ? "" : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · ${JR.OP_PADRAO ? "Parcele em até 12x" : "Oferta Progressiva"}</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
+        ${o.mini ? "" : oe ? `<div class="price"><s class="de">${brl(JR.priceOf(slug, vIdx, lens, true))}</s> ${brl(JR.priceOf(slug, vIdx, lens, false, true))}</div><div class="pair"><b>Oferta Exclusiva</b> · Parcele em até 12x</div>` : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · ${JR.OP_PADRAO ? "Parcele em até 12x" : "Oferta Progressiva"}</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
           return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 || JR.OP_PADRAO ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
-        ${o.lentes && !p.combo && v.lenses.length > 1 ? JR.lenteDots(p, vIdx, lens, href) : `<div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>`}
+        ${oe ? "" : o.lentes && !p.combo && v.lenses.length > 1 ? JR.lenteDots(p, vIdx, lens, href) : `<div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>`}
         ${o.mini ? "" : `<button class="quick" data-add>${o.pick ? "Escolher este" : "Adicionar ao carrinho"}</button>`}
       </div>
     </article>`;
@@ -285,7 +289,7 @@ window.JR = window.JR || {};
         if (e.target.closest("[data-add]")) {
           e.preventDefault();
           const inModal = !!card.closest("#pick-modal");
-          JR.addToCart(p.slug, +card.dataset.v, card.dataset.lens, 1, { op: !!card.dataset.op });   // card já decidiu (data-op) pelo JR.querOp
+          JR.addToCart(p.slug, +card.dataset.v, card.dataset.lens, 1, { op: !!card.dataset.op, oe: !!card.dataset.oe });   // card já decidiu (data-op) pelo JR.querOp
           if (inModal) $("#pick-modal").classList.remove("open");
         }
       });
@@ -323,7 +327,7 @@ window.JR = window.JR || {};
       if (t.closest("[data-pick]")) JR.openPicker(cart[cart.length - 1]?.slug);
       if (t.closest("[data-case]")) JR.addToCart("case", 0, "Único", 1);
       if (t.closest("[data-checkout]") && JR.meta) { const tt = JR.cartTotals ? JR.cartTotals(cart) : { total: 0 };
-        JR.meta("InitiateCheckout", { content_ids: cart.map(i => JR.skuOf(i.slug, i.v, i.lens, i.op)).filter(Boolean), value: tt.total, currency: "BRL", num_items: cart.reduce((a, i) => a + i.qty, 0) }); }
+        JR.meta("InitiateCheckout", { content_ids: cart.map(i => JR.skuOf(i.slug, i.v, i.lens, i.op, i.oe)).filter(Boolean), value: tt.total, currency: "BRL", num_items: cart.reduce((a, i) => a + i.qty, 0) }); }
       if (t.closest("[data-checkout]")) { const u = JR.checkoutUrl && JR.checkoutUrl(cart); if (u) location.href = u; else JR.toast("Não consegui montar o checkout: atualize a página e tente de novo."); }
       const soon = t.closest("[data-soon]");
       if (soon) { e.preventDefault(); JR.toast(`${soon.dataset.soon}: fora do escopo deste protótipo.`); }

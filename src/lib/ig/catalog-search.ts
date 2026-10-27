@@ -135,9 +135,9 @@ async function catalog() {
   ])
   const slugCol = new Map((cols ?? []).map(c => [c.id as string, c.slug as string]))
   // Fora da busca: gêmeos da Oferta Progressiva (-op, mesmo óculos), combos e o case.
-  const fora = new Set(['oferta-progressiva', 'combos'])
+  const fora = new Set(['oferta-progressiva', 'oferta-exclusiva', 'combos'])
   const products: CatalogProduct[] = ((prods ?? []) as (Omit<CatalogProduct, 'model' | 'frame' | 'collectionSlug' | 'keys'> & { collection_id: string })[])
-    .filter(p => !fora.has(slugCol.get(p.collection_id) ?? '') && !/-op$/.test(p.slug) && !/case/i.test(p.name))
+    .filter(p => !fora.has(slugCol.get(p.collection_id) ?? '') && !/-o[pe]$/.test(p.slug) && !/case/i.test(p.name))
     .map(p => {
       const { model, frame } = separaModelo(p.name)
       const n = norm(model)
