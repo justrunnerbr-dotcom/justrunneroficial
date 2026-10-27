@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from 'react'
 import { QUIZ_CUPOM_KEY, QUIZ_MIN_SUBTOTAL } from './bonus'
-import { isFreeGlassesEligible } from '../sku'
 
 // Cupom do bônus do quiz guardado no navegador até o checkout. Lido pelos
 // montadores de link da Yampi (src/lib/yampi.ts), que o mandam como
@@ -44,16 +43,15 @@ export function getQuizCupom(): QuizCupomSalvo | null {
   return parse(readRaw())
 }
 
-/** O cupom só libera o brinde com subtotal cheio de R$ 594 (2 óculos da promoção). */
+/** O cupom só libera o brinde em pedido de R$ 297 pra cima. */
 export function quizCupomLiberado(subtotalCheio: number): boolean {
   return subtotalCheio >= QUIZ_MIN_SUBTOTAL
 }
 
-/** Subtotal cheio só dos óculos do Compre 1 Leve 2 ([JR]). A Yampi confere o
- *  mínimo no subtotal inteiro, então 4 da Oferta Progressiva (R$ 700) passariam
- *  lá — o site só manda o cupom quando a promoção principal sozinha já fecha. */
-export function quizSubtotalPromo(items: { price: number; quantity: number; sku?: string | null }[]): number {
-  return items.filter(isFreeGlassesEligible).reduce((s, i) => s + i.price * i.quantity, 0)
+/** Subtotal do carrinho inteiro: desde 27/10 a regra é pedido de R$ 297 pra cima,
+ *  qualquer óculos (a Yampi confere o mínimo no subtotal). */
+export function quizSubtotalPromo(items: { price: number; quantity: number }[]): number {
+  return items.reduce((s, i) => s + i.price * i.quantity, 0)
 }
 
 function subscribe(cb: () => void) {

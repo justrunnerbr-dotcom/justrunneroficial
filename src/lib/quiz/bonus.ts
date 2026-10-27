@@ -1,14 +1,15 @@
 // Quiz do cliente (07/10/2026, mesma lógica da JHF): o óculos de bônus sai como
 // BRINDE da Yampi com regra 'promocode' — só entra no pedido pelo cupom único
-// que o quiz gera pra cada pessoa. O cupom exige pedido de R$ 594 no valor CHEIO
-// (2 óculos [JR] do Compre 1 Leve 2; 1 óculos sozinho dá "Cupom inválido") e
-// vale uma vez. Ver scripts/_quiz-cria-brindes.mjs.
+// que o quiz gera pra cada pessoa. O cupom exige pedido de R$ 297 pra cima
+// (27/10, regra do dono: 2 óculos da promoção a R$ 175 já passam; 1 sozinho dá
+// "Cupom inválido") e vale uma vez. Ver scripts/_quiz-cria-brindes.mjs.
+// O carrinho que manda o cupom pro checkout é o do tema (public/tema/assets/catalogo-real.js).
 
 /** Fim da promoção: 31/10/2026 23:59:59 em São Paulo. */
 export const QUIZ_VALIDADE = '2026-10-31 23:59:59'
 export const QUIZ_VALIDADE_LABEL = '31/10'
-/** Subtotal cheio mínimo pro cupom liberar o brinde: 2 × R$ 297. */
-export const QUIZ_MIN_SUBTOTAL = 594
+/** Valor mínimo do pedido pro cupom liberar o brinde (27/10: era R$ 594 = 2 × R$ 297 cheio). */
+export const QUIZ_MIN_SUBTOTAL = 297
 /** Preço de referência mostrado no card ("de R$ 175 por R$ 0"). */
 export const QUIZ_PRECO_REFERENCIA = 175
 /** Destino depois de escolher o bônus: a vitrine exclusiva de quem respondeu. */

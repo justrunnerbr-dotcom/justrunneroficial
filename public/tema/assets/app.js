@@ -194,6 +194,17 @@ window.JR = window.JR || {};
           <button class="rm cm-lixo" data-rm="${k}" aria-label="Remover ${p.name}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button></div></div>
       </div>`;
     }).join("");
+    /* Bônus do quiz: não é item do carrinho, a Yampi entrega como brinde pelo cupom (JR.checkoutUrl). */
+    const qc = JR.quizCupom && JR.quizCupom();
+    if (qc) {
+      const ok = JR.quizLiberado(cart);
+      body.innerHTML += `<div class="line cm-line" style="border:1px dashed ${ok ? "#16a34a" : "#d4d4d8"};border-radius:8px;padding:8px">
+        <div class="lm">${qc.imagem ? `<img src="${qc.imagem}" alt="" style="width:100%;height:100%;object-fit:contain">` : "🎁"}</div>
+        <div class="cm-info"><div class="ln">🎁 Bônus do quiz</div><div class="lv">${qc.nome || "Seu óculos bônus"}</div>
+          <div class="lv" style="font-weight:700;color:${ok ? "#15803d" : "#b45309"}">${ok ? "✓ Liberado, entra no checkout" : `Falta ${brl(JR.QUIZ_MIN - full)} pra liberar`}</div></div>
+        <div class="cm-dir"><div class="cm-preco">Grátis</div></div>
+      </div>`;
+    }
     const parcela = total >= 100 ? `em até 12x no cartão` : "";
     foot.innerHTML = `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>

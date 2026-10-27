@@ -100,7 +100,7 @@ export const QUIZ_MARKUP = `
     <div class="panel">
       <ul class="rules">
         <li>Válido somente para quem respondeu o quiz completo.</li>
-        <li>O bônus só é enviado em pedidos com 2 óculos da promoção Compre 1, Leve 2.</li>
+        <li>O bônus vale em pedidos a partir de R$ 297 (por exemplo, 2 óculos da promoção).</li>
         <li>Pedidos só com o óculos de bônus serão cancelados.</li>
         <li>Não é cumulativo com cupons de desconto.</li>
         <li>Um bônus por pessoa.</li>
@@ -112,7 +112,7 @@ export const QUIZ_MARKUP = `
     <div class="panel">
       <details><summary>Posso usar cupom?</summary><p>Não. O bônus não é cumulativo com cupons de desconto.</p></details>
       <details><summary>Posso escolher qualquer modelo de bônus?</summary><p>O bônus é um dos modelos desta página.</p></details>
-      <details><summary>Posso pedir só o óculos de bônus?</summary><p>Não. Ele vale junto com 2 óculos da promoção. Pedidos só com o bônus serão cancelados.</p></details>
+      <details><summary>Posso pedir só o óculos de bônus?</summary><p>Não. Ele vale em pedidos a partir de R$ 297. Pedidos só com o bônus serão cancelados.</p></details>
       <details><summary>Posso trocar o óculos de bônus?</summary><p>Sim, na mesma política da loja: em até 7 dias corridos após o recebimento, sem sinais de uso. Veja em <a href="/trocas-e-devolucoes">Trocas e Devoluções</a>.</p></details>
     </div>
 

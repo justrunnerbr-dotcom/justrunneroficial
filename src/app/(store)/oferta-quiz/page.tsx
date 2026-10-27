@@ -33,7 +33,7 @@ export default async function OfertaQuizPage() {
         Escolha seus 2 óculos da promoção
       </h2>
       <p style={{ fontSize: '14px', color: '#71717a', margin: '0 0 18px' }}>
-        Compre 1, leve 2 — o mais barato do par sai de graça. Com 2 óculos no carrinho, o seu bônus entra sozinho no checkout.
+        2 óculos por R$ 297. Com o pedido a partir de R$ 297, o seu bônus entra sozinho no checkout como brinde.
       </p>
       <ProductsGrid products={products} unroll={false} />
     </div>

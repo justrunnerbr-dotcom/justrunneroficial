@@ -41,8 +41,8 @@ export function QuizBonusRow({ subtotalCheio }: { subtotalCheio: number }) {
         ) : (
           <div style={{ fontSize: '11px', fontWeight: 600, color: '#b45309' }}>
             {subtotalCheio === 0
-              ? 'Escolha 2 óculos do Compre 1 Leve 2 pra liberar'
-              : `Falta ${formatPrice(falta)} em óculos do Compre 1 Leve 2 pra liberar`}
+              ? `Pedido a partir de ${formatPrice(QUIZ_MIN_SUBTOTAL)} libera o bônus`
+              : `Falta ${formatPrice(falta)} pra liberar`}
           </div>
         )}
       </div>

@@ -4,8 +4,8 @@ import { getAdminSupabase } from '@/lib/admin-client'
 import { QUIZ_BONUS, QUIZ_VALIDADE, QUIZ_MIN_SUBTOTAL, QUIZ_DESTINO } from '@/lib/quiz/bonus'
 
 // Gera o cupom único do bônus do quiz na Yampi. O cupom aponta pro brinde do
-// modelo escolhido, vale uma vez e só libera o brinde com subtotal cheio de
-// R$ 594 (2 óculos do Compre 1 Leve 2). Um bônus por pessoa: se o mesmo
+// modelo escolhido, vale uma vez e só libera o brinde em pedido de R$ 297 pra
+// cima (QUIZ_MIN_SUBTOTAL). Um bônus por pessoa: se o mesmo
 // WhatsApp ou e-mail já tem cupom, devolve o que já existe.
 
 const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // sem 0/O/1/I

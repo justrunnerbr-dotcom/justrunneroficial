@@ -251,12 +251,22 @@
       return ["utm_source", "utm_medium", "utm_campaign"].map(k => { const v = url.get(k) || st[k]; return v ? `&${k}=${encodeURIComponent(v)}` : ""; }).join("");
     } catch (e) { return ""; }
   };
+  /* Bônus do quiz (27/10): o /quiz guarda o cupom único em localStorage "jr_quiz_cupom" (src/lib/quiz/client.ts).
+     Ele aponta pra um brinde da Yampi e só vale em pedido de R$ 297 pra cima (QUIZ_MIN_SUBTOTAL em src/lib/quiz/bonus.ts);
+     abaixo disso a Yampi mostra "Cupom inválido", então só vai pro checkout quando o carrinho já libera. */
+  JR.QUIZ_MIN = 297;
+  JR.quizCupom = () => {
+    try { const v = JSON.parse(localStorage.getItem("jr_quiz_cupom") || "null"); return v && /^QUIZ[A-Z0-9]{6}$/.test(v.code) ? v : null; }
+    catch (e) { return null; }
+  };
+  JR.quizLiberado = items => !!JR.quizCupom() && JR.cartTotals(items).subtotal >= JR.QUIZ_MIN;
   JR.checkoutUrl = items => {
     const lines = items.map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && versao(l, i.op, i.oe), q: i.qty }; }).filter(x => x.l);
     if (!lines.length) return null;
+    const quiz = JR.quizLiberado(items) ? `&promocode=${encodeURIComponent(JR.quizCupom().code)}` : "";
     return `https://${REAL.checkoutDomain}/cart/items?` +
       lines.map(x => `product_option_id%5B%5D=${x.l.id}&quantity%5B%5D=${x.q}`).join("&") +
-      `&redirectTo=checkout&skipToCheckout=1&store_token=${STORE_TOKEN}&clearCart=1` + atribuicao();
+      `&redirectTo=checkout&skipToCheckout=1&store_token=${STORE_TOKEN}&clearCart=1` + quiz + atribuicao();
   };
 
   /* ---------- Fotos de página (slots do tema) ---------- */

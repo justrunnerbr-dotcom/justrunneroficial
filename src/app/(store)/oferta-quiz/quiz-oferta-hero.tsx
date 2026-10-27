@@ -1,20 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { Gift, Check } from 'lucide-react'
-import { useCartStore } from '@/lib/cart-store'
-import { useQuizCupom, quizCupomLiberado, quizSubtotalPromo } from '@/lib/quiz/client'
+import { Gift } from 'lucide-react'
+import { useQuizCupom } from '@/lib/quiz/client'
 import { QUIZ_MIN_SUBTOTAL, QUIZ_PRECO_REFERENCIA } from '@/lib/quiz/bonus'
 import { formatPrice } from '@/lib/utils'
 
 const RIBBON = '#f3f4f8'
 
-// Topo da /oferta-quiz: o bônus que a pessoa escolheu no quiz e o progresso do
-// carrinho até liberar (subtotal cheio de R$ 594 = 2 óculos [JR] do Compre 1 Leve 2).
+// Topo da /oferta-quiz: o bônus que a pessoa escolheu no quiz e a regra (pedido
+// de R$ 297 pra cima). Desde 16/10 o produto e o carrinho são do tema
+// (public/tema), então o progresso do carrinho aparece lá, não aqui.
 export function QuizOfertaHero({ validade }: { validade: string }) {
   const cupom = useQuizCupom()
-  const items = useCartStore(s => s.items)
-  const openCart = useCartStore(s => s.openCart)
 
   if (!cupom) {
     return (
@@ -27,11 +25,6 @@ export function QuizOfertaHero({ validade }: { validade: string }) {
       </div>
     )
   }
-
-  const subtotal = quizSubtotalPromo(items)
-  const liberado = quizCupomLiberado(subtotal)
-  const progresso = Math.min(1, subtotal / QUIZ_MIN_SUBTOTAL)
-  const oculos = Math.min(2, Math.floor(subtotal / (QUIZ_MIN_SUBTOTAL / 2)))
 
   return (
     <div style={{ borderRadius: '18px', overflow: 'hidden', background: '#0a0a0a', color: '#f3f4f8' }}>
@@ -57,19 +50,15 @@ export function QuizOfertaHero({ validade }: { validade: string }) {
           </div>
         </div>
 
-        {/* Progresso + resumo */}
+        {/* Regra + resumo */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>
-            <span>{liberado ? 'Bônus liberado!' : `Escolha 2 óculos do Compre 1 Leve 2 (${oculos}/2)`}</span>
+            <span>Pedido a partir de {formatPrice(QUIZ_MIN_SUBTOTAL)}</span>
             <span style={{ color: '#a6a6a6', fontWeight: 600 }}>até {validade}</span>
           </div>
-          <div style={{ height: '8px', borderRadius: '99px', background: '#27272a', overflow: 'hidden' }}>
-            <div style={{ width: `${progresso * 100}%`, height: '100%', background: liberado ? '#4ade80' : RIBBON, transition: 'width .3s' }} />
-          </div>
-          <div style={{ marginTop: '14px', fontSize: '13px', display: 'grid', gap: '4px' }}>
+          <div style={{ fontSize: '13px', display: 'grid', gap: '4px' }}>
             {[
-              ['Óculos 1 da promoção', 'R$ 297'],
-              ['Óculos 2 da promoção', 'incluso'],
+              ['2 óculos da promoção', 'R$ 297'],
               [`Bônus: ${cupom.nome ?? 'óculos'}`, 'R$ 0'],
             ].map(([a, b]) => (
               <div key={a} style={{ display: 'flex', justifyContent: 'space-between', color: '#d4d4d8' }}><span>{a}</span><span>{b}</span></div>
@@ -78,18 +67,9 @@ export function QuizOfertaHero({ validade }: { validade: string }) {
               <span>Total</span><span>R$ 297 · frete grátis</span>
             </div>
           </div>
-          {liberado ? (
-            <button type="button" onClick={openCart} style={{
-              marginTop: '14px', width: '100%', border: 'none', borderRadius: '999px', padding: '13px', cursor: 'pointer',
-              background: '#4ade80', color: '#052e16', fontWeight: 800, fontSize: '14px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            }}>
-              <Check size={16} /> Ver carrinho e finalizar
-            </button>
-          ) : (
-            <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#a6a6a6' }}>
-              Seu bônus entra sozinho no checkout. Não é cumulativo com outros cupons.
-            </p>
-          )}
+          <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#a6a6a6' }}>
+            Seu bônus entra sozinho no checkout como brinde. Não é cumulativo com outros cupons.
+          </p>
         </div>
       </div>
     </div>

@@ -52,8 +52,7 @@ function attributionParams(): string {
   }
 }
 
-// Cupom do bônus do quiz: só quando os óculos do Compre 1 Leve 2 já liberam o
-// brinde (R$ 594 cheio). Abaixo disso a Yampi mostraria "Cupom inválido" à toa.
+// Cupom do bônus do quiz: só quando o carrinho já libera o brinde (R$ 297 pra cima). Abaixo disso a Yampi mostraria "Cupom inválido" à toa.
 // Como ele não acumula, ganha de qualquer outro cupom do carrinho.
 function quizPromocode(items: CartItem[]): string | null {
   if (!quizCupomLiberado(quizSubtotalPromo(items))) return null
