@@ -66,6 +66,27 @@ export async function POST(request: Request) {
 
   const corpo = await request.json().catch(() => null) as (Pedido & { trocarLink?: TrocaLink }) | null
 
+  // catalogoPixel (26/10/2026): conecta pixel(s) a um catálogo e desconecta de outro. O "Produtos"
+  // dos anúncios e o Advantage+ de catálogo usam o catálogo ligado ao pixel; o PIXEL 01 estava só
+  // no catálogo da Shopify antiga. Lê de volta as fontes de evento dos dois catálogos.
+  const cp = (corpo as { catalogoPixel?: { ligar?: { catalogo: string; pixels: string[] }; desligar?: { catalogo: string; pixels: string[] } } } | null)?.catalogoPixel
+  if (cp) {
+    const ok = (x?: { catalogo: string; pixels: string[] }) => !x || (/^\d+$/.test(x.catalogo) && Array.isArray(x.pixels) && x.pixels.length > 0 && x.pixels.every(p => /^\d+$/.test(p)))
+    if (!ok(cp.ligar) || !ok(cp.desligar) || (!cp.ligar && !cp.desligar)) return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    const chamar = async (metodo: 'POST' | 'DELETE', x: { catalogo: string; pixels: string[] }) => {
+      const qs = new URLSearchParams({ external_event_sources: JSON.stringify(x.pixels) })
+      const res = await fetch(`https://graph.facebook.com/v21.0/${x.catalogo}/external_event_sources?${qs}`, { method: metodo, cache: 'no-store', headers: { Authorization: `Bearer ${cfg.token}` } })
+      const j = await res.json().catch(() => ({})) as { error?: { message?: string; error_user_msg?: string } }
+      return res.ok ? { ok: true, resposta: j } : { ok: false, erro: j.error?.error_user_msg ?? j.error?.message ?? `HTTP ${res.status}` }
+    }
+    const fontes = async (catalogo: string) => (await (await fetch(`https://graph.facebook.com/v21.0/${catalogo}/external_event_sources?fields=id,name`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' })).json())
+    const r: Record<string, unknown> = {}
+    if (cp.ligar) r.ligar = await chamar('POST', cp.ligar)
+    if (cp.desligar && (!cp.ligar || (r.ligar as { ok: boolean }).ok)) r.desligar = await chamar('DELETE', cp.desligar)
+    for (const c of [cp.ligar?.catalogo, cp.desligar?.catalogo].filter(Boolean) as string[]) r[`fontes_${c}`] = await fontes(c)
+    return NextResponse.json({ ok: true, ...r })
+  }
+
   // trocarLink: anúncios já criados (pausados) ganham criativo novo com outro link; o anúncio continua o mesmo.
   // Também devolve status e problemas (issues_info) de cada anúncio, pra conferir.
   if (corpo?.trocarLink) {
