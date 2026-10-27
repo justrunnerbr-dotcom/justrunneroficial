@@ -100,7 +100,7 @@ window.JR = window.JR || {};
       </footer>
       <div class="overlay" id="overlay"></div>
       <aside class="drawer" id="drawer" aria-label="Carrinho" aria-hidden="true">
-        <div class="drawer-head"><h3>Seu carrinho</h3><button data-close-cart aria-label="Fechar carrinho">${JR.icon.close}</button></div>
+        <div class="drawer-head"><h3>Carrinho <span class="cm-count" id="drawer-count" hidden>0</span></h3><button data-close-cart aria-label="Fechar carrinho">${JR.icon.close}</button></div>
         <div class="ship-meter" id="ship-meter"></div>
         <div class="drawer-body" id="drawer-body"></div>
         <div class="drawer-foot" id="drawer-foot"></div>
@@ -167,38 +167,42 @@ window.JR = window.JR || {};
     const free = total > JR.PRICE.freeShipping;
     /* 15/10: quanto falta pro frete grátis (Oferta Progressiva de R$ 175 fica abaixo dos R$ 200) */
     const falta = Math.max(0, JR.PRICE.freeShipping - total);
-    const temCase = cart.some(i => i.slug === "case");
-    meter.innerHTML = n === 0 ? "Frete grátis em compras acima de R$ 200." :
-      free ? `<b>Frete grátis garantido:</b> seu pedido passou de R$ 200.` : `Falta <b>${brl(falta)}</b> pra ganhar <b>frete grátis</b>.`;
-    meter.innerHTML += `<div class="track"><i style="width:${Math.min(100, (total / (JR.PRICE.freeShipping + 1)) * 100)}%"></i></div>`;
+    /* 26/10 (print do dono, carrinho da JHF): caixa de progresso no topo (2 por R$ 297 + frete grátis), item limpo com preço e lixeira,
+       total com parcelamento, botão preto "Finalizar compra segura" e o 2º óculos como botão secundário. Sem cronômetro: a oferta não
+       tem hora pra acabar (contador que reinicia é urgência falsa) e sem o case de R$ 35 no meio do caminho do checkout. */
+    const dc = $("#drawer-count"); if (dc) { dc.textContent = n; dc.hidden = !n; }
+    const temOe = cart.some(i => i.oe);
+    const promo = tt.opQtd === 1 ? `🎁 Leve mais 1 óculos e pague <b>R$ 297</b> nos 2`
+      : tt.opQtd >= 2 ? `✅ <b>2 óculos por R$ 297</b> aplicado` : temOe ? `🔥 <b>Oferta Exclusiva</b>: R$ 147,90 cada` : "";
+    const frete = free ? `🚚 <b>Frete grátis</b> garantido` : `🚚 Faltam <b>${brl(falta)}</b> para frete grátis`;
+    meter.hidden = !n;
+    meter.innerHTML = n ? `<div class="cm-box">${promo ? `<div class="cm-promo">${promo}</div>` : ""}<div class="track"><i style="width:${Math.min(100, (total / JR.PRICE.freeShipping) * 100)}%"></i></div><div class="cm-frete">${frete}</div></div>` : "";
     if (!n) {
       body.innerHTML = `<div class="empty">${JR.glasses({ shape: "shield", lens: "Espelhada" })}<p>Seu carrinho está vazio.<br>Escolha. Coloque. Vá.</p><a class="btn btn-dark" href="/#oferta">Escolher meu estilo ${JR.icon.arrow}</a></div>`;
       foot.innerHTML = "";
       return;
     }
-    body.innerHTML = cart.map((i, k) => {
+    body.innerHTML = `<div class="cm-label">Seus itens</div>` + cart.map((i, k) => {
       const p = JR.bySlug(i.slug), v = p.variants[i.v];
-      return `<div class="line">
+      const preco = (JR.priceOf ? JR.priceOf(i.slug, i.v, i.lens, i.op, i.oe) : JR.PRICE.one) * i.qty;
+      const sub = p.slug === "case" ? "Acessório · protege seu óculos" : `${v.name === "Padrão" ? "" : v.name} ${JR.optLabel(i.lens)}${i.oe ? " · Oferta Exclusiva" : ""}`.trim();
+      return `<div class="line cm-line">
         <a class="lm" href="produto.html?p=${p.slug}&c=${i.v}&l=${encodeURIComponent(i.lens)}${i.oe ? "&oe=1" : i.op ? "&op=1" : ""}">${JR.thumb ? JR.thumb(p.slug, i.v, i.lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens: i.lens, shadow: false })}</a>
-        <div><div class="ln">${p.name}</div><div class="lv">${p.slug === "case" ? "Acessório · protege seu óculos" : `Armação ${v.name}${JR.optLabel(i.lens) ? " · " + JR.optLabel(i.lens) : ""}${i.oe ? " · Oferta Exclusiva" : i.op && !JR.OP_PADRAO ? " · Oferta Progressiva" : ""}`}</div>
-          <div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div></div>
-        <button class="rm" data-rm="${k}">Remover</button>
+        <div class="cm-info"><div class="ln">${p.name}</div><div class="lv">${sub}</div></div>
+        <div class="cm-dir"><div class="cm-preco">${brl(preco)}</div>
+          <div class="cm-acoes"><div class="lq"><button data-q="${k}" data-d="-1" aria-label="Diminuir">−</button><span>${i.qty}</span><button data-q="${k}" data-d="1" aria-label="Aumentar">+</button></div>
+          <button class="rm cm-lixo" data-rm="${k}" aria-label="Remover ${p.name}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button></div></div>
       </div>`;
-    }).join("") + (tt.opQtd === 1 ? `<div class="upsell"><strong>Leve 2 por R$ 297</strong>Adicione mais 1 óculos: os 2 saem por R$ 297 (R$ 53 de desconto) e o frete fica grátis.<br><a class="btn btn-green" href="colecao.html?cat=leve2">Escolher meu segundo óculos ${JR.icon.arrow}</a></div>`   /* 19/10: leva pra categoria Compre 1 Leve 2 */
-      : !JR.OP_PADRAO && tt.oculos % 2 === 1 ? `<div class="upsell"><strong>Seu próximo óculos sai grátis</strong>Leve 2 pelo preço de 1: adicione mais um e ele não custa nada.<br><button class="btn btn-green" data-pick>Escolher meu ${n === 1 ? "segundo" : "próximo"} estilo ${JR.icon.arrow}</button></div>` : "");
-    /* Order bump (15/10): fixo no rodapé do carrinho, acima do total, pra aparecer no celular mesmo com vários itens */
-    const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="" loading="lazy">
-        <div><strong>Case com zíper</strong><span>${brl(JR.CASE.price)}</span></div>
-        <button class="btn btn-outline-dark" data-case aria-label="Adicionar case com zíper por ${brl(JR.CASE.price)}">+ Adicionar</button></div>` : "";   /* 19/10: versão enxuta (pedido do dono) */
-    foot.innerHTML = bump + `
+    }).join("");
+    const parcela = total >= 100 ? `em até 12x no cartão` : "";
+    foot.innerHTML = `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
-      ${tt.descontoOp ? `<div class="row save"><span>${JR.OP_PADRAO ? "Desconto Leve 2" : "Oferta Progressiva"}</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
-      <div class="row"><span>Frete</span><span>${free ? "Grátis" : "calculado no checkout"}</span></div>
-      <div class="row total"><span>Total</span><span>${brl(total)}</span></div>
-      <div class="row" style="justify-content:flex-end"><small>Parcele em até 12x</small></div>
-      <button class="btn btn-green btn-block" data-checkout>Finalizar compra ${JR.icon.lock}</button>
-      <div class="pay-note">Checkout seguro Yampi · Parcele em até 12x · troca em até 7 dias</div>`;
+      ${tt.descontoOp ? `<div class="row save"><span>Desconto 2 por R$ 297</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
+      <div class="row total cm-total"><span>Total</span><span>${brl(total)}${parcela ? `<small>${parcela}</small>` : ""}</span></div>
+      <button class="btn btn-block cm-finalizar" data-checkout>${JR.icon.lock} Finalizar compra segura</button>
+      ${tt.opQtd === 1 ? `<a class="btn btn-block cm-segundo" href="colecao.html?cat=leve2">Escolher meu 2º óculos · 2 por R$ 297</a>` : ""}
+      <div class="pay-note cm-selos">🔒 Pagamento seguro · 💳 Pix e cartão · 📦 Entrega rastreada</div>`;
   }
 
   const overlay = () => $("#overlay");

@@ -1738,3 +1738,36 @@ section { position: relative; }
 
 /* 15/10: lente do card, abaixo do nome */
 .card .card-lente { font-size: 12.5px; color: var(--paper-ink-2, #4a5058); margin-top: 1px; min-height: 1.3em; }
+
+/* ---------- Carrinho (26/10, print do dono): caixa de progresso, item limpo, botão preto ---------- */
+.drawer-head h3 { display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: .4px; font-size: 16px; font-weight: 800; }
+.cm-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; background: #0b0c0e; color: #fff; font: 700 12px/1 var(--display); letter-spacing: 0; }
+.ship-meter { background: none; padding: 14px 20px 0; }
+.cm-box { border: 1px solid var(--paper-line); border-radius: 12px; padding: 12px 14px; background: #f7f8f9; }
+.cm-promo { font-size: 13.5px; font-weight: 600; color: #0b0c0e; }
+.cm-box .track { margin: 8px 0 6px; height: 5px; }
+.cm-box .track i { background: #0b0c0e; }
+.cm-frete { font-size: 12px; color: var(--paper-ink-2); }
+.cm-label { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--paper-ink-2); padding: 14px 0 8px; border-bottom: 1px solid var(--paper-line); }
+.cm-line { grid-template-columns: 84px 1fr auto; align-items: start; }
+.cm-line .lm { background: #fff; }
+.cm-line .ln { font-size: 15px; font-weight: 700; margin-top: 6px; }
+.cm-line .lv { font-size: 13px; margin-top: 2px; }
+.cm-dir { display: grid; justify-items: end; gap: 10px; }
+.cm-preco { font: 800 16px/1.2 var(--display); color: #0b0c0e; white-space: nowrap; }
+.cm-acoes { display: flex; align-items: center; gap: 8px; }
+.cm-acoes .lq { margin-top: 0; }
+.cm-lixo { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; color: var(--paper-ink-2); text-decoration: none; }
+.cm-lixo:hover { background: #f1f2f4; color: #b42318; }
+.cm-total { align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--paper-line); }
+.cm-total > span:last-child { display: grid; justify-items: end; font: 800 20px/1.1 var(--display); }
+.cm-total small { font: 500 11.5px/1.4 var(--body, inherit); color: var(--paper-ink-2); }
+.cm-finalizar { background: #0b0c0e; color: #fff; height: 52px; border-radius: 10px; font-size: 15px; font-weight: 700; gap: 8px; }
+.cm-finalizar:hover { background: #24272b; }
+.cm-finalizar svg { transform: none !important; }
+.cm-segundo { border: 1.5px solid #0b0c0e; color: #0b0c0e; background: #fff; height: 46px; border-radius: 10px; font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
+.cm-segundo:hover { background: #f4f5f7; }
+.cm-selos { margin-top: 2px; }
+/* 26/10: com o carrinho aberto o aviso de "Adicionado" cobria o botão Finalizar no celular → sobe pro topo da tela */
+body:has(.drawer.open) .toast { top: 76px; bottom: auto; transform: translate(-50%, -8px); }
+body:has(.drawer.open) .toast.show { transform: translate(-50%, 0); }
