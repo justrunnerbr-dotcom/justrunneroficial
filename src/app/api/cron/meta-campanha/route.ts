@@ -502,6 +502,92 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: criados.every(c => !c.erro && c.anuncios.every(a => !a.erro)), campaignId, criados, lido })
   }
 
+  // conjuntosCopiaPublico (27/10/2026): conjuntos novos (ABO) numa campanha que já existe, com o público, pixel, evento,
+  // otimização e atribuição COPIADOS de um conjunto modelo (o "público validado"), N vídeos por conjunto (1 anúncio por
+  // vídeo, mesma copy) e o degrees_of_freedom_spec copiado de um anúncio modelo (sem "melhorias automáticas").
+  // Nasce PAUSADO; com "ligar": true liga anúncios e conjuntos no fim. "teste": true só confere. Lê de volta.
+  const ccp = (corpo as { conjuntosCopiaPublico?: {
+    teste?: boolean; ligar?: boolean; conta: string; campanhaId: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
+    link: string; paginaId: string; instagramId?: string; texto: string; titulo: string
+    conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
+  } } | null)?.conjuntosCopiaPublico
+  if (ccp) {
+    const num = /^\d+$/
+    if (!num.test(ccp.conta) || !num.test(ccp.campanhaId) || !num.test(ccp.modeloConjunto) || !num.test(ccp.modeloAnuncio) || !num.test(ccp.paginaId)
+      || !/^https:\/\/justrunner\.com\.br\//.test(ccp.link) || !(ccp.orcamentoDia >= 6 && ccp.orcamentoDia <= 500) || !ccp.texto || !ccp.titulo
+      || !Array.isArray(ccp.conjuntos) || !ccp.conjuntos.length || ccp.conjuntos.length > 10
+      || ccp.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === ccp.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json())
+    const postar = async (path: string, body: Record<string, unknown>) => {
+      const j = await fetch(`https://graph.facebook.com/v21.0/${path}`, { method: 'POST', cache: 'no-store',
+        headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(x => x.json()) as
+        { id?: string; success?: boolean; error?: { message?: string; error_user_title?: string; error_user_msg?: string } }
+      if (j.error) throw new Error([j.error.error_user_title, j.error.error_user_msg ?? j.error.message].filter(Boolean).join(': '))
+      return j
+    }
+    const problemas: string[] = []
+    const camp = await ler(`${ccp.campanhaId}?fields=name,account_id,daily_budget,objective,status`) as { account_id?: string; daily_budget?: string; objective?: string; name?: string }
+    if (camp.account_id !== ccp.conta) problemas.push('campanha não é dessa conta')
+    if (camp.daily_budget) problemas.push('campanha é CBO (orçamento na campanha); este modo é pra ABO')
+    const modelo = await ler(`${ccp.modeloConjunto}?fields=name,targeting,promoted_object,optimization_goal,billing_event,attribution_spec,destination_type`) as Record<string, unknown> & { name?: string }
+    if (!modelo.targeting || !modelo.promoted_object) problemas.push('conjunto modelo sem público/pixel')
+    const dof = (await ler(`${ccp.modeloAnuncio}?fields=creative{degrees_of_freedom_spec}`) as { creative?: { degrees_of_freedom_spec?: unknown } }).creative?.degrees_of_freedom_spec
+    if (!dof) problemas.push('anúncio modelo sem degrees_of_freedom_spec')
+    const capas: Record<string, string> = {}
+    for (const v of ccp.conjuntos.flatMap(c => c.videos)) {
+      if (capas[v.videoId]) continue
+      try { capas[v.videoId] = await getVideoThumbnail(cfg, v.videoId) } catch (e) { problemas.push(`${v.nome}: ${e instanceof Error ? e.message : 'sem capa (vídeo ainda processando?)'}`) }
+    }
+    if (ccp.teste || problemas.length) {
+      return NextResponse.json({ ok: !problemas.length, teste: true, problemas, campanha: camp.name, modelo: modelo.name, videosComCapa: Object.keys(capas).length })
+    }
+
+    const urlTags = buildUtmTags()
+    const criativos: Record<string, string> = {}
+    const criados: { conjunto: string; adsetId?: string; anuncios: { nome: string; adId?: string; erro?: string }[]; erro?: string }[] = []
+    for (const c of ccp.conjuntos) {
+      const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
+      try {
+        const adset = await postar(`act_${ccp.conta}/adsets`, {
+          name: c.nome, campaign_id: ccp.campanhaId, daily_budget: Math.round(ccp.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+          targeting: modelo.targeting, promoted_object: modelo.promoted_object, optimization_goal: modelo.optimization_goal,
+          billing_event: modelo.billing_event, attribution_spec: modelo.attribution_spec, status: 'PAUSED',
+        })
+        r.adsetId = String(adset.id)
+        for (const v of c.videos) {
+          const a: (typeof r.anuncios)[number] = { nome: v.nome }
+          try {
+            if (!criativos[v.videoId]) {
+              criativos[v.videoId] = String((await postar(`act_${ccp.conta}/adcreatives`, {
+                name: v.nome,
+                object_story_spec: { page_id: ccp.paginaId, ...(ccp.instagramId ? { instagram_user_id: ccp.instagramId } : {}),
+                  video_data: { video_id: v.videoId, image_url: capas[v.videoId], message: ccp.texto, title: ccp.titulo,
+                    call_to_action: { type: 'SHOP_NOW', value: { link: ccp.link } } } },
+                degrees_of_freedom_spec: dof, url_tags: urlTags,
+              })).id)
+            }
+            a.adId = String((await postar(`act_${ccp.conta}/ads`, { name: v.nome, adset_id: r.adsetId, creative: { creative_id: criativos[v.videoId] }, status: 'PAUSED' })).id)
+          } catch (e) { a.erro = e instanceof Error ? e.message : 'erro' }
+          r.anuncios.push(a)
+        }
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      criados.push(r)
+    }
+    const tudoOk = criados.every(c => !c.erro && c.anuncios.every(a => !a.erro))
+    const ligados: string[] = []
+    if (ccp.ligar && tudoOk) {
+      for (const c of criados) {
+        for (const a of c.anuncios) { await postar(a.adId!, { status: 'ACTIVE' }); ligados.push(a.adId!) }
+        await postar(c.adsetId!, { status: 'ACTIVE' }); ligados.push(c.adsetId!)
+      }
+    }
+    const lido = await Promise.all(criados.filter(c => c.adsetId).map(c => ler(`${c.adsetId}?fields=name,status,effective_status,daily_budget,targeting{flexible_spec,publisher_platforms,age_min,age_max},promoted_object,ads{name,status,effective_status}`)))
+    return NextResponse.json({ ok: tudoOk, campanha: camp.name, criados, ligados: ligados.length, lido })
+  }
+
   // adicionarAnuncios (16/10/2026): põe mais vídeos (1 anúncio por vídeo, PAUSADO) em conjuntos que já existem numa campanha.
   // Cada conjunto precisa ser da campanha informada. Com "teste": true só confere conjuntos e capas. Lê de volta.
   const aa = (corpo as { adicionarAnuncios?: {
