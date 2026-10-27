@@ -507,13 +507,13 @@ export async function POST(request: Request) {
   // vídeo, mesma copy) e o degrees_of_freedom_spec copiado de um anúncio modelo (sem "melhorias automáticas").
   // Nasce PAUSADO; com "ligar": true liga anúncios e conjuntos no fim. "teste": true só confere. Lê de volta.
   const ccp = (corpo as { conjuntosCopiaPublico?: {
-    teste?: boolean; ligar?: boolean; conta: string; campanhaId: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
+    teste?: boolean; ligar?: boolean; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
     link: string; paginaId: string; instagramId?: string; texto: string; titulo: string
     conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
   } } | null)?.conjuntosCopiaPublico
   if (ccp) {
     const num = /^\d+$/
-    if (!num.test(ccp.conta) || !num.test(ccp.campanhaId) || !num.test(ccp.modeloConjunto) || !num.test(ccp.modeloAnuncio) || !num.test(ccp.paginaId)
+    if (!num.test(ccp.conta) || (ccp.novaCampanha ? !!ccp.campanhaId : !num.test(ccp.campanhaId ?? '')) || !num.test(ccp.modeloConjunto) || !num.test(ccp.modeloAnuncio) || !num.test(ccp.paginaId)
       || !/^https:\/\/justrunner\.com\.br\//.test(ccp.link) || !(ccp.orcamentoDia >= 6 && ccp.orcamentoDia <= 500) || !ccp.texto || !ccp.titulo
       || !Array.isArray(ccp.conjuntos) || !ccp.conjuntos.length || ccp.conjuntos.length > 10
       || ccp.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
@@ -529,7 +529,9 @@ export async function POST(request: Request) {
       return j
     }
     const problemas: string[] = []
-    const camp = await ler(`${ccp.campanhaId}?fields=name,account_id,daily_budget,objective,status`) as { account_id?: string; daily_budget?: string; objective?: string; name?: string }
+    // novaCampanha (27/10): cria a campanha ABO (vendas) aqui mesmo em vez de usar uma existente.
+    const camp = ccp.novaCampanha ? { name: ccp.novaCampanha, account_id: ccp.conta } as { account_id?: string; daily_budget?: string; name?: string }
+      : await ler(`${ccp.campanhaId}?fields=name,account_id,daily_budget,objective,status`) as { account_id?: string; daily_budget?: string; objective?: string; name?: string }
     if (camp.account_id !== ccp.conta) problemas.push('campanha não é dessa conta')
     if (camp.daily_budget) problemas.push('campanha é CBO (orçamento na campanha); este modo é pra ABO')
     const modelo = await ler(`${ccp.modeloConjunto}?fields=name,targeting,promoted_object,optimization_goal,billing_event,attribution_spec,destination_type`) as Record<string, unknown> & { name?: string }
@@ -545,6 +547,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: !problemas.length, teste: true, problemas, campanha: camp.name, modelo: modelo.name, videosComCapa: Object.keys(capas).length })
     }
 
+    const campanhaId = ccp.novaCampanha
+      ? String((await createCampaign(cfg, { name: ccp.novaCampanha, objective: 'OUTCOME_SALES', accountId: ccp.conta })).id)
+      : ccp.campanhaId!
     const urlTags = buildUtmTags()
     const criativos: Record<string, string> = {}
     const criados: { conjunto: string; adsetId?: string; anuncios: { nome: string; adId?: string; erro?: string }[]; erro?: string }[] = []
@@ -552,7 +557,7 @@ export async function POST(request: Request) {
       const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
       try {
         const adset = await postar(`act_${ccp.conta}/adsets`, {
-          name: c.nome, campaign_id: ccp.campanhaId, daily_budget: Math.round(ccp.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+          name: c.nome, campaign_id: campanhaId, daily_budget: Math.round(ccp.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
           targeting: modelo.targeting, promoted_object: modelo.promoted_object, optimization_goal: modelo.optimization_goal,
           billing_event: modelo.billing_event, attribution_spec: modelo.attribution_spec, status: 'PAUSED',
         })
@@ -583,9 +588,10 @@ export async function POST(request: Request) {
         for (const a of c.anuncios) { await postar(a.adId!, { status: 'ACTIVE' }); ligados.push(a.adId!) }
         await postar(c.adsetId!, { status: 'ACTIVE' }); ligados.push(c.adsetId!)
       }
+      if (ccp.novaCampanha) { await postar(campanhaId, { status: 'ACTIVE' }); ligados.push(campanhaId) }
     }
     const lido = await Promise.all(criados.filter(c => c.adsetId).map(c => ler(`${c.adsetId}?fields=name,status,effective_status,daily_budget,targeting{flexible_spec,publisher_platforms,age_min,age_max},promoted_object,ads{name,status,effective_status}`)))
-    return NextResponse.json({ ok: tudoOk, campanha: camp.name, criados, ligados: ligados.length, lido })
+    return NextResponse.json({ ok: tudoOk, campanha: camp.name, campanhaId, criados, ligados: ligados.length, lido })
   }
 
   // adicionarAnuncios (16/10/2026): põe mais vídeos (1 anúncio por vídeo, PAUSADO) em conjuntos que já existem numa campanha.
