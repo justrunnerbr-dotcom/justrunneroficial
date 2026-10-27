@@ -260,8 +260,21 @@
     catch (e) { return null; }
   };
   JR.quizLiberado = items => !!JR.quizCupom() && JR.cartTotals(items).subtotal >= JR.QUIZ_MIN;
+  /* 27/10: a promoção "Oferta Progressiva - Leve 2 R$297" da Yampi (os R$ 53 com 2+ JROP) recusa QUALQUER cupom, e ela só
+     existe no painel (não na API). Testado no checkout real: 2 JROP + RUN10 = "Cupom inválido"; 2 JR (R$ 297, "2X1") + RUN10 =
+     R$ 287; 2 JR + 1 JROP + RUN10 = R$ 462. Então um par de JROP vai pro checkout como o par JR (mesmo R$ 297 pro cliente) e o
+     resto segue JROP. Com 4+ JROP sobram 2 JROP e a promoção volta a valer (cupom recusado de novo) — liberar cupom na promoção
+     do painel resolve de vez. */
+  const parJr = items => {
+    let falta = items.filter(i => i.op && !i.oe && !JR.isCombo(i.slug) && JR.opOf(i.slug, i.v, i.lens)).reduce((a, i) => a + i.qty, 0) >= 2 ? 2 : 0;
+    return items.flatMap(i => {
+      if (!falta || !i.op || i.oe || !JR.opOf(i.slug, i.v, i.lens)) return [i];
+      const n = Math.min(falta, i.qty); falta -= n;
+      return [{ ...i, op: false, qty: n }, ...(i.qty > n ? [{ ...i, qty: i.qty - n }] : [])];
+    });
+  };
   JR.checkoutUrl = items => {
-    const lines = items.map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && versao(l, i.op, i.oe), q: i.qty }; }).filter(x => x.l);
+    const lines = parJr(items).map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && versao(l, i.op, i.oe), q: i.qty }; }).filter(x => x.l);
     if (!lines.length) return null;
     const quiz = JR.quizLiberado(items) ? `&promocode=${encodeURIComponent(JR.quizCupom().code)}` : "";
     return `https://${REAL.checkoutDomain}/cart/items?` +
