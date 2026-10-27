@@ -66,6 +66,14 @@ export async function POST(request: Request) {
 
   const corpo = await request.json().catch(() => null) as (Pedido & { trocarLink?: TrocaLink }) | null
 
+  // lerFeed (26/10/2026): pede à Meta uma leitura do feed agora (o agendamento é 1×/dia) e devolve o resultado.
+  const lf = (corpo as { lerFeed?: { feed: string; url: string } } | null)?.lerFeed
+  if (lf) {
+    if (!/^\d+$/.test(lf.feed) || !/^https:\/\/justrunner\.com\.br\//.test(lf.url)) return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    const res = await fetch(`https://graph.facebook.com/v21.0/${lf.feed}/uploads?${new URLSearchParams({ url: lf.url })}`, { method: 'POST', cache: 'no-store', headers: { Authorization: `Bearer ${cfg.token}` } })
+    return NextResponse.json({ ok: res.ok, resposta: await res.json().catch(() => ({})) })
+  }
+
   // catalogoPixel (26/10/2026): conecta pixel(s) a um catálogo e desconecta de outro. O "Produtos"
   // dos anúncios e o Advantage+ de catálogo usam o catálogo ligado ao pixel; o PIXEL 01 estava só
   // no catálogo da Shopify antiga. Lê de volta as fontes de evento dos dois catálogos.
