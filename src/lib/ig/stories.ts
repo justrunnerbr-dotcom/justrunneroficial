@@ -43,6 +43,8 @@ export interface StoryMetricas {
 export interface Story {
   id: string
   mediaUrl: string
+  /** Capa só pra prévia do admin (26/10/2026): vídeo publicado direto do Drive não toca embutido no navegador. */
+  capaUrl?: string | null
   tipo: 'imagem' | 'video'
   agendadoPara: string
   tema: StoryTema

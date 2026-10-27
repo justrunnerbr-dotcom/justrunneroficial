@@ -68,6 +68,8 @@ const temMetrica = (s: Story) => !!s.metricas && (s.metricas.alcance !== null ||
 function Midia({ s, lazy = true }: { s: Story; lazy?: boolean }) {
   if (s.tipo === 'video') {
     // #t=0.1 faz o Safari do iPhone mostrar o primeiro quadro em vez de tela preta.
+    // eslint-disable-next-line @next/next/no-img-element
+    if (s.capaUrl) return <img src={s.capaUrl} alt={s.modelo ? `Story ${s.modelo}` : 'Story'} loading={lazy ? 'lazy' : undefined} decoding="async" />
     const src = s.mediaUrl.includes('#') ? s.mediaUrl : `${s.mediaUrl}#t=0.1`
     return <video src={src} muted playsInline preload="metadata" />
   }
