@@ -74,6 +74,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.ok, resposta: await res.json().catch(() => ({})) })
   }
 
+  // excluirCatalogo (27/10/2026, pedido do dono): apaga o catálogo da Shopify antiga. Exige o nome exato
+  // (lido antes) e nunca aceita o catálogo oficial; lê de volta depois pra confirmar que sumiu.
+  const ec = (corpo as { excluirCatalogo?: { catalogo: string; nome: string } } | null)?.excluirCatalogo
+  if (ec) {
+    if (!/^\d+$/.test(ec.catalogo) || ec.catalogo === '1047502311559047' || !ec.nome) return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    const H = { Authorization: `Bearer ${cfg.token}` }
+    const atual = await (await fetch(`https://graph.facebook.com/v21.0/${ec.catalogo}?fields=id,name`, { headers: H, cache: 'no-store' })).json() as { name?: string }
+    if (atual.name !== ec.nome) return NextResponse.json({ ok: false, erro: 'nome não confere', atual }, { status: 409 })
+    const res = await fetch(`https://graph.facebook.com/v21.0/${ec.catalogo}`, { method: 'DELETE', cache: 'no-store', headers: H })
+    const resposta = await res.json().catch(() => ({}))
+    const depois = await (await fetch(`https://graph.facebook.com/v21.0/${ec.catalogo}?fields=id,name`, { headers: H, cache: 'no-store' })).json()
+    return NextResponse.json({ ok: res.ok, resposta, depois })
+  }
+
   // catalogoPixel (26/10/2026): conecta pixel(s) a um catálogo e desconecta de outro. O "Produtos"
   // dos anúncios e o Advantage+ de catálogo usam o catálogo ligado ao pixel; o PIXEL 01 estava só
   // no catálogo da Shopify antiga. Lê de volta as fontes de evento dos dois catálogos.
