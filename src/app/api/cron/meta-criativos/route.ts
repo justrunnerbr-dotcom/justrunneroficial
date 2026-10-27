@@ -46,6 +46,20 @@ export async function GET(request: Request) {
     const r = await todas(`https://graph.facebook.com/${VER}/me/adaccounts?${new URLSearchParams({ fields: 'account_id,name,account_status,amount_spent,currency', limit: '100' })}`, token)
     return NextResponse.json({ ok: !r.erro, erro: r.erro, configuradas: META_ACCOUNTS.map(a => a.id), contas: r.data })
   }
+  // ?graph=<caminho>&<campos da Graph>: GET genérico, SÓ LEITURA (catálogos, product sets, feeds,
+  // promoted_object...). 26/10/2026, auditoria do catálogo dos anúncios. ?todas=1 segue a paginação.
+  const caminho = q.get('graph')
+  if (caminho) {
+    if (!/^[A-Za-z0-9_/]+$/.test(caminho)) return NextResponse.json({ ok: false, erro: 'caminho inválido' }, { status: 400 })
+    const params = new URLSearchParams([...q].filter(([k]) => !['graph', 'todas', 'access_token'].includes(k)))
+    const url = `https://graph.facebook.com/${VER}/${caminho}?${params}`
+    if (q.get('todas') === '1') {
+      const r = await todas(url, token)
+      return NextResponse.json({ ok: !r.erro, erro: r.erro, data: r.data })
+    }
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: AbortSignal.timeout(60000) })
+    return NextResponse.json(await res.json().catch(() => ({ erro: `HTTP ${res.status}` })), { status: res.ok ? 200 : 502 })
+  }
   // ?pixels=1&conta=ID: pixels que a conta enxerga + pixel/evento dos conjuntos (promoted_object)
   if (q.get('pixels') === '1' && /^\d+$/.test(q.get('conta') ?? '')) {
     const base = `https://graph.facebook.com/${VER}/act_${q.get('conta')}`
