@@ -7,6 +7,7 @@ import {
   type QuizRow, type Bar, type Cross,
 } from '@/lib/quiz/analise'
 import { labelOf } from '@/lib/quiz/perguntas'
+import { QUIZ_VALIDADE_LABEL } from '@/lib/quiz/bonus'
 
 const card: React.CSSProperties = { background: 'var(--admin-card)', border: '1px solid var(--admin-border)', borderRadius: '14px', padding: '16px 18px' }
 const small: React.CSSProperties = { fontSize: '11px', color: 'var(--admin-text-muted)' }
@@ -137,7 +138,7 @@ export function QuizAdminClient({ rows: reais, erro }: { rows: QuizRow[]; erro: 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--admin-text-main)' }}>Quiz do cliente</h1>
-          <p style={{ ...small, fontSize: 12, margin: '4px 0 0' }}>Respostas de justrunner.com.br/quiz · bônus válido até 31/10</p>
+          <p style={{ ...small, fontSize: 12, margin: '4px 0 0' }}>Respostas de justrunner.com.br/quiz · bônus válido até {QUIZ_VALIDADE_LABEL}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" onClick={() => setExemplo(e => !e)} aria-pressed={exemplo} style={{

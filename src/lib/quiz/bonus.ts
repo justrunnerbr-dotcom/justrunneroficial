@@ -5,9 +5,9 @@
 // "Cupom inválido") e vale uma vez. Ver scripts/_quiz-cria-brindes.mjs.
 // O carrinho que manda o cupom pro checkout é o do tema (public/tema/assets/catalogo-real.js).
 
-/** Fim da promoção: 31/10/2026 23:59:59 em São Paulo. */
-export const QUIZ_VALIDADE = '2026-10-31 23:59:59'
-export const QUIZ_VALIDADE_LABEL = '31/10'
+/** Fim da promoção: 30/11/2026 23:59:59 em São Paulo (27/10: estendida, era 31/10). */
+export const QUIZ_VALIDADE = '2026-11-30 23:59:59'
+export const QUIZ_VALIDADE_LABEL = '30/11'
 /** Valor mínimo do pedido pro cupom liberar o brinde (27/10: era R$ 594 = 2 × R$ 297 cheio). */
 export const QUIZ_MIN_SUBTOTAL = 297
 /** Preço de referência mostrado no card ("de R$ 175 por R$ 0"). */
