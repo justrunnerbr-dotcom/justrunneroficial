@@ -64,6 +64,16 @@ export async function GET() {
   const products = data as ProductWithCollection[]
   const items: string[] = []
 
+  // Preço de 1 óculos no site: o gêmeo da Oferta Progressiva (<slug>-op, R$175)
+  // é o que o cliente paga levando 1, e é o preço que a página mostra. O item do
+  // feed continua com o SKU JR- (os product sets dos anúncios filtram por "JR-"),
+  // mas com esse preço de venda (decisão do dono em 26/10/2026; antes ia R$297).
+  const precoUm = new Map<string, number>()
+  for (const p of products) {
+    if (p.collection?.slug !== 'oferta-progressiva' || !p.slug.endsWith('-op')) continue
+    for (const v of p.variants) if (v.price > 0) precoUm.set(`${p.slug.slice(0, -3)}|${v.name}`, v.price)
+  }
+
   for (const product of products) {
     if (isHidden(product.slug, product.name)) continue
     if (product.collection?.slug === 'oferta-progressiva') continue
@@ -89,14 +99,22 @@ export async function GET() {
       const hasCompare =
         variant.compare_price !== null && variant.compare_price > variant.price
       const listPrice = hasCompare ? (variant.compare_price as number) : variant.price
-      const salePrice = hasCompare ? variant.price : null
+      const um = precoUm.get(`${product.slug}|${variant.name}`)
+      const salePrice = um !== undefined && um < listPrice ? um : hasCompare ? variant.price : null
 
       const title =
         sortedVariants.length > 1
           ? `${product.name} — ${variant.name}`
           : product.name
 
-      const productUrl = `${SITE_URL}/produto/${product.slug}?v=${encodeURIComponent(variant.id)}`
+      // O tema novo escolhe a lente por ?l= (sem "Lente ") e, no Eye Jacket e
+      // Redux (várias armações num produto), a cor por ?cor=; ?v=<id> era do site
+      // antigo e caía sempre na 1ª lente.
+      const [cor, lente] = variant.name.includes(' · ') ? variant.name.split(' · ') : [null, variant.name]
+      const qs = new URLSearchParams()
+      if (cor) qs.set('cor', cor)
+      if (lente && lente !== 'Único') qs.set('l', lente.replace(/^Lente /, ''))
+      const productUrl = `${SITE_URL}/produto/${product.slug}${qs.size ? `?${qs}` : ''}`
 
       const salePriceLine =
         salePrice !== null
