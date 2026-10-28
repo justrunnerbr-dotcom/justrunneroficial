@@ -88,6 +88,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.ok, resposta, depois })
   }
 
+  // excluirAnuncios (27/10/2026, pedido do dono): apaga anúncios que travam a exclusão do catálogo antigo.
+  // Recusa qualquer anúncio que não esteja pausado (status próprio, do conjunto ou da campanha); lê de volta.
+  const ea = (corpo as { excluirAnuncios?: { ids: string[] } } | null)?.excluirAnuncios
+  if (ea) {
+    if (!Array.isArray(ea.ids) || !ea.ids.length || ea.ids.length > 100 || !ea.ids.every(i => /^\d+$/.test(i))) return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    const H = { Authorization: `Bearer ${cfg.token}` }
+    const resultado: { id: string; ok: boolean; status?: string; erro?: string; depois?: string }[] = []
+    for (const id of ea.ids) {
+      const atual = await (await fetch(`https://graph.facebook.com/v21.0/${id}?fields=effective_status`, { headers: H, cache: 'no-store' })).json() as { effective_status?: string; error?: { message?: string } }
+      if (!atual.effective_status || !atual.effective_status.includes('PAUSED')) { resultado.push({ id, ok: false, status: atual.effective_status, erro: atual.error?.message ?? 'não está pausado' }); continue }
+      const res = await fetch(`https://graph.facebook.com/v21.0/${id}`, { method: 'DELETE', cache: 'no-store', headers: H })
+      const j = await res.json().catch(() => ({})) as { error?: { message?: string } }
+      const depois = await (await fetch(`https://graph.facebook.com/v21.0/${id}?fields=effective_status`, { headers: H, cache: 'no-store' })).json() as { effective_status?: string; error?: { message?: string } }
+      resultado.push({ id, ok: res.ok && !j.error, status: atual.effective_status, erro: j.error?.message, depois: depois.effective_status ?? depois.error?.message })
+    }
+    return NextResponse.json({ ok: resultado.every(r => r.ok), apagados: resultado.filter(r => r.ok).length, resultado })
+  }
+
   // catalogoPixel (26/10/2026): conecta pixel(s) a um catálogo e desconecta de outro. O "Produtos"
   // dos anúncios e o Advantage+ de catálogo usam o catálogo ligado ao pixel; o PIXEL 01 estava só
   // no catálogo da Shopify antiga. Lê de volta as fontes de evento dos dois catálogos.
