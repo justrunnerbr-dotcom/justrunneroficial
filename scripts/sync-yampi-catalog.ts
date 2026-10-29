@@ -47,6 +47,9 @@ const CATEGORY_MAP: Record<string, number> = {
   soto: 8441428,
   sphaera: 8441429,
   sutro: 8180539,
+  // Lote de 2026-10-29
+  'fat-cat': 8457985,
+  terraforma: 8457986,
 }
 
 async function main() {

@@ -616,6 +616,20 @@
    "cor": "Preta",
    "oe": 1
   },
+  "straight-jacket-bege": {
+   "p": "straight-jacket",
+   "cor": "Bege"
+  },
+  "straight-jacket-bege-op": {
+   "p": "straight-jacket",
+   "cor": "Bege",
+   "op": 1
+  },
+  "straight-jacket-bege-oe": {
+   "p": "straight-jacket",
+   "cor": "Bege",
+   "oe": 1
+  },
   "eye-jacket-brain-dead": {
    "p": "eye-jacket",
    "cor": "Brain Dead"
@@ -1091,6 +1105,34 @@
    "p": "combo",
    "cor": "Combo 12",
    "oe": 1
+  },
+  "fat-cat-preta": {
+   "p": "fat-cat",
+   "cor": "Preta"
+  },
+  "fat-cat-preta-op": {
+   "p": "fat-cat",
+   "cor": "Preta",
+   "op": 1
+  },
+  "fat-cat-preta-oe": {
+   "p": "fat-cat",
+   "cor": "Preta",
+   "oe": 1
+  },
+  "terraforma-preta": {
+   "p": "terraforma",
+   "cor": "Preta"
+  },
+  "terraforma-preta-op": {
+   "p": "terraforma",
+   "cor": "Preta",
+   "op": 1
+  },
+  "terraforma-preta-oe": {
+   "p": "terraforma",
+   "cor": "Preta",
+   "oe": 1
   }
  },
  "colecoes": {
@@ -1115,6 +1157,8 @@
   "sphaera": "colecao.html?cat=sphaera",
   "sutro": "colecao.html?cat=sutro",
   "oferta-exclusiva": "colecao.html?cat=exclusiva",
+  "fat-cat": "colecao.html?cat=fat-cat",
+  "terraforma": "colecao.html?cat=terraforma",
   "compre-1-leve-2": "colecao.html?cat=leve2",
   "lancamentos": "colecao.html?cat=lancamentos",
   "mais-vendidos": "colecao.html?cat=mais-vendidos"

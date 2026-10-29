@@ -9,11 +9,11 @@
 
   /* ---------- Produtos: modelo → cores → lentes, com o catálogo do site no ar (JR- e combos JRC-) ---------- */
   const ORDER = ["radar-ev", "minute", "flak", "eye-jacket-redux", "eye-jacket", "plantaris", "hstn", "half-jacket", "encoder",
-    "straight-jacket", "dartboard", "plantaris-squared", "m-frame", "1311", "ellipse", "holbrook", "soto", "sutro", "sphaera", "monster-dog", "radar-ev-kit", "combo"];
+    "straight-jacket", "dartboard", "plantaris-squared", "m-frame", "1311", "ellipse", "holbrook", "soto", "sutro", "sphaera", "monster-dog", "fat-cat", "terraforma", "radar-ev-kit", "combo"];
   const NOVOS = {   // modelos que não existiam no protótipo do sócio: formato e estilo pro desenho e pros filtros
     "plantaris-squared": ["wrap", "sportstyle"], "m-frame": ["dual", "performance"], "1311": ["wrap", "everyday"],
     ellipse: ["wrap", "everyday"], holbrook: ["wrap", "everyday"], soto: ["wrap", "everyday"], sutro: ["shield", "performance"],
-    sphaera: ["shield", "performance"], "monster-dog": ["wrap", "everyday"], "radar-ev-kit": ["shield", "acessorio"], combo: ["wrap", "combo"]
+    sphaera: ["shield", "performance"], "monster-dog": ["wrap", "everyday"], "fat-cat": ["wrap", "everyday"], terraforma: ["wrap", "everyday"], "radar-ev-kit": ["shield", "acessorio"], combo: ["wrap", "combo"]
   };
   const slugs = Object.keys(REAL.models).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
 
@@ -336,7 +336,7 @@
      que anúncios, Google e catálogo da Meta já usam). O Next (next.config.ts) entrega o .html do tema nesses endereços e aqui
      o tema lê o produto/categoria pelo caminho. No localhost (servidor simples) seguem os .html com ?p=…&c=…. */
   const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "exclusiva": "oferta-exclusiva", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
+  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "exclusiva": "oferta-exclusiva", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "fat-cat": "fat-cat", "terraforma": "terraforma", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
   const ALIAS_CAT = Object.fromEntries(Object.entries(CAT_ALIAS).map(([c, s]) => [s, c]));
   const PAGINAS = { "faq.html": "/faq", "sobre.html": "/sobre", "contato.html": "/contato", "trocas-e-devolucoes.html": "/trocas-e-devolucoes",
     "politica-de-privacidade.html": "/politica-de-privacidade", "frete-e-entrega.html": "/frete-e-entrega", "colecao.html": "/colecao" };

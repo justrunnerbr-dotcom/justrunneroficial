@@ -47,6 +47,8 @@ const FAMILIAS = [
   ['soto', ['Soto'], 'Soto'],
   ['sphaera', ['Sphaera'], 'Sphaera'],
   ['sutro', ['Sutro'], 'Sutro'],
+  ['fat-cat', ['Fat Cat'], 'Fat Cat'],
+  ['terraforma', ['Terraforma'], 'Terraforma'],
   ['combo', ['Combo'], 'Compre 1 Leve 3'],
 ]
 
