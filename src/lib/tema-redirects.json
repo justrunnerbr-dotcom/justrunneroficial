@@ -1133,6 +1133,34 @@
    "p": "terraforma",
    "cor": "Preta",
    "oe": 1
+  },
+  "terraforma-cinza-claro": {
+   "p": "terraforma",
+   "cor": "Cinza Claro"
+  },
+  "terraforma-cinza-claro-op": {
+   "p": "terraforma",
+   "cor": "Cinza Claro",
+   "op": 1
+  },
+  "terraforma-cinza-claro-oe": {
+   "p": "terraforma",
+   "cor": "Cinza Claro",
+   "oe": 1
+  },
+  "terraforma-cinza-escuro": {
+   "p": "terraforma",
+   "cor": "Cinza Escuro"
+  },
+  "terraforma-cinza-escuro-op": {
+   "p": "terraforma",
+   "cor": "Cinza Escuro",
+   "op": 1
+  },
+  "terraforma-cinza-escuro-oe": {
+   "p": "terraforma",
+   "cor": "Cinza Escuro",
+   "oe": 1
   }
  },
  "colecoes": {
