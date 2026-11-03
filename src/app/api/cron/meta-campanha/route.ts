@@ -539,13 +539,14 @@ export async function POST(request: Request) {
   // vídeo, mesma copy) e o degrees_of_freedom_spec copiado de um anúncio modelo (sem "melhorias automáticas").
   // Nasce PAUSADO; com "ligar": true liga anúncios e conjuntos no fim. "teste": true só confere. Lê de volta.
   const ccp = (corpo as { conjuntosCopiaPublico?: {
-    teste?: boolean; ligar?: boolean; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
+    teste?: boolean; ligar?: boolean; inicio?: string; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
     link: string; paginaId: string; instagramId?: string; texto: string; titulo: string
     conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
   } } | null)?.conjuntosCopiaPublico
   if (ccp) {
     const num = /^\d+$/
     if (!num.test(ccp.conta) || (ccp.novaCampanha ? !!ccp.campanhaId : !num.test(ccp.campanhaId ?? '')) || !num.test(ccp.modeloConjunto) || !num.test(ccp.modeloAnuncio) || !num.test(ccp.paginaId)
+      || (ccp.inicio !== undefined && !(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-03:00$/.test(ccp.inicio) && new Date(ccp.inicio).getTime() > Date.now()))
       || !/^https:\/\/justrunner\.com\.br\//.test(ccp.link) || !(ccp.orcamentoDia >= 6 && ccp.orcamentoDia <= 500) || !ccp.texto || !ccp.titulo
       || !Array.isArray(ccp.conjuntos) || !ccp.conjuntos.length || ccp.conjuntos.length > 10
       || ccp.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
@@ -583,6 +584,10 @@ export async function POST(request: Request) {
       ? String((await createCampaign(cfg, { name: ccp.novaCampanha, objective: 'OUTCOME_SALES', accountId: ccp.conta })).id)
       : ccp.campanhaId!
     const urlTags = buildUtmTags()
+    // inicio (03/11/2026): conjunto já nasce com start_time futuro (unix; a Meta recusa ISO com -03:00). Com ligar,
+    // conjunto e anúncios já nascem ACTIVE — nada veicula antes do início — e só a campanha é ligada no fim.
+    const inicioUnix = ccp.inicio ? Math.round(new Date(ccp.inicio).getTime() / 1000) : undefined
+    const nasceAtivo = !!(ccp.ligar && inicioUnix)
     const criativos: Record<string, string> = {}
     const criados: { conjunto: string; adsetId?: string; anuncios: { nome: string; adId?: string; erro?: string }[]; erro?: string }[] = []
     for (const c of ccp.conjuntos) {
@@ -591,7 +596,8 @@ export async function POST(request: Request) {
         const adset = await postar(`act_${ccp.conta}/adsets`, {
           name: c.nome, campaign_id: campanhaId, daily_budget: Math.round(ccp.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
           targeting: modelo.targeting, promoted_object: modelo.promoted_object, optimization_goal: modelo.optimization_goal,
-          billing_event: modelo.billing_event, attribution_spec: modelo.attribution_spec, status: 'PAUSED',
+          billing_event: modelo.billing_event, attribution_spec: modelo.attribution_spec, status: nasceAtivo ? 'ACTIVE' : 'PAUSED',
+          ...(inicioUnix ? { start_time: inicioUnix } : {}),
         })
         r.adsetId = String(adset.id)
         for (const v of c.videos) {
@@ -606,7 +612,7 @@ export async function POST(request: Request) {
                 degrees_of_freedom_spec: dof, url_tags: urlTags,
               })).id)
             }
-            a.adId = String((await postar(`act_${ccp.conta}/ads`, { name: v.nome, adset_id: r.adsetId, creative: { creative_id: criativos[v.videoId] }, status: 'PAUSED' })).id)
+            a.adId = String((await postar(`act_${ccp.conta}/ads`, { name: v.nome, adset_id: r.adsetId, creative: { creative_id: criativos[v.videoId] }, status: nasceAtivo ? 'ACTIVE' : 'PAUSED' })).id)
           } catch (e) { a.erro = e instanceof Error ? e.message : 'erro' }
           r.anuncios.push(a)
         }
@@ -616,13 +622,13 @@ export async function POST(request: Request) {
     const tudoOk = criados.every(c => !c.erro && c.anuncios.every(a => !a.erro))
     const ligados: string[] = []
     if (ccp.ligar && tudoOk) {
-      for (const c of criados) {
+      for (const c of nasceAtivo ? [] : criados) {
         for (const a of c.anuncios) { await postar(a.adId!, { status: 'ACTIVE' }); ligados.push(a.adId!) }
         await postar(c.adsetId!, { status: 'ACTIVE' }); ligados.push(c.adsetId!)
       }
       if (ccp.novaCampanha) { await postar(campanhaId, { status: 'ACTIVE' }); ligados.push(campanhaId) }
     }
-    const lido = await Promise.all(criados.filter(c => c.adsetId).map(c => ler(`${c.adsetId}?fields=name,status,effective_status,daily_budget,targeting{flexible_spec,publisher_platforms,age_min,age_max},promoted_object,ads{name,status,effective_status}`)))
+    const lido = await Promise.all(criados.filter(c => c.adsetId).map(c => ler(`${c.adsetId}?fields=name,status,effective_status,daily_budget,start_time,targeting{flexible_spec,publisher_platforms,age_min,age_max},promoted_object,ads{name,status,effective_status}`)))
     return NextResponse.json({ ok: tudoOk, campanha: camp.name, campanhaId, criados, ligados: ligados.length, lido })
   }
 
