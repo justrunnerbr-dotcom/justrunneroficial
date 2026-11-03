@@ -50,6 +50,8 @@ const CATEGORY_MAP: Record<string, number> = {
   // Lote de 2026-10-29
   'fat-cat': 8457985,
   terraforma: 8457986,
+  // Lote de 2026-11-03
+  'radarlock-path': 8461272,
 }
 
 async function main() {

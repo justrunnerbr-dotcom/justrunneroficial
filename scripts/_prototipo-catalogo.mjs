@@ -34,6 +34,7 @@ const FAMILIAS = [
   ['half-jacket', ['Half Jacket'], 'Half Jacket'],
   ['monster-dog', ['Monster Dog'], 'Monster Dog'],
   ['m-frame', ['M Frame'], 'M Frame'],
+  ['radarlock-path', ['Radarlock Path', 'Radarlock'], 'Radarlock Path'],   // antes de radar-ev: "Radarlock" começa com "Radar"
   ['radar-ev', ['Radar EV', 'Radar'], 'Radar EV'],
   ['plantaris', ['Plantaris'], 'Plantaris'],
   ['minute', ['Minute'], 'Minute'],

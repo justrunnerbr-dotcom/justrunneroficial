@@ -1161,6 +1161,34 @@
    "p": "terraforma",
    "cor": "Cinza Escuro",
    "oe": 1
+  },
+  "radarlock-path-preta": {
+   "p": "radarlock-path",
+   "cor": "Preta"
+  },
+  "radarlock-path-preta-op": {
+   "p": "radarlock-path",
+   "cor": "Preta",
+   "op": 1
+  },
+  "radarlock-path-preta-oe": {
+   "p": "radarlock-path",
+   "cor": "Preta",
+   "oe": 1
+  },
+  "radarlock-path-silver": {
+   "p": "radarlock-path",
+   "cor": "Silver"
+  },
+  "radarlock-path-silver-op": {
+   "p": "radarlock-path",
+   "cor": "Silver",
+   "op": 1
+  },
+  "radarlock-path-silver-oe": {
+   "p": "radarlock-path",
+   "cor": "Silver",
+   "oe": 1
   }
  },
  "colecoes": {
@@ -1187,6 +1215,7 @@
   "oferta-exclusiva": "colecao.html?cat=exclusiva",
   "fat-cat": "colecao.html?cat=fat-cat",
   "terraforma": "colecao.html?cat=terraforma",
+  "radarlock-path": "colecao.html?cat=radarlock-path",
   "compre-1-leve-2": "colecao.html?cat=leve2",
   "lancamentos": "colecao.html?cat=lancamentos",
   "mais-vendidos": "colecao.html?cat=mais-vendidos"
