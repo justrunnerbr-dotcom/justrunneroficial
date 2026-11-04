@@ -16,17 +16,16 @@ window.JR = window.JR || {};
 
   /* ---------- Header / footer ---------- */
   const page = document.body.dataset.page;
-  /* Menu igual ao site antigo (13/10): Início · Compre 1 Leve 2 · Combos · Categorias (lista) · Oferta Progressiva */
+    /* 04/11: menu enxuto a pedido do dono — só Início · Compre 1 Leve 2 · Categorias. Oferta Exclusiva, Combos e
+     Oferta Progressiva foram para dentro de Categorias; Lentes Mais Vendidas saiu do menu (páginas seguem no ar). */
   const navLinks = [
     ["Início", "/"],
     ["Compre 1 Leve 2", "colecao.html?cat=leve2", "hot"],
-    ["Combos", "colecao.html?cat=leve3"],
-    ["Categorias", "colecao.html", "cats"],
-    ["Lentes Mais Vendidas 🔥", "colecao.html?lente=preta", "lentes"],
-    ["Oferta Progressiva", "colecao.html?cat=oferta"],
-    ["Oferta Exclusiva", "colecao.html?cat=exclusiva"]
+    ["Categorias", "colecao.html", "cats"]
   ];
-  const cats = () => `<a href="colecao.html?cat=mais-vendidos" class="dd-hot">Mais vendidos</a>` + (JR.CATEGORIAS || []).map(c => `<a href="colecao.html?cat=${c.slug}">${c.nome}</a>`).join("");
+  const cats = () => `<a href="colecao.html?cat=mais-vendidos" class="dd-hot">Mais vendidos</a>` +
+    `<a href="colecao.html?cat=exclusiva" class="dd-hot">Oferta Exclusiva</a>` +
+    `<a href="colecao.html?cat=leve3">Combos</a><a href="colecao.html?cat=oferta">Oferta Progressiva</a><span class="dd-sep"></span>` + (JR.CATEGORIAS || []).map(c => `<a href="colecao.html?cat=${c.slug}">${c.nome}</a>`).join("");
   /* Lentes Mais Vendidas (13/10, igual à JHF): uma página por cor de lente (JR.LENTES em catalogo-real.js) */
   const lentes = () => (JR.LENTES || []).map(l => `<a href="colecao.html?lente=${l.slug}"><span aria-hidden="true">${l.emoji}</span> ${l.nome}</a>`).join("");
   const navItem = ([t, h, c]) => c === "cats"
