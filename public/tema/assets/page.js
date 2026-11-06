@@ -120,7 +120,8 @@
       leve3:       { nome: "Combos", banner: "fotos/cat-banner-combos.jpg?v=2", bannerMob: "fotos/cat-banner-combos-mobile.jpg?v=2", alt: "Compre 1 Leve 3: trail, run e bike", lista: () => JR.SHOWCASE.combos },
       lancamentos: { nome: "Lançamentos", banner: "fotos/cat-banner-lancamentos.jpg", alt: "Lançamentos Just Runner", lista: () => JR.SHOWCASE.lancamentos },
       "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidosTodos || JR.SHOWCASE.maisVendidos },
-      exclusiva:   { nome: "Oferta Exclusiva", banner: "fotos/cat-banner-exclusiva.jpg", bannerMob: "fotos/cat-banner-exclusiva-mobile.jpg", alt: "Oferta Exclusiva: seu estilo por R$ 147,90. Modelos selecionados", lista: () => JR.SHOWCASE.exclusiva, oe: true },
+      /* 06/11 (análise de conversão): no celular usa o banner do desktop (mais baixo) pra os produtos subirem; mobile antigo: fotos/cat-banner-exclusiva-mobile.jpg */
+      exclusiva:   { nome: "Oferta Exclusiva", banner: "fotos/cat-banner-exclusiva.jpg", alt: "Oferta Exclusiva: seu estilo por R$ 147,90. Modelos selecionados", lista: () => JR.SHOWCASE.exclusiva, oe: true },
       oferta:      { nome: "Oferta Progressiva", banner: "fotos/cat-banner-oferta.jpg", bannerMob: "fotos/cat-banner-oferta-mobile.jpg", alt: "Oferta Progressiva: 1 óculos por R$ 175, 2 por R$ 297", lista: () => JR.SHOWCASE.oferta, op: true }
     };
     Object.keys(JR.ESTILOS || {}).forEach(k => { if (CATS[k]) CATS[k].lista = () => JR.estiloLista(k); });
