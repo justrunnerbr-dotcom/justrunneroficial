@@ -101,6 +101,21 @@
     $("#tiles").classList.add("tiles-foto");
     $("#tiles").innerHTML = fotosUso.map(f => `
     <a class="tile-foto reveal" href="${f.href}"><img src="${f.src}" alt="${f.alt}" loading="lazy" decoding="async" width="1000" height="1111"></a>`).join("");
+    /* 06/11: no celular a fileira desliza sozinha (1 card a cada 2,6 s, volta ao início no fim) enquanto está na tela;
+       para de vez quando a pessoa toca/arrasta. Sem animação para quem pediu menos movimento. */
+    const tl = $("#tiles");
+    if (matchMedia("(max-width: 760px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+      let visivel = false, parado = false;
+      new IntersectionObserver(es => { visivel = es[0].isIntersecting; }, { threshold: .5 }).observe(tl);
+      ["pointerdown", "touchstart", "wheel"].forEach(ev => tl.addEventListener(ev, () => { parado = true; }, { passive: true, once: true }));
+      setInterval(() => {
+        if (parado || !visivel || document.hidden) return;
+        const card = tl.firstElementChild; if (!card) return;
+        const passo = card.getBoundingClientRect().width + 8;
+        if (tl.scrollLeft + tl.clientWidth >= tl.scrollWidth - 4) tl.scrollTo({ left: 0, behavior: "smooth" });
+        else tl.scrollBy({ left: passo, behavior: "smooth" });
+      }, 2600);
+    }
   } else
   $("#tiles").innerHTML = tiles.map((t, i) => `
     <a class="tile reveal" href="${t.href}">${JR.scene({ ...t.sc, slot: "home-uso-" + (i + 1) })}

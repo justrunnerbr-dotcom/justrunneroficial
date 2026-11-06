@@ -1355,6 +1355,18 @@ section { position: relative; }
   .tiles.tiles-foto.scroller { grid-template-columns: none; grid-auto-columns: 70%; }
 }
 @media (prefers-reduced-motion: reduce) { .tile-foto img, .tile-foto:hover img { transition: none; transform: scale(1.03); } }
+/* 06/11 (análise de conversão): "Encontre seu Just Runner" menor e mais dinâmica. Menos respiro, título menor e,
+   no celular, cards de ~38% (2,5 na tela) que deslizam sozinhos (home.js) até a pessoa tocar. */
+#estilos.sec { padding: 36px 0; }
+#estilos .sec-head { margin-bottom: 16px; }
+@media (max-width: 760px) {
+  #estilos.sec { padding: 22px 0 16px; }
+  #estilos .sec-head { margin-bottom: 10px; }
+  #estilos .h-md { font-size: 22px; line-height: 1.15; }
+  #estilos .sub { font-size: 13px; margin-top: 2px; }
+  .tiles.tiles-foto.scroller { grid-auto-columns: 38%; gap: 8px; }
+  #estilos .tile-foto { border-radius: 12px; }
+}
 
 /* Página de categoria por esporte (colecao.html?cat=...): banner 3:1 do usuário no topo. */
 .cat-banner { background: #0b0b0b; }
@@ -1477,6 +1489,8 @@ section { position: relative; }
 .vit-head h2 { margin: 0; font: 700 clamp(20px, 2.3vw, 28px)/1.2 var(--display); letter-spacing: -.01em; color: #111; }
 .vit-head a { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #111; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
 .vit-head a svg { width: 14px; height: 14px; }
+/* 06/11: título "1 Óculos R$ 175,00 · 2 Óculos R$ 297,00" menor no celular (pedido do dono) */
+@media (max-width: 760px) { #vt-leve2 { font-size: 16px; line-height: 1.3; } }
 .vit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .vit-grid.scroll { grid-auto-flow: column; grid-auto-columns: calc((100% - 48px) / 4); grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px; scrollbar-width: thin; }
 .vit-grid.scroll > * { scroll-snap-align: start; }
@@ -1771,3 +1785,79 @@ section { position: relative; }
 /* 26/10: com o carrinho aberto o aviso de "Adicionado" cobria o botão Finalizar no celular → sobe pro topo da tela */
 body:has(.drawer.open) .toast { top: 76px; bottom: auto; transform: translate(-50%, -8px); }
 body:has(.drawer.open) .toast.show { transform: translate(-50%, 0); }
+/* 06/11 (análise de conversão): frete de 1 óculos visível, prova social e carrinho inteiro na tela do celular */
+.cm-frete-calc { display: block; margin-top: 3px; font-size: 11.5px; color: var(--paper-ink-2); }
+.cm-prova-fotos { display: flex; flex: none; }
+.cm-prova-fotos img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; margin-left: -8px; background: #e5e7eb; }
+.cm-prova-fotos img:first-child { margin-left: 0; }
+/* 06/11: avaliações no carrinho + verde forte do site (pedido do dono) */
+.cm-aval { margin: 12px 0 4px; padding: 12px 14px; border-radius: 12px; background: #ecfdf3; border: 1.5px solid var(--green-2); }
+.cm-aval-top { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--green); }
+.cm-estrelas { color: #f5b301; font-size: 14px; letter-spacing: 1px; }
+.cm-aval-txt { margin: 6px 0 0; font-size: 13px; line-height: 1.4; color: #0b0c0e; min-height: 3.6em; transition: opacity .25s ease; }
+.cm-aval-txt.troca { opacity: 0; }
+.cm-aval-txt span { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 700; color: var(--green); }
+.cm-aval-ver { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 0; border: 0; background: none; font: 700 12px/1 var(--body, inherit); color: var(--green); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.cm-aval-ver svg { width: 14px; height: 14px; }
+.cm-aval-ver[aria-expanded="true"] .cm-seta svg { transform: rotate(-90deg); }
+.cm-aval-ver[aria-expanded="false"] .cm-seta svg { transform: rotate(90deg); }
+.cm-galeria { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 10px -12px 0; padding: 0 12px 4px; scrollbar-width: none; }
+.cm-galeria::-webkit-scrollbar { display: none; }
+.cm-galeria img, .cm-vid { flex: 0 0 auto; width: 110px; height: 150px; border-radius: 10px; background: #dfe7e2; scroll-snap-align: start; overflow: hidden; }
+.cm-galeria img { object-fit: cover; }
+.cm-vid { position: relative; padding: 0; border: 0; cursor: pointer; }
+.cm-vid video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cm-play { position: absolute; left: 50%; top: 50%; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%; background: rgba(20, 83, 45, .88); box-shadow: 0 4px 14px rgba(0,0,0,.3); transition: opacity .2s ease; }
+.cm-play::after { content: ""; position: absolute; left: 15px; top: 11px; border-style: solid; border-width: 8px 0 8px 13px; border-color: transparent transparent transparent #fff; }
+.cm-vid.tocando .cm-play { opacity: 0; }
+.cm-box { background: #ecfdf3; border-color: var(--green-2); }
+.cm-promo, .cm-promo b { color: var(--green); }
+.cm-box .track { background: #cdeed9; }
+.cm-box .track i { background: linear-gradient(90deg, var(--green-2), var(--green-glow)); }
+.cm-finalizar { background: linear-gradient(180deg, var(--green-2), var(--green)); box-shadow: 0 8px 22px rgba(20, 83, 45, .3); }
+.cm-finalizar:hover { background: linear-gradient(180deg, #22804a, #176237); }
+.cm-segundo { border-color: var(--green-2); color: var(--green); }
+.row.save { color: var(--green-2); }
+@media (max-width: 760px) {
+  .drawer { height: 100dvh; bottom: auto; }
+  .drawer-head { padding: 12px 16px; }
+  .ship-meter { padding: 10px 16px 0; }
+  .cm-box { padding: 10px 12px; }
+  .drawer-body { padding: 4px 16px; }
+  .cm-label { padding: 10px 0 6px; }
+  .cm-line { grid-template-columns: 64px 1fr auto; padding: 10px 0; gap: 10px; }
+  .drawer-foot { padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); gap: 6px; }
+  .cm-total { padding-top: 6px; }
+  .cm-finalizar { height: 48px; }
+  .cm-segundo { height: 42px; }
+}
+/* 06/11 (pedido do dono): carrinho mais compacto no celular, tudo numa tela só */
+@media (max-width: 760px) {
+  .drawer-head { padding: 10px 16px; }
+  .drawer-head h3 { font-size: 15px; }
+  .cm-box { padding: 8px 12px; border-radius: 10px; }
+  .cm-promo { font-size: 13px; line-height: 1.3; }
+  .cm-box .track { margin: 6px 0 4px; }
+  .cm-frete { font-size: 11.5px; }
+  .cm-label { padding: 8px 0 4px; font-size: 10.5px; }
+  .cm-line { grid-template-columns: 54px 1fr auto; padding: 8px 0; gap: 10px; align-items: center; }
+  .cm-line .ln { font-size: 14px; margin-top: 0; }
+  .cm-line .lv { font-size: 12px; }
+  .cm-dir { gap: 6px; }
+  .cm-preco { font-size: 15px; }
+  .cm-line .lq button { width: 26px; height: 26px; }
+  .cm-aval { margin: 8px 0 2px; padding: 8px 12px; border-radius: 10px; }
+  .cm-aval-top { font-size: 12px; }
+  .cm-estrelas { font-size: 12px; }
+  .cm-aval-txt { font-size: 12.5px; line-height: 1.35; min-height: 0; margin-top: 4px; }
+  .cm-aval-ver { margin-top: 6px; font-size: 11.5px; }
+  .drawer-foot { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); gap: 5px; }
+  .drawer-foot .row { font-size: 13px; }
+  .cm-total { padding-top: 5px; }
+  .cm-total > span:last-child { font-size: 18px; }
+  .cm-total > span:first-child { font-size: 16px; font-weight: 800; }
+  .cm-finalizar { height: 46px; font-size: 14px; }
+  .cm-segundo { height: 38px; font-size: 11.5px; }
+  .cm-selos { font-size: 11px; margin-top: 0; }
+}
+@media (max-width: 760px) and (max-height: 700px) { .cm-label { display: none; } .cm-aval-ver { display: none; } .cm-aval-txt { min-height: 0; } .cm-selos { display: none; } }

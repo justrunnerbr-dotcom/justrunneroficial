@@ -20,3 +20,8 @@ body:has(.sticky-buy.show) .wa-pop { bottom: calc(90px + 76px); }
 .wa-ir svg { width: 18px; height: 18px; }
 @media (max-width: 749px) { .wa-btn { right: 14px; bottom: 14px; padding: 11px 18px 11px 14px; font-size: 14.5px; gap: 8px; } .wa-btn svg { width: 22px; height: 22px; } .wa-pop { right: 14px; bottom: 76px; } }
 @media (prefers-reduced-motion: reduce) { .wa-btn, .wa-pop { transition: none; } }
+/* 06/11: a pedido do dono, o botão vira só uma bolinha com a logo (o texto "Fale no WhatsApp" fica só pra leitor de tela) */
+.wa-btn { width: 58px; height: 58px; padding: 0; gap: 0; justify-content: center; }
+.wa-btn svg { width: 30px; height: 30px; }
+.wa-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 749px) { .wa-btn { width: 50px; height: 50px; padding: 0; } .wa-btn svg { width: 26px; height: 26px; } .wa-pop { bottom: 72px; } }

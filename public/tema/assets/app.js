@@ -41,7 +41,11 @@ window.JR = window.JR || {};
     const el = $("#header");
     if (!el) return;
     el.outerHTML = `
-      <div class="topbar"><b>Compre 1, Leve 2 por R$ 297</b><span class="sep hide-sm">|</span><span class="hide-sm">Frete grátis acima de R$ 200</span><span class="sep hide-sm">|</span><span class="hide-sm">Parcele em até 12x</span></div>
+      <!-- 06/11: a pedido do dono, a faixa preta "Compre 1, Leve 2 por R$ 297" saiu e a faixa de benefícios (marquee) subiu pro topo, acima do logo. -->
+      <div class="marquee" aria-label="Benefícios"><div class="marquee-track">${Array(2).fill([
+        ["truck", "Frete grátis acima de R$ 200"], ["card", "Parcele em até 12x"], ["swap", "Troca em até 7 dias"],
+        ["polar", "Lentes polarizadas UV400"], ["lock", "Checkout seguro Yampi"]
+      ].map(([i, t]) => `<span>${JR.icon[i]}${t}</span>`).join("")).join("")}</div></div>
       <header class="header" id="site-header">
         <div class="wrap">
           <button class="icon-btn menu-btn" data-open-menu aria-label="Abrir menu">${JR.icon.menu}</button>
@@ -53,10 +57,6 @@ window.JR = window.JR || {};
           </div>
         </div>
       </header>
-      <div class="marquee" aria-label="Benefícios"><div class="marquee-track">${Array(2).fill([
-        ["truck", "Frete grátis acima de R$ 200"], ["card", "Parcele em até 12x"], ["swap", "Troca em até 7 dias"],
-        ["polar", "Lentes polarizadas UV400"], ["lock", "Checkout seguro Yampi"]
-      ].map(([i, t]) => `<span>${JR.icon[i]}${t}</span>`).join("")).join("")}</div></div>
       <div class="mobile-nav" id="mobile-nav"><div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">${logo}<button class="icon-btn" data-close-menu aria-label="Fechar">${JR.icon.close}</button></div>
         ${navLinks.map(([t, h, c]) => c === "cats"
@@ -144,6 +144,9 @@ window.JR = window.JR || {};
     save(); renderCart();
     const c = $("#cart-count"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump");
     if (opts.open !== false) openCart();
+    /* 06/11 (análise de conversão): com o carrinho aberto o aviso "Adicionado" cobria a caixa da promoção e o frete.
+       O próprio carrinho já diz o que mudou, então o aviso só aparece quando o carrinho não abre. */
+    if (opts.open !== false && slug !== "case") return;
     const n = units();
     const tt = JR.cartTotals ? JR.cartTotals(cart) : null;
     if (slug === "case") JR.toast("Case adicionado ao carrinho.");
@@ -153,6 +156,20 @@ window.JR = window.JR || {};
     else if (tt && tt.desconto && tt.oculos % 2 === 0) JR.toast(`Leve 2 pelo preço de 1 aplicado: ${brl(tt.desconto)} de desconto.`);
     else JR.toast("Adicionado ao carrinho.");
   };
+
+  JR.AVAL_CARRINHO = [
+    { n: "@dra.luanaribeiro", t: "Ótimo custo benefício, lentes clarinhas de policarbonato com proteção UV400 ameiiiii, +1 na minha coleção hahahah!" },
+    { n: "@aannieoliveira", t: "O melhor óculos de corrida! Qualidade é absurda e o envio foi muito rápido" },
+    { n: "Kelvin Yamamoto", t: "Já tenho três óculos dessa loja, o material é muito bom e o encaixe no rosto é perfeito para corrida!" },
+    { n: "Yuri Farias", t: "O melhor óculos para corrida! Fiquei surpreso com a qualidade das lentes, e a entrega também foi muito rápida" }
+  ];
+  JR._avalIdx = 0;
+  setInterval(() => {
+    const el = document.getElementById("cm-aval-txt");
+    if (!el || !document.querySelector("#drawer.open") || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    JR._avalIdx++; const a = JR.AVAL_CARRINHO[JR._avalIdx % JR.AVAL_CARRINHO.length];
+    el.classList.add("troca"); setTimeout(() => { el.innerHTML = `“${a.t}”<span>${a.n}</span>`; el.classList.remove("troca"); }, 250);
+  }, 4500);
 
   function renderCart() {
     const n = units();
@@ -171,8 +188,11 @@ window.JR = window.JR || {};
        tem hora pra acabar (contador que reinicia é urgência falsa) e sem o case de R$ 35 no meio do caminho do checkout. */
     const dc = $("#drawer-count"); if (dc) { dc.textContent = n; dc.hidden = !n; }
     const temOe = cart.some(i => i.oe);
-    const promo = tt.opQtd === 1 ? `🎁 Leve mais 1 óculos e pague <b>R$ 297</b> nos 2`
-      : tt.opQtd >= 2 ? `✅ <b>2 óculos por R$ 297</b> aplicado` : temOe ? `🔥 <b>Oferta Exclusiva</b>: R$ 147,90 cada` : "";
+    /* 06/11 (análise de conversão): a conta do 2º óculos em reais (R$ 297 − preço do 1º) (a linha "frete a partir de R$ 12,62" saiu a pedido do dono). */
+    const opItem = cart.find(i => i.op);
+    const segundo = tt.opQtd === 1 && opItem ? 297 - (JR.priceOf ? JR.priceOf(opItem.slug, opItem.v, opItem.lens, true, false) : 175) : 0;
+    const promo = tt.opQtd === 1 && segundo > 0 ? `🎁 Adicione mais 1 por só <b>${brl(segundo)}</b> e ganhe <b>frete grátis</b>`
+      : tt.opQtd === 2 ? `✅ <b>2 óculos por R$ 297</b> aplicado: sai ${brl(148.5)} cada` : tt.opQtd > 2 ? `✅ <b>2 por R$ 297</b> aplicado` : temOe ? `🔥 <b>Oferta Exclusiva</b>: R$ 147,90 cada` : "";
     const frete = free ? `🚚 <b>Frete grátis</b> garantido` : `🚚 Faltam <b>${brl(falta)}</b> para frete grátis`;
     meter.hidden = !n;
     meter.innerHTML = n ? `<div class="cm-box">${promo ? `<div class="cm-promo">${promo}</div>` : ""}<div class="track"><i style="width:${Math.min(100, (total / JR.PRICE.freeShipping) * 100)}%"></i></div><div class="cm-frete">${frete}</div></div>` : "";
@@ -193,6 +213,25 @@ window.JR = window.JR || {};
           <button class="rm cm-lixo" data-rm="${k}" aria-label="Remover ${p.name}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button></div></div>
       </div>`;
     }).join("");
+    /* 06/11 (análise de conversão, pedido do dono): avaliações no carrinho. Os 4 depoimentos são os mesmos que a loja já mostra
+       no checkout da Yampi (seguro.justrunner.com.br, com 5 estrelas), copiados como estão; trocam sozinhos a cada 4,5 s.
+       Embaixo, as fotos/vídeos reais de clientes (JR.DEPOIMENTOS, sem parceiro/publi) abrem a janela da aba "Avaliações". */
+    const AVAL = JR.AVAL_CARRINHO || [];
+    /* 06/11 (pedido do dono): "Ver fotos e vídeos" abre uma galeria DENTRO do carrinho (fileira deslizante), sem sair dele. */
+    const depsAll = (JR.DEPOIMENTOS || []).filter(d => !d.parceiro && (d.capa || d.tipo === "foto"));
+    const deps = depsAll.slice(0, 4);
+    const temJanela = depsAll.length > 0;
+    const galeria = JR._avalAberto ? `<div class="cm-galeria">${depsAll.slice(0, 10).map((d, k) => d.tipo === "video"
+      ? `<button type="button" class="cm-vid" data-cm-vid aria-label="Tocar vídeo de cliente ${k + 1}"><video src="${d.src}" poster="${d.capa}" preload="none" playsinline loop></video><span class="cm-play" aria-hidden="true"></span></button>`
+      : `<img src="${d.src}" alt="Foto de cliente usando Just Runner" loading="lazy" decoding="async">`).join("")}</div>` : "";
+    if (AVAL.length) {
+      const a = AVAL[JR._avalIdx % AVAL.length];
+      body.innerHTML += `<div class="cm-aval" aria-label="Avaliações de clientes">
+        <div class="cm-aval-top"><span class="cm-estrelas" role="img" aria-label="5 de 5 estrelas">★★★★★</span><b>Avaliações de clientes</b></div>
+        <p class="cm-aval-txt" id="cm-aval-txt">“${a.t}”<span>${a.n}</span></p>
+        ${deps.length && temJanela ? `<button type="button" class="cm-aval-ver" data-ver-clientes aria-expanded="${!!JR._avalAberto}">${JR._avalAberto ? "Fechar fotos e vídeos" : `<span class="cm-prova-fotos">${deps.map(d => `<img src="${d.capa || d.src}" alt="" loading="lazy" decoding="async">`).join("")}</span>Ver fotos e vídeos de clientes`} <span class="cm-seta">${JR.icon.arrow}</span></button>${galeria}` : ""}
+      </div>`;
+    }
     /* Bônus do quiz: não é item do carrinho, a Yampi entrega como brinde pelo cupom (JR.checkoutUrl). */
     const qc = JR.quizCupom && JR.quizCupom();
     if (qc) {
@@ -211,13 +250,14 @@ window.JR = window.JR || {};
       ${tt.descontoOp ? `<div class="row save"><span>Desconto 2 por R$ 297</span><span>− ${brl(tt.descontoOp)}</span></div>` : ""}
       <div class="row total cm-total"><span>Total</span><span>${brl(total)}${parcela ? `<small>${parcela}</small>` : ""}</span></div>
       <button class="btn btn-block cm-finalizar" data-checkout>${JR.icon.lock} Finalizar compra segura</button>
-      ${tt.opQtd === 1 ? `<a class="btn btn-block cm-segundo" href="colecao.html?cat=leve2">Escolher meu 2º óculos · 2 por R$ 297</a>` : ""}
+      ${tt.opQtd === 1 ? `<a class="btn btn-block cm-segundo" href="colecao.html?cat=leve2">Escolher meu 2º óculos por ${segundo > 0 ? brl(segundo) : "R$ 297 os 2"}</a>` : ""}
       <div class="pay-note cm-selos">🔒 Pagamento seguro · 💳 Pix e cartão · 📦 Entrega rastreada</div>`;
   }
 
   const overlay = () => $("#overlay");
-  function openCart() { $("#drawer").classList.add("open"); $("#drawer").setAttribute("aria-hidden", "false"); overlay().classList.add("open"); }
+  function openCart() { renderCart(); $("#drawer").classList.add("open"); $("#drawer").setAttribute("aria-hidden", "false"); overlay().classList.add("open"); }
   function closeAll() {
+    if (JR._avalAberto) { JR._avalAberto = false; renderCart(); }
     $("#drawer")?.classList.remove("open"); $("#drawer")?.setAttribute("aria-hidden", "true");
     $("#pick-modal")?.classList.remove("open"); overlay()?.classList.remove("open");
   }
@@ -338,6 +378,12 @@ window.JR = window.JR || {};
       if (q) { const i = cart[+q.dataset.q]; i.qty += +q.dataset.d; if (i.qty < 1) cart.splice(+q.dataset.q, 1); save(); renderCart(); }
       const rm = t.closest("[data-rm]");
       if (rm) { cart.splice(+rm.dataset.rm, 1); save(); renderCart(); }
+      const vb = t.closest("[data-cm-vid]");
+      if (vb) { const v = vb.querySelector("video"); const tocar = v.paused;
+        $$(".cm-vid video").forEach(x => { x.pause(); x.parentElement.classList.remove("tocando"); });
+        if (tocar) { v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); vb.classList.add("tocando"); } }
+      if (t.closest("[data-ver-clientes]")) { JR._avalAberto = !JR._avalAberto; renderCart();
+        if (JR._avalAberto) $(".cm-galeria")?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
       if (t.closest("[data-pick]")) JR.openPicker(cart[cart.length - 1]?.slug);
       if (t.closest("[data-case]")) JR.addToCart("case", 0, "Único", 1);
       if (t.closest("[data-checkout]") && JR.meta) { const tt = JR.cartTotals ? JR.cartTotals(cart) : { total: 0 };
