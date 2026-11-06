@@ -32,7 +32,7 @@
   { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("oe") === "1" ? "Oferta Exclusiva" : qs.get("op") === "1" && !JR.OP_PADRAO ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
 
   /* (b) confiança junto do botão: só sinais reais */
-  $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 12x"], ["truck", "Frete grátis acima de R$ 200"]]
+  $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 3x sem juros"], ["truck", "Frete grátis acima de R$ 200"]]
     .map(([i, t]) => `<li>${icon[i]}${t}</li>`).join("");
 
   /* (c) prazo por CEP: mostra a política oficial; valor exato do frete fica no checkout */
@@ -59,7 +59,7 @@
     if (emOe()) {
       const pr = JR.priceOf(product.slug, state.v, state.lens, false, true), de = JR.priceOf(product.slug, state.v, state.lens, true);
       $("#p-price").innerHTML = `${de > pr ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}`;
-      $("#p-inst").innerHTML = "<b>Oferta Exclusiva</b> · Parcele em até 12x";
+      $("#p-inst").innerHTML = "<b>Oferta Exclusiva</b> · Parcele em até 3x sem juros";
       const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong><span>Oferta Exclusiva</span>`;
       $("#add").textContent = `Adicionar · ${brl(pr * state.qty)}`;
       $("#add-pair").hidden = $(".pair-box").hidden = true;
@@ -69,7 +69,7 @@
     if (emOp()) {
       const pr = JR.priceOf(product.slug, state.v, state.lens, true);
       $("#p-price").innerHTML = brl(pr);
-      $("#p-inst").innerHTML = JR.OP_PADRAO ? "<b>2 por R$ 297</b> · Parcele em até 12x" : "Oferta Progressiva · 2 óculos por R$ 297";
+      $("#p-inst").innerHTML = JR.OP_PADRAO ? "<b>2 por R$ 297</b> · Parcele em até 3x sem juros" : "Oferta Progressiva · 2 óculos por R$ 297";
       const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong><span>2 por R$ 297</span>`;
       $("#add").textContent = `Adicionar · ${brl(state.qty >= 2 ? pr * state.qty - 53 : pr * state.qty)}`;
       $("#add-pair").hidden = $(".pair-box").hidden = !JR.OP_PADRAO;   // 19/10: com R$ 175 padrão, o botão do 2º óculos volta (2 por R$ 297)
@@ -78,7 +78,7 @@
     }
     const l = JR.realLens(product.slug, state.v, state.lens) || {}, pr = l.price || JR.PRICE.one;
     $("#p-price").innerHTML = `${l.de ? `<s class="de">${brl(l.de)}</s> ` : ""}${brl(pr)}`;
-    $("#p-inst").innerHTML = "Parcele em até 12x";
+    $("#p-inst").innerHTML = "Parcele em até 3x sem juros";
     const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>${brl(pr)}</strong>${product.combo ? "<span>kit com 3 óculos</span>" : ""}`;   // sem o "Leve 2" verde (13/10)
     $("#add").textContent = `Adicionar · ${brl(product.combo ? pr * state.qty : Math.ceil(state.qty / 2) * pr)}`;
     $("#add-pair").hidden = $(".pair-box").hidden = !!product.combo || JR.OP_PADRAO;   // kit (sem R$ 175): sem "2º grátis" no site

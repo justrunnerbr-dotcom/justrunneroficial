@@ -7,8 +7,8 @@ JR.PRICE = { one: 175, pair: 297, freeShipping: 200, installments: 6 };
 
 /* Política oficial: fonte .agents/rules/product-catalog-rules.md (prazo do FAQ). Todo texto de prazo/troca lê daqui. */
 JR.POLICY = {
-  delivery: "Capitais em 3–5 dias úteis · interior em até 10 dias úteis",
-  deliveryLong: "O prazo de entrega varia de acordo com a sua localização: capitais recebem em 3 a 5 dias úteis e interior em até 10 dias úteis após a confirmação do pagamento.",
+  delivery: "Prazo calculado pelo CEP no checkout",
+  deliveryLong: "O prazo de entrega depende da sua região e da forma de envio escolhida. Ele aparece no checkout assim que você informa o CEP e começa a contar após a confirmação do pagamento.",
   exchangeDays: 7
 };
 

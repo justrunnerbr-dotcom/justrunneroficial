@@ -43,7 +43,7 @@ window.JR = window.JR || {};
     el.outerHTML = `
       <!-- 06/11: a pedido do dono, a faixa preta "Compre 1, Leve 2 por R$ 297" saiu e a faixa de benefícios (marquee) subiu pro topo, acima do logo. -->
       <div class="marquee" aria-label="Benefícios"><div class="marquee-track">${Array(2).fill([
-        ["truck", "Frete grátis acima de R$ 200"], ["card", "Parcele em até 12x"], ["swap", "Troca em até 7 dias"],
+        ["truck", "Frete grátis acima de R$ 200"], ["card", "Parcele em até 3x sem juros"], ["swap", "Troca em até 7 dias"],
         ["polar", "Lentes polarizadas UV400"], ["lock", "Checkout seguro Yampi"]
       ].map(([i, t]) => `<span>${JR.icon[i]}${t}</span>`).join("")).join("")}</div></div>
       <header class="header" id="site-header">
@@ -92,7 +92,7 @@ window.JR = window.JR || {};
               <li><a href="${JR.waLink()}" target="_blank" rel="noopener">WhatsApp ${JR.CONTACT.phone}</a></li>
               <li>${JR.CONTACT.hours}</li><li><a href="mailto:${JR.CONTACT.email}">${JR.CONTACT.email}</a></li></ul>
               <div class="pay">${JR.CONTACT.payments.map(p => `<span>${p}</span>`).join("")}</div>
-              <p style="margin:10px 0 0;font-size:12px">Checkout seguro Yampi · Parcele em até 12x</p></div>
+              <p style="margin:10px 0 0;font-size:12px">Checkout seguro Yampi · Parcele em até 3x sem juros</p></div>
           </div>
           <div class="legal"><span>© 2026 Just Runner · CNPJ ${JR.CONTACT.cnpj} · justrunner.com.br</span>${JR.LOCAL ? "<span>Protótipo de layout — não é a loja em produção</span>" : ""}</div>
         </div>
@@ -243,7 +243,7 @@ window.JR = window.JR || {};
         <div class="cm-dir"><div class="cm-preco">Grátis</div></div>
       </div>`;
     }
-    const parcela = total >= 100 ? `em até 12x no cartão` : "";
+    const parcela = total >= 100 ? `em até 3x sem juros no cartão` : "";
     foot.innerHTML = `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto ? `<div class="row save"><span>Leve 2 pelo preço de 1</span><span>− ${brl(tt.desconto)}</span></div>` : ""}
@@ -302,8 +302,8 @@ window.JR = window.JR || {};
       <a class="media" href="${href}" aria-label="${p.name}">${JR.thumb ? JR.thumb(slug, vIdx, lens) : JR.glasses({ shape: p.shape, frame: v.frame, lens })}</a>
       <div class="info">
         <a class="name" href="${href}">${JR.cardName(p, v)}</a>${p.combo ? "" : `<div class="card-lente">${JR.cardLente(lens)}</div>`}
-        ${o.mini ? "" : oe ? `<div class="price"><s class="de">${brl(JR.priceOf(slug, vIdx, lens, true))}</s> ${brl(JR.priceOf(slug, vIdx, lens, false, true))}</div><div class="pair"><b>Oferta Exclusiva</b> · Parcele em até 12x</div>` : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · ${JR.OP_PADRAO ? "Parcele em até 12x" : "Oferta Progressiva"}</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
-          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 12x" : o.semLeve2 || JR.OP_PADRAO ? "Parcele em até 12x" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 12x"}</div>`; })()}
+        ${o.mini ? "" : oe ? `<div class="price"><s class="de">${brl(JR.priceOf(slug, vIdx, lens, true))}</s> ${brl(JR.priceOf(slug, vIdx, lens, false, true))}</div><div class="pair"><b>Oferta Exclusiva</b> · Parcele em até 3x sem juros</div>` : op ? `<div class="price">${brl(JR.priceOf(slug, vIdx, lens, true))}</div><div class="pair"><b>2 por R$ 297</b> · ${JR.OP_PADRAO ? "Parcele em até 3x sem juros" : "Oferta Progressiva"}</div>` : (() => { const pr = JR.minPrice ? JR.minPrice(slug) : JR.PRICE.one, lz = JR.realLens && JR.realLens(slug, vIdx, lens), de = lz && lz.de;
+          return `<div class="price">${de ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}</div><div class="pair">${p.combo ? "<b>3 óculos</b> no kit · Parcele em até 3x sem juros" : o.semLeve2 || JR.OP_PADRAO ? "Parcele em até 3x sem juros" : "<b>Leve 2 pelo preço de 1</b> · Parcele em até 3x sem juros"}</div>`; })()}
         ${oe ? "" : o.lentes && !p.combo && v.lenses.length > 1 ? JR.lenteDots(p, vIdx, lens, href) : `<div class="swatches" ${p.combo ? "hidden" : ""}>${dots}${p.variants.length > 5 ? `<span class="more">+${p.variants.length - 5}</span>` : ""}${opcoes ? `<span class="more">· ${opcoes}</span>` : ""}</div>`}
         ${o.mini ? "" : `<button class="quick" data-add>${o.pick ? "Escolher este" : "Adicionar ao carrinho"}</button>`}
       </div>
