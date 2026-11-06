@@ -121,6 +121,9 @@
     state.slide = (i + n) % n;
     $$("#stage .slide").forEach((s, k) => { s.classList.toggle("on", k === state.slide); s.setAttribute("aria-hidden", k !== state.slide); });
     $$("#thumbs .thumb").forEach((t, k) => { t.classList.toggle("on", k === state.slide); t.setAttribute("aria-selected", k === state.slide); });
+    /* 06/11: no celular a miniatura ativa entra na fileira visível */
+    const th = $$("#thumbs .thumb")[state.slide], box = $("#thumbs");
+    if (th && box.scrollWidth > box.clientWidth) box.scrollTo({ left: box.scrollLeft + th.getBoundingClientRect().left - box.getBoundingClientRect().left - 16, behavior: "smooth" });
     $("#stage .count").textContent = `${state.slide + 1} / ${n}`;
   }
   $("#thumbs").addEventListener("click", e => { const t = e.target.closest("[data-slide]"); if (t) go(+t.dataset.slide); });

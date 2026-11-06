@@ -1611,7 +1611,9 @@ section { position: relative; }
 /* Celular (13/10): foto do óculos e escolha de cor na mesma tela — galeria mais baixa, sem a fileira de miniaturas
    (as setas e o "1/4" continuam) e as bolinhas de cor numa faixa que desliza pro lado. */
 @media (max-width: 760px) {
-  .thumbs { display: none; }
+  /* 06/11: miniaturas voltam no celular (como no site da Just): fileira que desliza, ~4 visíveis */
+  .thumbs { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; margin: 10px calc(var(--gutter) * -1) 0; padding: 0 var(--gutter); }
+  .thumb { flex: 0 0 calc((100% - 24px) / 4.3); width: auto; scroll-snap-align: start; }
   .stage { aspect-ratio: 5 / 4; }
   .tag-row { margin-top: 2px; }
   .title-row { margin: 8px 0 2px; }
