@@ -117,9 +117,9 @@
       beach:     { nome: "Beach Sports", banner: "fotos/banner-cat-beach.jpg",     alt: "Beach sports: leveza e conforto para jogar na areia" },
       lifestyle: { nome: "Lifestyle",    banner: "fotos/banner-cat-lifestyle.jpg", alt: "Lifestyle" },
       leve2:       { nome: "Compre 1 Leve 2", banner: "fotos/hero-atual.jpg", alt: "Compre 1 Leve 2", lista: () => JR.SHOWCASE.leve2 },
-      leve3:       { nome: "Combos", banner: "fotos/cat-banner-combos.jpg?v=2", bannerMob: "fotos/cat-banner-combos-mobile.jpg?v=2", alt: "Compre 1 Leve 3: trail, run e bike", lista: () => JR.SHOWCASE.combos },
-      lancamentos: { nome: "Lançamentos", banner: "fotos/cat-banner-lancamentos.jpg", alt: "Lançamentos Just Runner", lista: () => JR.SHOWCASE.lancamentos },
-      "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidosTodos || JR.SHOWCASE.maisVendidos },
+      leve3:       { nome: "Combos", banner: "fotos/cat-banner-combos.jpg?v=bf1", bannerMob: "fotos/cat-banner-combos-mobile.jpg?v=bf1", alt: "Compre 1 Leve 3: trail, run e bike", lista: () => JR.SHOWCASE.combos },
+      lancamentos: { nome: "Lançamentos", banner: "fotos/cat-banner-lancamentos.jpg?v=bf1", alt: "Lançamentos Just Runner", lista: () => JR.SHOWCASE.lancamentos },
+      "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg?v=bf1", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg?v=bf1", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidosTodos || JR.SHOWCASE.maisVendidos },
       /* 06/11 (análise de conversão): no celular usa o banner do desktop (mais baixo) pra os produtos subirem; mobile antigo: fotos/cat-banner-exclusiva-mobile.jpg */
       exclusiva:   { nome: "Oferta Exclusiva", banner: "fotos/cat-banner-exclusiva.jpg", alt: "Oferta Exclusiva: seu estilo por R$ 147,90. Modelos selecionados", lista: () => JR.SHOWCASE.exclusiva, oe: true },
       oferta:      { nome: "Oferta Progressiva", banner: "fotos/cat-banner-oferta.jpg", bannerMob: "fotos/cat-banner-oferta-mobile.jpg", alt: "Oferta Progressiva: 1 óculos por R$ 175, 2 por R$ 297", lista: () => JR.SHOWCASE.oferta, op: true }
