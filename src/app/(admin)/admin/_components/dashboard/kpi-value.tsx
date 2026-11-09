@@ -9,7 +9,11 @@ export function KpiValue({ value, kind }: { value: number; kind: ValueKind }) {
   const [shown, setShown] = useState(value)
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // sem animação: mostra o valor novo direto (ex.: ao ligar "+ 13,8%" ou "− Appmax")
+      const raf = requestAnimationFrame(() => setShown(value))
+      return () => cancelAnimationFrame(raf)
+    }
     let raf = 0
     const t0 = performance.now()
     const tick = (t: number) => {

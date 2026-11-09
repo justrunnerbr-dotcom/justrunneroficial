@@ -5,6 +5,7 @@ const base: Totals = {
   revenue: 243653.38, paid: 837, profit: 50000, media: 60290.31, meta: 60290.31, google: 0, mediaTax: 8320.06,
   sessions: 130000, productSessions: null, cartSessions: null, checkoutSessions: null, purchaseSessions: 800,
   noSessionPaid: 37, recurring: 0, withCustomer: 0, costOk: 837, yampiPaid: 837, attributed: 0,
+  pixRevenue: 0, pixFee: 0, pixCount: 0, cardRevenue: 0, cardFee: 0, cardCount: 0,
 }
 
 describe('mídia com o tributo do Meta: custo por pedido, MER e ROI', () => {

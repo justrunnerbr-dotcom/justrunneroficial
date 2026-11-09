@@ -138,6 +138,8 @@ export interface OrderEconomics {
   /** Frete pago pelo cliente neste pedido (0 quando foi frete grátis). */
   freightPaidByCustomer: number
   gatewayFee:   number
+  /** 'pix', 'credit_card', 'boleto'… — separa a taxa da Appmax por meio (botão "− Appmax" do Dashboard). */
+  paymentMethod: string | null
   yampiFee:     number
   /** true quando algum item entrou com custo zero por falta de cadastro. */
   missingCost:  boolean
@@ -212,6 +214,7 @@ export async function loadOrderEconomics(range: DateRange): Promise<{ orders: Or
       freightPaidByCustomer: shippingAmount > 0 ? shippingAmount : 0,
       // parcelas reais da transação Yampi (desde 16/10/2026); sem o dado, cai no default_installments
       gatewayFee:  computeGatewayFee(total, o.payment_method, settings, o.installments ?? undefined),
+      paymentMethod: o.payment_method,
       // a data manda na taxa: a Yampi mudou de 2,5% pra 1,5% em 01/08/2026
       yampiFee:    computeYampiFee(total, settings, o.created_at ?? undefined),
       missingCost: items.length === 0 || items.some(it => it.unitCost === null),
@@ -237,6 +240,7 @@ export async function loadOrderEconomics(range: DateRange): Promise<{ orders: Or
       freightCost: computeFreightCost(mo.shipping_amount, settings),
       freightPaidByCustomer: mo.shipping_amount > 0 ? mo.shipping_amount : 0,
       gatewayFee:  computeGatewayFee(total, mo.payment_method, settings, mo.installments),
+      paymentMethod: mo.payment_method,
       yampiFee:    0,
       missingCost: false,
       sessionId:   null,

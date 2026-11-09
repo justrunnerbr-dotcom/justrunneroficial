@@ -18,6 +18,7 @@ import { EvolutionChart } from './_components/dashboard/evolution-chart'
 import { ProductRank } from './_components/dashboard/product-rank'
 import { KpiValue } from './_components/dashboard/kpi-value'
 import { MetaTaxToggleButton, MetaTaxValue, MetaTaxBase } from './_components/dashboard/meta-tax'
+import { AppmaxToggleButton, AppmaxValue, AppmaxBase, AppmaxDetail, type AppmaxSplit } from './_components/dashboard/appmax-fee'
 import { ExportCsvButton } from './_components/dashboard/export-csv'
 import { formatKind, type ValueKind } from './_components/dashboard/format'
 import './_components/dashboard/dashboard.css'
@@ -63,6 +64,8 @@ interface Kpi {
   sub?:   string
   /** Sem comparação quando a referência não é equivalente (ex.: mídia de hoje por hora). */
   noCmp?: boolean
+  /** Receita paga: bruto + taxa da Appmax por meio, pro botão "− Appmax". */
+  appmax?: { cur: AppmaxSplit; base: AppmaxSplit }
 }
 
 function Delta({ cur, base, tone }: { cur: number; base: number; tone: Tone }) {
@@ -148,20 +151,24 @@ function KpiCard({ k, refLabel, qs, spark }: { k: Kpi; refLabel: string; qs: str
       <div className="dsh-kpi-v num">
         {k.value === null
           ? <span className="dsh-kpi-na">indisponível</span>
-          : isMeta ? <MetaTaxValue value={k.value} /> : <KpiValue value={k.value} kind={k.kind} />}
+          : isMeta ? <MetaTaxValue value={k.value} />
+          : k.appmax ? <AppmaxValue cur={k.appmax.cur} /> : <KpiValue value={k.value} kind={k.kind} />}
       </div>
-      {drill && <span className="dsh-kpi-arrow" aria-hidden="true">→</span>}
+      {drill && !k.appmax && <span className="dsh-kpi-arrow" aria-hidden="true">→</span>}
       <div className="dsh-kpi-f">
         {k.value !== null && (k.base !== null && !k.noCmp
           ? <Delta cur={k.value} base={k.base} tone={k.tone} />
           : <span className="dsh-dl dsh-dl-neu" title={k.noCmp ? 'Mídia e lucro não têm leitura por hora, então hoje ficam sem comparação' : undefined}>sem comparação</span>)}
+        {k.appmax && <span className="dsh-appmax-btn"><AppmaxToggleButton /></span>}
         {state === 'partial' && <span className="dsh-badge dsh-badge-partial">parcial</span>}
         {!k.sub && k.value !== null && k.base !== null && !k.noCmp && (isMeta
           ? <MetaTaxBase base={k.base} title={refLabel} />
+          : k.appmax ? <AppmaxBase base={k.appmax.base} title={refLabel} />
           : <span className="dsh-kpi-sub" title={refLabel}>ant. {formatKind(k.base, k.kind)}</span>)}
       </div>
       {state !== 'ok' && k.why && <div className="dsh-kpi-why" title={k.why}>{k.why}</div>}
       {k.sub && <div className="dsh-kpi-sub">{k.sub}</div>}
+      {k.appmax && <AppmaxDetail cur={k.appmax.cur} />}
       {spark && <Spark vals={spark} color={SPARK_COLOR[k.id] ?? 'var(--c1)'} />}
     </div>
   )
@@ -181,6 +188,14 @@ function Card({ title, help, right, cls, children }: { title: string; help?: Met
 
 // ── blocos ───────────────────────────────────────────────────────────────────
 
+function appmaxSplit(t: DashboardData['cur']): AppmaxSplit {
+  return {
+    gross: t.revenue,
+    pixRevenue: t.pixRevenue, pixFee: t.pixFee, pixCount: t.pixCount,
+    cardRevenue: t.cardRevenue, cardFee: t.cardFee, cardCount: t.cardCount,
+  }
+}
+
 function kpis(d: DashboardData): { title: string; items: Kpi[] }[] {
   const { cur, base: ref, curD, baseD: refD } = d
   const hourCut = d.compareNote !== null && d.singleDay
@@ -195,7 +210,7 @@ function kpis(d: DashboardData): { title: string; items: Kpi[] }[] {
     {
       title: 'Resultado',
       items: [
-        { id: 'receita', value: cur.revenue, base: ref.revenue, kind: 'brl', tone: 'up' },
+        { id: 'receita', value: cur.revenue, base: ref.revenue, kind: 'brl', tone: 'up', appmax: { cur: appmaxSplit(cur), base: appmaxSplit(ref) } },
         { id: 'lucro', value: cur.profit, base: ref.profit, kind: 'brl', tone: 'up', state: profitState, why: pp, noCmp: hourCut },
         { id: 'margem', value: curD.margin, base: refD.margin, kind: 'pct1', tone: 'up', state: profitState, why: pp ? 'herda o lucro parcial' : undefined, noCmp: hourCut },
         { id: 'pagos', value: cur.paid, base: ref.paid, kind: 'int', tone: 'up' },

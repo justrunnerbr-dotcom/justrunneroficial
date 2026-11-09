@@ -237,3 +237,10 @@
 .dsh-info > summary span { font-weight: 500; color: var(--muted); }
 .dsh-info-body { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .dsh-info-body .dsh-meta { margin-top: 0; }
+/* Botão "− Appmax" no card Receita paga (portado da JHF em 09/11/2026) */
+.dsh-appmax-btn { position: relative; z-index: 2; margin-left: auto; }
+.dsh-appmax-btn .dsh-tax { font-size: .62rem; padding: 2px 6px; }
+.dsh-kpi:hover, .dsh-kpi:focus-within { z-index: 6; }
+.dsh-appmax-pop { display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 100%; z-index: 20; pointer-events: none; background: var(--panel-solid); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .5); padding: 8px 10px; font-size: .76rem; color: var(--muted); line-height: 1.45; white-space: nowrap; }
+.dsh-appmax-pop span { display: block; }
+.dsh-kpi:hover .dsh-appmax-pop, .dsh-kpi:focus-within .dsh-appmax-pop { display: block; }

@@ -165,6 +165,13 @@ export interface Totals {
   costOk:           number
   yampiPaid:        number
   attributed:       number
+  /** Taxa da Appmax por meio (mesma fórmula do lucro, com as parcelas reais). */
+  pixRevenue:       number
+  pixFee:           number
+  pixCount:         number
+  cardRevenue:      number
+  cardFee:          number
+  cardCount:        number
 }
 
 export interface Derived {
@@ -207,8 +214,11 @@ export function derive(t: Totals): Derived {
 function orderTotals(orders: OrderEconomics[], firstPaid: Map<string, string>) {
   const sessions = new Set<string>()
   let revenue = 0, noSessionPaid = 0, recurring = 0, withCustomer = 0, costOk = 0, yampiPaid = 0, attributed = 0
+  let pixRevenue = 0, pixFee = 0, pixCount = 0, cardRevenue = 0, cardFee = 0, cardCount = 0
   for (const o of orders) {
     revenue += o.revenue
+    if (o.paymentMethod === 'pix') { pixRevenue += o.revenue; pixFee += o.gatewayFee; pixCount++ }
+    else { cardRevenue += o.revenue; cardFee += o.gatewayFee; cardCount++ }
     if (!o.missingCost) costOk++
     if (o.sessionId && !o.manual) sessions.add(o.sessionId)
     else noSessionPaid++
@@ -222,7 +232,10 @@ function orderTotals(orders: OrderEconomics[], firstPaid: Map<string, string>) {
       if (first && first < o.createdAt) recurring++
     }
   }
-  return { revenue, paid: orders.length, purchaseSessions: sessions.size, noSessionPaid, recurring, withCustomer, costOk, yampiPaid, attributed }
+  return {
+    revenue, paid: orders.length, purchaseSessions: sessions.size, noSessionPaid, recurring, withCustomer, costOk, yampiPaid, attributed,
+    pixRevenue, pixFee, pixCount, cardRevenue, cardFee, cardCount,
+  }
 }
 
 function scale(t: Totals, n: number): Totals {
@@ -234,6 +247,8 @@ function scale(t: Totals, n: number): Totals {
     cartSessions: s(t.cartSessions), checkoutSessions: s(t.checkoutSessions), purchaseSessions: t.purchaseSessions / n,
     noSessionPaid: t.noSessionPaid / n, recurring: t.recurring / n, withCustomer: t.withCustomer / n,
     costOk: t.costOk / n, yampiPaid: t.yampiPaid / n, attributed: t.attributed / n,
+    pixRevenue: t.pixRevenue / n, pixFee: t.pixFee / n, pixCount: t.pixCount / n,
+    cardRevenue: t.cardRevenue / n, cardFee: t.cardFee / n, cardCount: t.cardCount / n,
   }
 }
 
