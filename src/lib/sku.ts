@@ -6,6 +6,7 @@
 // JR-    catálogo principal  (scripts/sync-yampi-catalog.ts)
 // JROP-  Oferta Progressiva  (scripts/sync-yampi-oferta-progressiva.ts)
 // JRC-   Combos              (scripts/create-combos.ts + sync-yampi-combos.ts)
+// JROE-  Oferta Exclusiva    (R$ 147,90; título [JR OE])
 //
 // Prefixo novo TEM que ser adicionado em CATALOG_SKU_PREFIXES (src/lib/yampi/
 // so-products.ts), senão os pedidos dele são tratados como legado e nunca

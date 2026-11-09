@@ -274,7 +274,7 @@ export async function getRecoveredOrders(since: string, until: string): Promise<
 // grátis). Sem urgência inventada. Carrinho antigo com 1 óculos de R$ 297 (SKU JR-) leva pra loja, não pro
 // carrinho salvo: o carrinho salvo cobraria R$ 297 por 1, e o site hoje vende por R$ 175.
 export function buildWhatsappMessage(cart: AbandonedCart): string {
-  const limpa = (t: string) => t.replace(/^\[JR(?: OP| COMBO)?\]\s*/, '').replace(/\s{2,}/g, ' · ').trim()
+  const limpa = (t: string) => t.replace(/^\[JR(?: OP| OE| COMBO)?\]\s*/, '').replace(/\s{2,}/g, ' · ').trim()
   const first = cart.items[0]
   const extra = cart.items.length - 1
   const productText = extra > 0

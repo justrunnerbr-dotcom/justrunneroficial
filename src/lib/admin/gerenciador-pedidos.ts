@@ -196,8 +196,8 @@ export async function getPedidosLucro(
       externalId: u?.external_id ?? (o.manual ? 'manual' : ''),
       createdAt: o.createdAt,
       customer: name || (o.manual ? 'Pedido manual' : '—'),
-      // Prefixos de título da Just Runner ([JR], [JR OP], [JR COMBO]) saem da lista de itens.
-      items: o.items.map(i => `${i.quantity}× ${i.productTitle.replace(/^\[(JR(?: OP| COMBO)?|SO|OP|BUMP)\]\s*/i, '').replace(/\s+/g, ' ')}`).join(', '),
+      // Prefixos de título da Just Runner ([JR], [JR OP], [JR OE], [JR COMBO]) saem da lista de itens.
+      items: o.items.map(i => `${i.quantity}× ${i.productTitle.replace(/^\[(JR(?: OP| OE| COMBO)?|SO|OP|BUMP)\]\s*/i, '').replace(/\s+/g, ' ')}`).join(', '),
       revenue: o.revenue,
       productCost: o.productCost,
       freightCost: o.freightCost,

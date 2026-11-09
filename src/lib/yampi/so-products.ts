@@ -5,7 +5,8 @@
 // usam "JRC-" (scripts/create-combos.ts) — ver src/lib/cart-store.ts pros mesmos
 // prefixos. Prefixo novo de catálogo TEM que entrar aqui também: senão o pedido
 // é classificado como legado e nunca chega em `orders`/`customers` no admin.
-const CATALOG_SKU_PREFIXES = ['JR-', 'JROP-', 'JRC-']
+// JROE- = Oferta Exclusiva (R$ 147,90). Faltava até 09/11/2026: os pedidos dela não entravam no admin.
+const CATALOG_SKU_PREFIXES = ['JR-', 'JROP-', 'JRC-', 'JROE-']
 
 export function isSiteOficialOrder(items: Array<{ item_sku?: string }>): boolean {
   return items.some((item) => {
