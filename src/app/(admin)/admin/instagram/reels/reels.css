@@ -1,0 +1,8 @@
+/* Reels — reaproveita stories.css; aqui só o que muda (legenda e link). */
+.rls-cap { font-size: .8rem; line-height: 1.35; color: var(--fg); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rls-cap em { color: var(--muted); font-style: normal; }
+.rls-link { font-size: .74rem; font-weight: 650; color: var(--accent); text-decoration: none; }
+.rls-link:hover { text-decoration: underline; }
+.rls-live::before { background: #059669; }
+.sty-more-p form.rls-leg { flex-direction: column; }
+.rls-leg textarea, .rls-ta { font: inherit; font-size: .78rem; line-height: 1.4; color: var(--fg); background: var(--panel-solid); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; width: 100%; min-width: 0; resize: vertical; }
