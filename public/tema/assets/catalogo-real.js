@@ -61,9 +61,12 @@
   JR.opOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.op; };
   /* oe = item da Oferta Exclusiva (SKU JROE-, R$ 147,90, 26/10): mesma ideia, só nos modelos escolhidos pelo dono, sem desconto por quantidade. */
   JR.oeOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.oe; };
-  const versao = (l, op, oe) => (oe && l.oe) || (op && l.op) || l;
-  JR.priceOf = (slug, vIdx, lens, op, oe) => { const l = JR.realLens(slug, vIdx, lens); return l ? versao(l, op, oe).price : JR.PRICE.one; };
-  JR.skuOf = (slug, vIdx, lens, op, oe) => { const l = JR.realLens(slug, vIdx, lens) || {}; return versao(l, op, oe).sku; };
+  /* l3 = item do Compre 1 Leve 3 (SKU JRL3-, R$ 297 cada, 10/11): óculos com custo até R$ 35; a Yampi cobra 3 por R$ 297
+     pela regra "leve 3 pague 1" da categoria "Compre 1 Leve 3 Black" (painel). */
+  JR.l3Of = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.l3; };
+  const versao = (l, op, oe, l3) => (l3 && l.l3) || (oe && l.oe) || (op && l.op) || l;
+  JR.priceOf = (slug, vIdx, lens, op, oe, l3) => { const l = JR.realLens(slug, vIdx, lens); return l ? versao(l, op, oe, l3).price : JR.PRICE.one; };
+  JR.skuOf = (slug, vIdx, lens, op, oe, l3) => { const l = JR.realLens(slug, vIdx, lens) || {}; return versao(l, op, oe, l3).sku; };
   JR.minPrice = slug => { const p = JR.bySlug(slug); return Math.min(...p.variants.flatMap((v, i) => v.lenses.map(l => JR.priceOf(slug, i, l)))); };
   JR.isCombo = slug => !!(JR.bySlug(slug) || {}).combo;
   /* 19/10 (pedido do dono): preço de entrada R$ 175 em todo o site. Vende a versão JROP (Oferta Progressiva:
@@ -74,13 +77,16 @@
   /* Mesmas contas do src/lib/cart-store.ts: Leve 2 (JR-, cada 2º grátis, do mais caro pro mais barato; combo fora)
      + Oferta Progressiva (JROP-, desconto fixo de R$ 53 a partir de 2 óculos). */
   JR.cartTotals = items => {
-    const linhas = items.map(i => ({ ...i, price: JR.priceOf(i.slug, i.v, i.lens, i.op, i.oe) }));
+    const linhas = items.map(i => ({ ...i, price: JR.priceOf(i.slug, i.v, i.lens, i.op, i.oe, i.l3) }));
     const subtotal = linhas.reduce((a, i) => a + i.price * i.qty, 0);
-    const eleg = linhas.filter(i => !i.op && !i.oe && !JR.isCombo(i.slug) && i.price >= 90).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
+    const eleg = linhas.filter(i => !i.op && !i.oe && !i.l3 && !JR.isCombo(i.slug) && i.price >= 90).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
     let desconto = 0; for (let k = 1; k < eleg.length; k += 2) desconto += eleg[k];
-    const opQtd = linhas.filter(i => i.op && !i.oe).reduce((a, i) => a + i.qty, 0);
+    const opQtd = linhas.filter(i => i.op && !i.oe && !i.l3).reduce((a, i) => a + i.qty, 0);
     const descontoOp = opQtd >= 2 ? 53 : 0;
-    return { subtotal, desconto, descontoOp, total: subtotal - desconto - descontoOp, oculos: eleg.length, opQtd };
+    /* Compre 1 Leve 3: a cada 3 óculos JRL3- (R$ 297 cada), os 2 mais baratos saem grátis (igual à regra da Yampi). */
+    const l3p = linhas.filter(i => i.l3).flatMap(i => Array(i.qty).fill(i.price)).sort((a, b) => b - a);
+    let descontoL3 = 0; for (let k = 0; k < l3p.length; k++) if (k % 3 && k - (k % 3) + 2 < l3p.length) descontoL3 += l3p[k];
+    return { subtotal, desconto: desconto + descontoL3, descontoOp, descontoL3, total: subtotal - desconto - descontoOp - descontoL3, oculos: eleg.length, opQtd, l3Qtd: l3p.length };
   };
   /* Compatível com o código do tema: n óculos de R$ 297 no Leve 2 (pares pelo preço de 1). */
   JR.total = n => Math.ceil(n / 2) * JR.PRICE.one;
@@ -209,6 +215,16 @@
       const out = []; for (let k = 0; out.length < filas.reduce((a, f) => a + f.length, 0); k++) filas.forEach(f => f[k] && out.push(f[k]));
       return out;
     })(),
+    /* Compre 1 Leve 3 (10/11): toda cor × lente com versão JRL3-. Uma fila por modelo (as cores dele revezando) e os
+       modelos intercalados, pra não abrir com 8 Radar EV seguidos. */
+    l3: (() => {
+      const filas = naoCombo.map(p => {
+        const porCor = p.variants.map((v, i) => v.lenses.filter(x => (JR.REAL_LENS[p.slug][v.name].lenses[x] || {}).l3).map(x => [p.slug, i, x])).filter(f => f.length);
+        const f = []; for (let k = 0; porCor.some(c => c[k]); k++) porCor.forEach(c => c[k] && f.push(c[k])); return f;
+      }).filter(f => f.length);
+      const out = []; for (let k = 0; filas.some(f => f[k]); k++) filas.forEach(f => f[k] && out.push(f[k]));
+      return out;
+    })(),
     all: naoCombo.map(p => [p.slug, 0, p.variants[0].lenses[0]]),
     /* Mais vendidos (13/10): os 4 do banner escolhidos pelo usuário + os 8 seguintes do ranking de vendas
        da Yampi (src/lib/best-sellers.ts), cada um como armação/produto do site antigo. */
@@ -274,7 +290,7 @@
     });
   };
   JR.checkoutUrl = items => {
-    const lines = parJr(items).map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && versao(l, i.op, i.oe), q: i.qty }; }).filter(x => x.l);
+    const lines = parJr(items).map(i => { const l = JR.realLens(i.slug, i.v, i.lens); return { l: l && versao(l, i.op, i.oe, i.l3), q: i.qty }; }).filter(x => x.l);
     if (!lines.length) return null;
     const quiz = JR.quizLiberado(items) ? `&promocode=${encodeURIComponent(JR.quizCupom().code)}` : "";
     return `https://${REAL.checkoutDomain}/cart/items?` +
@@ -336,7 +352,7 @@
      que anúncios, Google e catálogo da Meta já usam). O Next (next.config.ts) entrega o .html do tema nesses endereços e aqui
      o tema lê o produto/categoria pelo caminho. No localhost (servidor simples) seguem os .html com ?p=…&c=…. */
   const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "exclusiva": "oferta-exclusiva", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "fat-cat": "fat-cat", "terraforma": "terraforma", "radarlock-path": "radarlock-path", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
+  const CAT_ALIAS = {"1311": "1311", "radar": "radar", "minute": "minute", "eye-jacket": "eye-jacket", "flak": "flak", "plantaris": "plantaris", "hstn": "hstn", "half-jacket": "half-jacket", "encoder": "encoder", "straight-jacket": "straight-jacket", "casual": "casual", "oferta": "oferta-progressiva", "exclusiva": "oferta-exclusiva", "l3": "compre-1-leve-3", "leve3": "combos", "ellipse": "ellipse", "holbrook": "holbrook", "m-frame": "m-frame", "monster-dog": "monster-dog", "soto": "soto", "sphaera": "sphaera", "sutro": "sutro", "fat-cat": "fat-cat", "terraforma": "terraforma", "radarlock-path": "radarlock-path", "leve2": "compre-1-leve-2", "lancamentos": "lancamentos", "mais-vendidos": "mais-vendidos"};   // cat do tema → slug de coleção do site antigo
   const ALIAS_CAT = Object.fromEntries(Object.entries(CAT_ALIAS).map(([c, s]) => [s, c]));
   const PAGINAS = { "faq.html": "/faq", "sobre.html": "/sobre", "contato.html": "/contato", "trocas-e-devolucoes.html": "/trocas-e-devolucoes",
     "politica-de-privacidade.html": "/politica-de-privacidade", "frete-e-entrega.html": "/frete-e-entrega", "colecao.html": "/colecao" };
@@ -346,8 +362,8 @@
     const q = new URLSearchParams(location.search);
     const m = location.pathname.match(/^\/(produto|colecao)\/([^/?#]+)/);
     if (m && m[1] === "produto") {
-      let ps = decodeURIComponent(m[2]); const op = /-op$/.test(ps), oe = /-oe$/.test(ps); if (op || oe) ps = ps.slice(0, -3);
-      for (const p of JR.PRODUCTS) { const i = p.variants.findIndex((v, k) => psDe(p.slug, k) === ps); if (i >= 0) { q.set("p", p.slug); q.set("c", i); if (op) q.set("op", "1"); if (oe) q.set("oe", "1"); q.set("_ok", "1"); break; } }
+      let ps = decodeURIComponent(m[2]); const op = /-op$/.test(ps), oe = /-oe$/.test(ps), l3 = /-l3$/.test(ps); if (op || oe || l3) ps = ps.slice(0, -3);
+      for (const p of JR.PRODUCTS) { const i = p.variants.findIndex((v, k) => psDe(p.slug, k) === ps); if (i >= 0) { q.set("p", p.slug); q.set("c", i); if (op) q.set("op", "1"); if (oe) q.set("oe", "1"); if (l3) q.set("l3", "1"); q.set("_ok", "1"); break; } }
       if (!q.get("_ok") && !LOCAL) location.replace("/colecao/compre-1-leve-2");   // produto que saiu do catálogo
     }
     if (m && m[1] === "colecao") {
@@ -366,7 +382,7 @@
       /* Eye Jacket e Eye Jacket Redux: várias cores no mesmo produto do site antigo → a cor vai no endereço */
       if (pr.variants.filter((v, k) => psDe(pr.slug, k) === ps).length > 1) extra.set("cor", pr.variants[c].name);
       if (q.get("l")) extra.set("l", q.get("l"));
-      return `/produto/${ps}${q.get("oe") === "1" ? "-oe" : q.get("op") === "1" ? "-op" : ""}${extra.toString() ? "?" + extra : ""}${h}`;
+      return `/produto/${ps}${q.get("l3") === "1" ? "-l3" : q.get("oe") === "1" ? "-oe" : q.get("op") === "1" ? "-op" : ""}${extra.toString() ? "?" + extra : ""}${h}`;
     }
     if (arq === "colecao.html") {
       if (q.get("lente")) return `/colecao/lente-${q.get("lente")}${h}`;

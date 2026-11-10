@@ -15,7 +15,7 @@
   { const l0 = JR.realLens(product.slug, state.v, state.lens) || {};
     /* 19/10: com o R$ 175 padrão, a Meta recebe o SKU e o preço que o cliente vê (JROP), igual ao AddToCart */
     const pedidoOp = qs.get("op") === "1" ? true : qs.get("op") === "0" ? false : undefined;
-    const vOp = qs.get("oe") === "1" && l0.oe ? l0.oe : JR.querOp && JR.querOp(product.slug, state.v, state.lens, pedidoOp) ? l0.op : null;
+    const vOp = qs.get("l3") === "1" && l0.l3 ? l0.l3 : qs.get("oe") === "1" && l0.oe ? l0.oe : JR.querOp && JR.querOp(product.slug, state.v, state.lens, pedidoOp) ? l0.op : null;
     JR.meta && JR.meta("ViewContent", { content_ids: [(vOp || l0).sku || product.slug], content_name: product.name, content_category: product.name, value: (vOp || l0).price || JR.PRICE.one, currency: "BRL", content_type: "product" }); }
 
   /* (a) título e subtítulo descritivos: "o que é?" + busca orgânica */
@@ -29,7 +29,7 @@
     : product.style === "acessorio" ? "Lentes extras para o seu Radar EV"
     : `Óculos de sol esportivo polarizado para ${USE || "treino e dia a dia"}`;
   /* Selo do topo conforme a oferta: combo, Oferta Progressiva (?op=1) ou Compre 1 Leve 2 */
-  { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("oe") === "1" ? "Oferta Exclusiva" : qs.get("op") === "1" && !JR.OP_PADRAO ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
+  { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("l3") === "1" ? "Compre 1 Leve 3" : qs.get("oe") === "1" ? "Oferta Exclusiva" : qs.get("op") === "1" && !JR.OP_PADRAO ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
 
   /* (b) confiança junto do botão: só sinais reais */
   $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 3x sem juros"], ["truck", "Frete grátis acima de R$ 200"]]
@@ -55,7 +55,19 @@
   const emOp = () => OP_PAGINA && !!JR.opOf(product.slug, state.v, state.lens);
   /* ?oe=1 (Oferta Exclusiva, 26/10): R$ 147,90 por óculos nas lentes que têm versão JROE; trocar pra lente fora da oferta volta ao preço normal. */
   const emOe = () => qs.get("oe") === "1" && !!(JR.oeOf && JR.oeOf(product.slug, state.v, state.lens));
+  /* ?l3=1 (Compre 1 Leve 3, 10/11): JRL3- a R$ 297, a Yampi fecha 3 por R$ 297; lente fora da seleção volta ao preço normal. */
+  const emL3 = () => qs.get("l3") === "1" && !!(JR.l3Of && JR.l3Of(product.slug, state.v, state.lens));
   function renderPreco() {
+    if (emL3()) {
+      const pr = JR.priceOf(product.slug, state.v, state.lens, false, false, true);
+      $("#p-price").innerHTML = `3 por ${brl(pr)}`;
+      $("#p-inst").innerHTML = "<b>Compre 1 Leve 3</b> · escolha 3 óculos da seleção, 2 saem grátis";
+      const sb = $("#sb-price"); if (sb) sb.innerHTML = `<strong>3 por ${brl(pr)}</strong><span>Compre 1 Leve 3</span>`;
+      $("#add").textContent = `Adicionar · ${brl(pr * (state.qty - 2 * Math.floor(state.qty / 3)))}`;
+      $("#add-pair").hidden = $(".pair-box").hidden = true;
+      { const h = $("#add-pair").nextElementSibling; if (h && h.classList.contains("helper")) h.hidden = true; }
+      return;
+    }
     if (emOe()) {
       const pr = JR.priceOf(product.slug, state.v, state.lens, false, true), de = JR.priceOf(product.slug, state.v, state.lens, true);
       $("#p-price").innerHTML = `${de > pr ? `<s class="de">${brl(de)}</s> ` : ""}${brl(pr)}`;
@@ -205,7 +217,7 @@
   });
   function syncUrl() {
     /* 16/10: no site no ar o endereço fica bonito (/produto/minute-preta?l=Azul) */
-    const rel = `produto.html?p=${product.slug}&c=${state.v}&l=${encodeURIComponent(state.lens)}${qs.get("oe") === "1" ? "&oe=1" : qs.get("op") === "1" ? "&op=1" : ""}`;
+    const rel = `produto.html?p=${product.slug}&c=${state.v}&l=${encodeURIComponent(state.lens)}${qs.get("l3") === "1" ? "&l3=1" : qs.get("oe") === "1" ? "&oe=1" : qs.get("op") === "1" ? "&op=1" : ""}`;
     const b = JR.bonita ? JR.bonita(rel) : rel;
     if (b !== rel) return history.replaceState(null, "", b);
     const u = new URL(location.href);
@@ -220,7 +232,7 @@
   };
   $("#qminus").onclick = () => setQty(state.qty - 1);
   $("#qplus").onclick = () => setQty(state.qty + 1);
-  $("#add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, state.qty, { op: emOp(), oe: emOe() });
+  $("#add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, state.qty, { op: emOp(), oe: emOe(), l3: emL3() });
   $("#add-pair").onclick = () => { JR.addToCart(product.slug, state.v, state.lens, 1, { open: false }); JR.openPicker(product.slug); };
 
   /* Benefício = situação real (brand-voice) */
@@ -267,7 +279,7 @@
       sb.classList.toggle("show", show); sb.setAttribute("aria-hidden", !show);
     }).observe($("#add-pair"));
   }
-  $("#sb-add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, 1, { op: emOp(), oe: emOe() });
+  $("#sb-add").onclick = () => JR.addToCart(product.slug, state.v, state.lens, 1, { op: emOp(), oe: emOe(), l3: emL3() });
 
   /* ---------- Escolha seu segundo óculos (cross-sell do Compre 1 Leve 2) ---------- */
   $("#pair-grid").innerHTML = JR.SHOWCASE.all.filter(([sl]) => sl !== product.slug).slice(0, 4)

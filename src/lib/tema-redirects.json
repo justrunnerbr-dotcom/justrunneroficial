@@ -14,6 +14,11 @@
    "cor": "Cinza",
    "oe": 1
   },
+  "1311-cinza-l3": {
+   "p": "1311",
+   "cor": "Cinza",
+   "l3": 1
+  },
   "dartboard": {
    "p": "dartboard",
    "cor": "Padrão"
@@ -27,6 +32,11 @@
    "p": "dartboard",
    "cor": "Padrão",
    "oe": 1
+  },
+  "dartboard-l3": {
+   "p": "dartboard",
+   "cor": "Padrão",
+   "l3": 1
   },
   "encoder": {
    "p": "encoder",
@@ -42,6 +52,11 @@
    "cor": "Padrão",
    "oe": 1
   },
+  "encoder-l3": {
+   "p": "encoder",
+   "cor": "Padrão",
+   "l3": 1
+  },
   "flak-branca": {
    "p": "flak",
    "cor": "Branca"
@@ -55,6 +70,11 @@
    "p": "flak",
    "cor": "Branca",
    "oe": 1
+  },
+  "flak-branca-l3": {
+   "p": "flak",
+   "cor": "Branca",
+   "l3": 1
   },
   "flak-preta": {
    "p": "flak",
@@ -70,6 +90,11 @@
    "cor": "Preta",
    "oe": 1
   },
+  "flak-preta-l3": {
+   "p": "flak",
+   "cor": "Preta",
+   "l3": 1
+  },
   "flak-cooper": {
    "p": "flak",
    "cor": "Cooper"
@@ -83,6 +108,11 @@
    "p": "flak",
    "cor": "Cooper",
    "oe": 1
+  },
+  "flak-cooper-l3": {
+   "p": "flak",
+   "cor": "Cooper",
+   "l3": 1
   },
   "half-jacket": {
    "p": "half-jacket",
@@ -98,6 +128,11 @@
    "cor": "Padrão",
    "oe": 1
   },
+  "half-jacket-l3": {
+   "p": "half-jacket",
+   "cor": "Padrão",
+   "l3": 1
+  },
   "hstn-cinza": {
    "p": "hstn",
    "cor": "Cinza"
@@ -111,6 +146,11 @@
    "p": "hstn",
    "cor": "Cinza",
    "oe": 1
+  },
+  "hstn-cinza-l3": {
+   "p": "hstn",
+   "cor": "Cinza",
+   "l3": 1
   },
   "hstn-cooper": {
    "p": "hstn",
@@ -126,6 +166,11 @@
    "cor": "Cooper",
    "oe": 1
   },
+  "hstn-cooper-l3": {
+   "p": "hstn",
+   "cor": "Cooper",
+   "l3": 1
+  },
   "hstn-preta": {
    "p": "hstn",
    "cor": "Preta"
@@ -139,6 +184,11 @@
    "p": "hstn",
    "cor": "Preta",
    "oe": 1
+  },
+  "hstn-preta-l3": {
+   "p": "hstn",
+   "cor": "Preta",
+   "l3": 1
   },
   "minute-azul": {
    "p": "minute",
@@ -154,6 +204,11 @@
    "cor": "Azul",
    "oe": 1
   },
+  "minute-azul-l3": {
+   "p": "minute",
+   "cor": "Azul",
+   "l3": 1
+  },
   "minute-branca": {
    "p": "minute",
    "cor": "Branca"
@@ -167,6 +222,11 @@
    "p": "minute",
    "cor": "Branca",
    "oe": 1
+  },
+  "minute-branca-l3": {
+   "p": "minute",
+   "cor": "Branca",
+   "l3": 1
   },
   "minute-cinza": {
    "p": "minute",
@@ -182,6 +242,11 @@
    "cor": "Cinza",
    "oe": 1
   },
+  "minute-cinza-l3": {
+   "p": "minute",
+   "cor": "Cinza",
+   "l3": 1
+  },
   "minute-cooper": {
    "p": "minute",
    "cor": "Cooper"
@@ -195,6 +260,11 @@
    "p": "minute",
    "cor": "Cooper",
    "oe": 1
+  },
+  "minute-cooper-l3": {
+   "p": "minute",
+   "cor": "Cooper",
+   "l3": 1
   },
   "minute-cristal": {
    "p": "minute",
@@ -210,6 +280,11 @@
    "cor": "Cristal",
    "oe": 1
   },
+  "minute-cristal-l3": {
+   "p": "minute",
+   "cor": "Cristal",
+   "l3": 1
+  },
   "minute-preta": {
    "p": "minute",
    "cor": "Preta"
@@ -223,6 +298,11 @@
    "p": "minute",
    "cor": "Preta",
    "oe": 1
+  },
+  "minute-preta-l3": {
+   "p": "minute",
+   "cor": "Preta",
+   "l3": 1
   },
   "minute-branca-kit-marrom": {
    "p": "minute",
@@ -238,6 +318,11 @@
    "cor": "Branca Kit Marrom",
    "oe": 1
   },
+  "minute-branca-kit-marrom-l3": {
+   "p": "minute",
+   "cor": "Branca Kit Marrom",
+   "l3": 1
+  },
   "minute-verde": {
    "p": "minute",
    "cor": "Verde"
@@ -251,6 +336,11 @@
    "p": "minute",
    "cor": "Verde",
    "oe": 1
+  },
+  "minute-verde-l3": {
+   "p": "minute",
+   "cor": "Verde",
+   "l3": 1
   },
   "plantaris-azul-escuro": {
    "p": "plantaris",
@@ -266,6 +356,11 @@
    "cor": "Azul Escuro",
    "oe": 1
   },
+  "plantaris-azul-escuro-l3": {
+   "p": "plantaris",
+   "cor": "Azul Escuro",
+   "l3": 1
+  },
   "plantaris-cinza": {
    "p": "plantaris",
    "cor": "Cinza"
@@ -279,6 +374,11 @@
    "p": "plantaris",
    "cor": "Cinza",
    "oe": 1
+  },
+  "plantaris-cinza-l3": {
+   "p": "plantaris",
+   "cor": "Cinza",
+   "l3": 1
   },
   "plantaris-matte-bone": {
    "p": "plantaris",
@@ -294,6 +394,11 @@
    "cor": "Matte Bone",
    "oe": 1
   },
+  "plantaris-matte-bone-l3": {
+   "p": "plantaris",
+   "cor": "Matte Bone",
+   "l3": 1
+  },
   "plantaris-podpah": {
    "p": "plantaris",
    "cor": "Podpah"
@@ -307,6 +412,11 @@
    "p": "plantaris",
    "cor": "Podpah",
    "oe": 1
+  },
+  "plantaris-podpah-l3": {
+   "p": "plantaris",
+   "cor": "Podpah",
+   "l3": 1
   },
   "plantaris-preta-haste-transparente": {
    "p": "plantaris",
@@ -322,6 +432,11 @@
    "cor": "Preta Haste Transparente",
    "oe": 1
   },
+  "plantaris-preta-haste-transparente-l3": {
+   "p": "plantaris",
+   "cor": "Preta Haste Transparente",
+   "l3": 1
+  },
   "plantaris-preta": {
    "p": "plantaris",
    "cor": "Preta"
@@ -335,6 +450,11 @@
    "p": "plantaris",
    "cor": "Preta",
    "oe": 1
+  },
+  "plantaris-preta-l3": {
+   "p": "plantaris",
+   "cor": "Preta",
+   "l3": 1
   },
   "plantaris-stonewash": {
    "p": "plantaris",
@@ -350,6 +470,11 @@
    "cor": "Stonewash",
    "oe": 1
   },
+  "plantaris-stonewash-l3": {
+   "p": "plantaris",
+   "cor": "Stonewash",
+   "l3": 1
+  },
   "plantaris-verde": {
    "p": "plantaris",
    "cor": "Verde"
@@ -363,6 +488,11 @@
    "p": "plantaris",
    "cor": "Verde",
    "oe": 1
+  },
+  "plantaris-verde-l3": {
+   "p": "plantaris",
+   "cor": "Verde",
+   "l3": 1
   },
   "plantaris-piet": {
    "p": "plantaris",
@@ -378,6 +508,11 @@
    "cor": "Piet",
    "oe": 1
   },
+  "plantaris-piet-l3": {
+   "p": "plantaris",
+   "cor": "Piet",
+   "l3": 1
+  },
   "radar-ev-bronze": {
    "p": "radar-ev",
    "cor": "Bronze"
@@ -391,6 +526,11 @@
    "p": "radar-ev",
    "cor": "Bronze",
    "oe": 1
+  },
+  "radar-ev-bronze-l3": {
+   "p": "radar-ev",
+   "cor": "Bronze",
+   "l3": 1
   },
   "radar-ev-cooper": {
    "p": "radar-ev",
@@ -406,6 +546,11 @@
    "cor": "Cooper",
    "oe": 1
   },
+  "radar-ev-cooper-l3": {
+   "p": "radar-ev",
+   "cor": "Cooper",
+   "l3": 1
+  },
   "radar-ev-laranja": {
    "p": "radar-ev",
    "cor": "Laranja"
@@ -419,6 +564,11 @@
    "p": "radar-ev",
    "cor": "Laranja",
    "oe": 1
+  },
+  "radar-ev-laranja-l3": {
+   "p": "radar-ev",
+   "cor": "Laranja",
+   "l3": 1
   },
   "radar-ev-piet": {
    "p": "radar-ev",
@@ -434,6 +584,11 @@
    "cor": "Piet",
    "oe": 1
   },
+  "radar-ev-piet-l3": {
+   "p": "radar-ev",
+   "cor": "Piet",
+   "l3": 1
+  },
   "radar-ev-preta": {
    "p": "radar-ev",
    "cor": "Preta"
@@ -447,6 +602,11 @@
    "p": "radar-ev",
    "cor": "Preta",
    "oe": 1
+  },
+  "radar-ev-preta-l3": {
+   "p": "radar-ev",
+   "cor": "Preta",
+   "l3": 1
   },
   "radar-verde": {
    "p": "radar-ev",
@@ -462,6 +622,11 @@
    "cor": "Verde",
    "oe": 1
   },
+  "radar-verde-l3": {
+   "p": "radar-ev",
+   "cor": "Verde",
+   "l3": 1
+  },
   "radar-ev-acrilico": {
    "p": "radar-ev",
    "cor": "Acrílico"
@@ -475,6 +640,11 @@
    "p": "radar-ev",
    "cor": "Acrílico",
    "oe": 1
+  },
+  "radar-ev-acrilico-l3": {
+   "p": "radar-ev",
+   "cor": "Acrílico",
+   "l3": 1
   },
   "radar-ev-branca": {
    "p": "radar-ev",
@@ -490,6 +660,11 @@
    "cor": "Branca",
    "oe": 1
   },
+  "radar-ev-branca-l3": {
+   "p": "radar-ev",
+   "cor": "Branca",
+   "l3": 1
+  },
   "radar-ev-cinza": {
    "p": "radar-ev",
    "cor": "Cinza"
@@ -503,6 +678,11 @@
    "p": "radar-ev",
    "cor": "Cinza",
    "oe": 1
+  },
+  "radar-ev-cinza-l3": {
+   "p": "radar-ev",
+   "cor": "Cinza",
+   "l3": 1
   },
   "radar-ev-neon": {
    "p": "radar-ev",
@@ -518,6 +698,11 @@
    "cor": "Neon",
    "oe": 1
   },
+  "radar-ev-neon-l3": {
+   "p": "radar-ev",
+   "cor": "Neon",
+   "l3": 1
+  },
   "radar-ev-transparente": {
    "p": "radar-ev",
    "cor": "Transparente"
@@ -531,6 +716,11 @@
    "p": "radar-ev",
    "cor": "Transparente",
    "oe": 1
+  },
+  "radar-ev-transparente-l3": {
+   "p": "radar-ev",
+   "cor": "Transparente",
+   "l3": 1
   },
   "radar-ev-thieves": {
    "p": "radar-ev",
@@ -546,6 +736,11 @@
    "cor": "Thieves Preta",
    "oe": 1
   },
+  "radar-ev-thieves-l3": {
+   "p": "radar-ev",
+   "cor": "Thieves Preta",
+   "l3": 1
+  },
   "radar-ev-thieves-branca": {
    "p": "radar-ev",
    "cor": "Thieves Branca"
@@ -559,6 +754,11 @@
    "p": "radar-ev",
    "cor": "Thieves Branca",
    "oe": 1
+  },
+  "radar-ev-thieves-branca-l3": {
+   "p": "radar-ev",
+   "cor": "Thieves Branca",
+   "l3": 1
   },
   "radar-ev-kit-de-lentes": {
    "p": "radar-ev-kit",
@@ -574,6 +774,11 @@
    "cor": "Padrão",
    "oe": 1
   },
+  "radar-ev-kit-de-lentes-l3": {
+   "p": "radar-ev-kit",
+   "cor": "Padrão",
+   "l3": 1
+  },
   "straight-jacket-cinza": {
    "p": "straight-jacket",
    "cor": "Cinza"
@@ -587,6 +792,11 @@
    "p": "straight-jacket",
    "cor": "Cinza",
    "oe": 1
+  },
+  "straight-jacket-cinza-l3": {
+   "p": "straight-jacket",
+   "cor": "Cinza",
+   "l3": 1
   },
   "straight-jacket-cooper": {
    "p": "straight-jacket",
@@ -602,6 +812,11 @@
    "cor": "Cooper",
    "oe": 1
   },
+  "straight-jacket-cooper-l3": {
+   "p": "straight-jacket",
+   "cor": "Cooper",
+   "l3": 1
+  },
   "straight-jacket-preta": {
    "p": "straight-jacket",
    "cor": "Preta"
@@ -615,6 +830,11 @@
    "p": "straight-jacket",
    "cor": "Preta",
    "oe": 1
+  },
+  "straight-jacket-preta-l3": {
+   "p": "straight-jacket",
+   "cor": "Preta",
+   "l3": 1
   },
   "straight-jacket-bege": {
    "p": "straight-jacket",
@@ -630,6 +850,11 @@
    "cor": "Bege",
    "oe": 1
   },
+  "straight-jacket-bege-l3": {
+   "p": "straight-jacket",
+   "cor": "Bege",
+   "l3": 1
+  },
   "eye-jacket-brain-dead": {
    "p": "eye-jacket",
    "cor": "Brain Dead"
@@ -643,6 +868,11 @@
    "p": "eye-jacket",
    "cor": "Brain Dead",
    "oe": 1
+  },
+  "eye-jacket-brain-dead-l3": {
+   "p": "eye-jacket",
+   "cor": "Brain Dead",
+   "l3": 1
   },
   "eye-jacket": {
    "p": "eye-jacket",
@@ -658,6 +888,11 @@
    "cor": "Cinza",
    "oe": 1
   },
+  "eye-jacket-l3": {
+   "p": "eye-jacket",
+   "cor": "Cinza",
+   "l3": 1
+  },
   "eye-jacket-flame": {
    "p": "eye-jacket",
    "cor": "Flame"
@@ -671,6 +906,11 @@
    "p": "eye-jacket",
    "cor": "Flame",
    "oe": 1
+  },
+  "eye-jacket-flame-l3": {
+   "p": "eye-jacket",
+   "cor": "Flame",
+   "l3": 1
   },
   "eye-jacket-cooper": {
    "p": "eye-jacket",
@@ -686,6 +926,11 @@
    "cor": "Cooper",
    "oe": 1
   },
+  "eye-jacket-cooper-l3": {
+   "p": "eye-jacket",
+   "cor": "Cooper",
+   "l3": 1
+  },
   "eye-jacket-redux": {
    "p": "eye-jacket-redux",
    "cor": "Branca"
@@ -699,6 +944,11 @@
    "p": "eye-jacket-redux",
    "cor": "Branca",
    "oe": 1
+  },
+  "eye-jacket-redux-l3": {
+   "p": "eye-jacket-redux",
+   "cor": "Branca",
+   "l3": 1
   },
   "ellipse-laranja": {
    "p": "ellipse",
@@ -714,6 +964,11 @@
    "cor": "Laranja",
    "oe": 1
   },
+  "ellipse-laranja-l3": {
+   "p": "ellipse",
+   "cor": "Laranja",
+   "l3": 1
+  },
   "ellipse-preta": {
    "p": "ellipse",
    "cor": "Preta"
@@ -727,6 +982,11 @@
    "p": "ellipse",
    "cor": "Preta",
    "oe": 1
+  },
+  "ellipse-preta-l3": {
+   "p": "ellipse",
+   "cor": "Preta",
+   "l3": 1
   },
   "holbrook-preta": {
    "p": "holbrook",
@@ -742,6 +1002,11 @@
    "cor": "Preta",
    "oe": 1
   },
+  "holbrook-preta-l3": {
+   "p": "holbrook",
+   "cor": "Preta",
+   "l3": 1
+  },
   "m-frame-preta": {
    "p": "m-frame",
    "cor": "Preta"
@@ -755,6 +1020,11 @@
    "p": "m-frame",
    "cor": "Preta",
    "oe": 1
+  },
+  "m-frame-preta-l3": {
+   "p": "m-frame",
+   "cor": "Preta",
+   "l3": 1
   },
   "m-frame-x-metal": {
    "p": "m-frame",
@@ -770,6 +1040,11 @@
    "cor": "X Metal",
    "oe": 1
   },
+  "m-frame-x-metal-l3": {
+   "p": "m-frame",
+   "cor": "X Metal",
+   "l3": 1
+  },
   "monster-dog-all-black": {
    "p": "monster-dog",
    "cor": "All Black"
@@ -783,6 +1058,11 @@
    "p": "monster-dog",
    "cor": "All Black",
    "oe": 1
+  },
+  "monster-dog-all-black-l3": {
+   "p": "monster-dog",
+   "cor": "All Black",
+   "l3": 1
   },
   "monster-dog-marrom": {
    "p": "monster-dog",
@@ -798,6 +1078,11 @@
    "cor": "Marrom",
    "oe": 1
   },
+  "monster-dog-marrom-l3": {
+   "p": "monster-dog",
+   "cor": "Marrom",
+   "l3": 1
+  },
   "plantaris-squared-bege": {
    "p": "plantaris-squared",
    "cor": "Bege"
@@ -811,6 +1096,11 @@
    "p": "plantaris-squared",
    "cor": "Bege",
    "oe": 1
+  },
+  "plantaris-squared-bege-l3": {
+   "p": "plantaris-squared",
+   "cor": "Bege",
+   "l3": 1
   },
   "plantaris-squared-cinza": {
    "p": "plantaris-squared",
@@ -826,6 +1116,11 @@
    "cor": "Cinza",
    "oe": 1
   },
+  "plantaris-squared-cinza-l3": {
+   "p": "plantaris-squared",
+   "cor": "Cinza",
+   "l3": 1
+  },
   "plantaris-squared-marrom": {
    "p": "plantaris-squared",
    "cor": "Marrom"
@@ -839,6 +1134,11 @@
    "p": "plantaris-squared",
    "cor": "Marrom",
    "oe": 1
+  },
+  "plantaris-squared-marrom-l3": {
+   "p": "plantaris-squared",
+   "cor": "Marrom",
+   "l3": 1
   },
   "plantaris-squared-preta": {
    "p": "plantaris-squared",
@@ -854,6 +1154,11 @@
    "cor": "Preta",
    "oe": 1
   },
+  "plantaris-squared-preta-l3": {
+   "p": "plantaris-squared",
+   "cor": "Preta",
+   "l3": 1
+  },
   "plantaris-squared-verde": {
    "p": "plantaris-squared",
    "cor": "Verde"
@@ -867,6 +1172,11 @@
    "p": "plantaris-squared",
    "cor": "Verde",
    "oe": 1
+  },
+  "plantaris-squared-verde-l3": {
+   "p": "plantaris-squared",
+   "cor": "Verde",
+   "l3": 1
   },
   "soto-azul": {
    "p": "soto",
@@ -882,6 +1192,11 @@
    "cor": "Azul",
    "oe": 1
   },
+  "soto-azul-l3": {
+   "p": "soto",
+   "cor": "Azul",
+   "l3": 1
+  },
   "soto-carbon": {
    "p": "soto",
    "cor": "Carbon"
@@ -895,6 +1210,11 @@
    "p": "soto",
    "cor": "Carbon",
    "oe": 1
+  },
+  "soto-carbon-l3": {
+   "p": "soto",
+   "cor": "Carbon",
+   "l3": 1
   },
   "soto-cristal": {
    "p": "soto",
@@ -910,6 +1230,11 @@
    "cor": "Cristal",
    "oe": 1
   },
+  "soto-cristal-l3": {
+   "p": "soto",
+   "cor": "Cristal",
+   "l3": 1
+  },
   "sphaera-preta": {
    "p": "sphaera",
    "cor": "Preta"
@@ -923,6 +1248,11 @@
    "p": "sphaera",
    "cor": "Preta",
    "oe": 1
+  },
+  "sphaera-preta-l3": {
+   "p": "sphaera",
+   "cor": "Preta",
+   "l3": 1
   },
   "sutro-preta": {
    "p": "sutro",
@@ -938,6 +1268,11 @@
    "cor": "Preta",
    "oe": 1
   },
+  "sutro-preta-l3": {
+   "p": "sutro",
+   "cor": "Preta",
+   "l3": 1
+  },
   "combo-1": {
    "p": "combo",
    "cor": "Combo 1"
@@ -951,6 +1286,11 @@
    "p": "combo",
    "cor": "Combo 1",
    "oe": 1
+  },
+  "combo-1-l3": {
+   "p": "combo",
+   "cor": "Combo 1",
+   "l3": 1
   },
   "combo-2": {
    "p": "combo",
@@ -966,6 +1306,11 @@
    "cor": "Combo 2",
    "oe": 1
   },
+  "combo-2-l3": {
+   "p": "combo",
+   "cor": "Combo 2",
+   "l3": 1
+  },
   "combo-5": {
    "p": "combo",
    "cor": "Combo 3"
@@ -979,6 +1324,11 @@
    "p": "combo",
    "cor": "Combo 3",
    "oe": 1
+  },
+  "combo-5-l3": {
+   "p": "combo",
+   "cor": "Combo 3",
+   "l3": 1
   },
   "combo-6": {
    "p": "combo",
@@ -994,6 +1344,11 @@
    "cor": "Combo 4",
    "oe": 1
   },
+  "combo-6-l3": {
+   "p": "combo",
+   "cor": "Combo 4",
+   "l3": 1
+  },
   "combo-7": {
    "p": "combo",
    "cor": "Combo 5"
@@ -1007,6 +1362,11 @@
    "p": "combo",
    "cor": "Combo 5",
    "oe": 1
+  },
+  "combo-7-l3": {
+   "p": "combo",
+   "cor": "Combo 5",
+   "l3": 1
   },
   "combo-9": {
    "p": "combo",
@@ -1022,6 +1382,11 @@
    "cor": "Combo 6",
    "oe": 1
   },
+  "combo-9-l3": {
+   "p": "combo",
+   "cor": "Combo 6",
+   "l3": 1
+  },
   "combo-10": {
    "p": "combo",
    "cor": "Combo 7"
@@ -1035,6 +1400,11 @@
    "p": "combo",
    "cor": "Combo 7",
    "oe": 1
+  },
+  "combo-10-l3": {
+   "p": "combo",
+   "cor": "Combo 7",
+   "l3": 1
   },
   "combo-8": {
    "p": "combo",
@@ -1050,6 +1420,11 @@
    "cor": "Combo 8",
    "oe": 1
   },
+  "combo-8-l3": {
+   "p": "combo",
+   "cor": "Combo 8",
+   "l3": 1
+  },
   "combo-11": {
    "p": "combo",
    "cor": "Combo 9"
@@ -1063,6 +1438,11 @@
    "p": "combo",
    "cor": "Combo 9",
    "oe": 1
+  },
+  "combo-11-l3": {
+   "p": "combo",
+   "cor": "Combo 9",
+   "l3": 1
   },
   "combo-12": {
    "p": "combo",
@@ -1078,6 +1458,11 @@
    "cor": "Combo 10",
    "oe": 1
   },
+  "combo-12-l3": {
+   "p": "combo",
+   "cor": "Combo 10",
+   "l3": 1
+  },
   "combo-13": {
    "p": "combo",
    "cor": "Combo 11"
@@ -1091,6 +1476,11 @@
    "p": "combo",
    "cor": "Combo 11",
    "oe": 1
+  },
+  "combo-13-l3": {
+   "p": "combo",
+   "cor": "Combo 11",
+   "l3": 1
   },
   "combo-14": {
    "p": "combo",
@@ -1106,6 +1496,11 @@
    "cor": "Combo 12",
    "oe": 1
   },
+  "combo-14-l3": {
+   "p": "combo",
+   "cor": "Combo 12",
+   "l3": 1
+  },
   "fat-cat-preta": {
    "p": "fat-cat",
    "cor": "Preta"
@@ -1119,6 +1514,11 @@
    "p": "fat-cat",
    "cor": "Preta",
    "oe": 1
+  },
+  "fat-cat-preta-l3": {
+   "p": "fat-cat",
+   "cor": "Preta",
+   "l3": 1
   },
   "terraforma-preta": {
    "p": "terraforma",
@@ -1134,6 +1534,11 @@
    "cor": "Preta",
    "oe": 1
   },
+  "terraforma-preta-l3": {
+   "p": "terraforma",
+   "cor": "Preta",
+   "l3": 1
+  },
   "terraforma-cinza-claro": {
    "p": "terraforma",
    "cor": "Cinza Claro"
@@ -1147,6 +1552,11 @@
    "p": "terraforma",
    "cor": "Cinza Claro",
    "oe": 1
+  },
+  "terraforma-cinza-claro-l3": {
+   "p": "terraforma",
+   "cor": "Cinza Claro",
+   "l3": 1
   },
   "terraforma-cinza-escuro": {
    "p": "terraforma",
@@ -1162,6 +1572,11 @@
    "cor": "Cinza Escuro",
    "oe": 1
   },
+  "terraforma-cinza-escuro-l3": {
+   "p": "terraforma",
+   "cor": "Cinza Escuro",
+   "l3": 1
+  },
   "radarlock-path-preta": {
    "p": "radarlock-path",
    "cor": "Preta"
@@ -1176,6 +1591,11 @@
    "cor": "Preta",
    "oe": 1
   },
+  "radarlock-path-preta-l3": {
+   "p": "radarlock-path",
+   "cor": "Preta",
+   "l3": 1
+  },
   "radarlock-path-silver": {
    "p": "radarlock-path",
    "cor": "Silver"
@@ -1189,6 +1609,11 @@
    "p": "radarlock-path",
    "cor": "Silver",
    "oe": 1
+  },
+  "radarlock-path-silver-l3": {
+   "p": "radarlock-path",
+   "cor": "Silver",
+   "l3": 1
   }
  },
  "colecoes": {
@@ -1216,6 +1641,7 @@
   "fat-cat": "colecao.html?cat=fat-cat",
   "terraforma": "colecao.html?cat=terraforma",
   "radarlock-path": "colecao.html?cat=radarlock-path",
+  "compre-1-leve-3": "colecao.html?cat=l3",
   "compre-1-leve-2": "colecao.html?cat=leve2",
   "lancamentos": "colecao.html?cat=lancamentos",
   "mais-vendidos": "colecao.html?cat=mais-vendidos"

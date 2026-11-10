@@ -58,12 +58,15 @@ const porVariante = {}   // variant id → [modelo, cor, lente] (pra resolver as
 const semFamilia = []
 const opPendente = []   // variações JROP (Oferta Progressiva): entram como preço alternativo da mesma cor/lente
 const oePendente = []   // variações JROE (Oferta Exclusiva, R$147,90, 26/10/2026): idem, campo `oe`
+const l3Pendente = []   // variações JRL3- (Compre 1 Leve 3 por R$297, 10/11/2026): idem, campo `l3`
 const modelosDaColecao = {}
 for (const p of ps) {
   const op = p.variants.filter(v => /^JROP-/.test(v.sku || '') && v.yampi_product_id)
   if (op.length) { opPendente.push({ p, op }); continue }
   const oe = p.variants.filter(v => /^JROE-/.test(v.sku || '') && v.yampi_product_id)
   if (oe.length) { oePendente.push({ p, op: oe }); continue }
+  const l3 = p.variants.filter(v => /^JRL3-/.test(v.sku || '') && v.yampi_product_id)
+  if (l3.length) { l3Pendente.push({ p, op: l3 }); continue }
   const jr = p.variants.filter(v => /^(JR|JRC)-/.test(v.sku || '') && v.yampi_product_id)
   if (!jr.length) continue
   const fam = FAMILIAS.find(([, pre]) => pre.some(x => p.name.toLowerCase().startsWith(x.toLowerCase())))
@@ -89,7 +92,7 @@ for (const p of ps) {
 }
 
 // Oferta Progressiva (op) e Exclusiva (oe): mesma família, cor e lente do produto JR (nomes iguais), com o id/preço do gêmeo.
-for (const [campo, pendentes] of [['op', opPendente], ['oe', oePendente]]) {
+for (const [campo, pendentes] of [['op', opPendente], ['oe', oePendente], ['l3', l3Pendente]]) {
 let opOk = 0; const opSem = []
 for (const { p, op } of pendentes) {
   const fam = FAMILIAS.find(([, pre]) => pre.some(x => p.name.toLowerCase().startsWith(x.toLowerCase())))
@@ -105,12 +108,12 @@ for (const { p, op } of pendentes) {
     if (alvo) { alvo[campo] = { id: String(v.yampi_product_id), sku: v.sku, price: v.price }; opOk++ } else opSem.push(`${p.name} · ${v.name}`)
   }
 }
-console.log(campo === 'op' ? 'oferta progressiva' : 'oferta exclusiva', ': ligadas', opOk, '| sem par JR:', opSem.length ? opSem.join(', ') : 'nenhuma')
+console.log({ op: 'oferta progressiva', oe: 'oferta exclusiva', l3: 'compre 1 leve 3' }[campo], ': ligadas', opOk, '| sem par JR:', opSem.length ? opSem.join(', ') : 'nenhuma')
 }
 
 // Categorias do menu, na ordem do site antigo (collections.position), com os modelos de cada uma.
 const colTodas = await get('collections?select=slug,name,position&order=position')
-const categorias = colTodas.filter(c => modelosDaColecao[c.slug] && !['combos', 'oferta-exclusiva'].includes(c.slug))
+const categorias = colTodas.filter(c => modelosDaColecao[c.slug] && !['combos', 'oferta-exclusiva', 'compre-1-leve-3'].includes(c.slug))
   .map(c => ({ slug: c.slug, nome: c.name === 'Hstn' ? 'HSTN' : c.name, modelos: [...modelosDaColecao[c.slug]] }))
 
 // Vitrines curadas do site no ar (mesmos arquivos que a home usa).
@@ -128,13 +131,13 @@ const vitrines = { lancamentos: resolve(ids(lancTxt)), leve2Destaque: resolve(id
 const redirProdutos = {}
 for (const [slug, m] of Object.entries(models)) {
   const cores = Object.keys(m.colors)
-  cores.forEach((cor, i) => { const ps = m.colors[cor].productSlug; redirProdutos[ps] ||= { p: slug, cor }; redirProdutos[ps + '-op'] ||= { p: slug, cor, op: 1 }; redirProdutos[ps + '-oe'] ||= { p: slug, cor, oe: 1 } })   // produto com várias cores (Eye Jacket, Redux) abre na 1ª
+  cores.forEach((cor, i) => { const ps = m.colors[cor].productSlug; redirProdutos[ps] ||= { p: slug, cor }; redirProdutos[ps + '-op'] ||= { p: slug, cor, op: 1 }; redirProdutos[ps + '-oe'] ||= { p: slug, cor, oe: 1 }; redirProdutos[ps + '-l3'] ||= { p: slug, cor, l3: 1 } })   // produto com várias cores (Eye Jacket, Redux) abre na 1ª
 }
 const colecoes = await get('collections?select=slug')
 const MODELO_DA_COLECAO = { radar: 'radar-ev', casual: 'dartboard', 'eye-jacket': 'eye-jacket', flak: 'flak', minute: 'minute', plantaris: 'plantaris', hstn: 'hstn',
   encoder: 'encoder', 'straight-jacket': 'straight-jacket', 'half-jacket': 'half-jacket', '1311': '1311', ellipse: 'ellipse', holbrook: 'holbrook',
   'm-frame': 'm-frame', 'monster-dog': 'monster-dog', soto: 'soto', sphaera: 'sphaera', sutro: 'sutro' }
-const CAT_DA_COLECAO = { 'compre-1-leve-2': 'leve2', 'oferta-progressiva': 'oferta', 'oferta-exclusiva': 'exclusiva', combos: 'leve3', lancamentos: 'lancamentos', 'mais-vendidos': 'mais-vendidos' }
+const CAT_DA_COLECAO = { 'compre-1-leve-2': 'leve2', 'oferta-progressiva': 'oferta', 'oferta-exclusiva': 'exclusiva', 'compre-1-leve-3': 'l3', combos: 'leve3', lancamentos: 'lancamentos', 'mais-vendidos': 'mais-vendidos' }
 const redirColecoes = {}
 for (const { slug } of colecoes) {
   if (CAT_DA_COLECAO[slug]) redirColecoes[slug] = `colecao.html?cat=${CAT_DA_COLECAO[slug]}`

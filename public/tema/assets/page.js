@@ -122,6 +122,8 @@
       "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg?v=bf1", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg?v=bf1", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidosTodos || JR.SHOWCASE.maisVendidos },
       /* 06/11 (análise de conversão): no celular usa o banner do desktop (mais baixo) pra os produtos subirem; mobile antigo: fotos/cat-banner-exclusiva-mobile.jpg */
       exclusiva:   { nome: "Oferta Exclusiva", banner: "fotos/cat-banner-exclusiva.jpg", alt: "Oferta Exclusiva: seu estilo por R$ 147,90. Modelos selecionados", lista: () => JR.SHOWCASE.exclusiva, oe: true },
+      /* 10/11 (Black): 3 por R$ 297 nos óculos com custo até R$ 35. Banner do dono (BANNERS/); no celular usa o desktop, igual à Oferta Exclusiva (06/11). */
+      l3:          { nome: "Compre 1 Leve 3", banner: "fotos/banner-c1l3-297.jpg", alt: "Compre 1 leve 3 por R$ 297. Escolha seus modelos", bannerInteiro: true, lista: () => JR.SHOWCASE.l3, l3: true },
       oferta:      { nome: "Oferta Progressiva", banner: "fotos/cat-banner-oferta.jpg", bannerMob: "fotos/cat-banner-oferta-mobile.jpg", alt: "Oferta Progressiva: 1 óculos por R$ 175, 2 por R$ 297", lista: () => JR.SHOWCASE.oferta, op: true }
     };
     Object.keys(JR.ESTILOS || {}).forEach(k => { if (CATS[k]) CATS[k].lista = () => JR.estiloLista(k); });
@@ -133,7 +135,7 @@
     if (cat) {
       document.title = `${cat.nome} | Just Runner`;
       $(".page-hero").outerHTML = cat.banner
-        ? `<section class="cat-banner"><a href="#col-grid" aria-label="Ver os óculos de ${cat.nome}"><picture>${cat.bannerMob ? `<source media="(max-width: 749px)" srcset="${cat.bannerMob}">` : ""}<img src="${cat.banner}" alt="${cat.alt}" fetchpriority="high"></picture></a></section>`
+        ? `<section class="cat-banner${cat.bannerInteiro ? " inteiro" : ""}"><a href="#col-grid" aria-label="Ver os óculos de ${cat.nome}"><picture>${cat.bannerMob ? `<source media="(max-width: 749px)" srcset="${cat.bannerMob}">` : ""}<img src="${cat.banner}" alt="${cat.alt}" fetchpriority="high"></picture></a></section>`
         : cat.lente
         ? `<section class="page-hero lente-hero"><div class="wrap"><span class="kicker">Lentes Mais Vendidas 🔥</span><h1 class="display h-lg">${cat.emoji} ${cat.nome}</h1><p class="lead">${cat.texto}</p><p class="lente-inclui">Inclui as lentes ${cat.inclui}.</p>
             <nav class="lente-chips" aria-label="Outras cores de lente">${JR.LENTES.map(l => `<a href="colecao.html?lente=${l.slug}"${l.slug === cat.lente ? ' aria-current="page"' : ""}><span aria-hidden="true">${l.emoji}</span>${l.nome.replace("Lente ", "")}</a>`).join("")}</nav></div></section>`
@@ -148,7 +150,7 @@
       if (sort === "az") list = [...list].sort((a, b) => JR.bySlug(a[0]).name.localeCompare(JR.bySlug(b[0]).name));
       if (sort === "lens") list = [...list].sort((a, b) => lensCount(b[0]) - lensCount(a[0]));
       $("#f-count").textContent = cat && cat.lente ? `${list.length} óculos com ${cat.nome.toLowerCase()} · mais vendidos primeiro` : `${list.length} óculos`;
-      $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, cat && cat.oe ? { oe: true } : cat && cat.op ? { op: true } : { lentes: true })).join("");
+      $("#col-grid").innerHTML = list.map(([sl, v, l]) => JR.card(sl, v, l, cat && cat.l3 ? { l3: true } : cat && cat.oe ? { oe: true } : cat && cat.op ? { op: true } : { lentes: true })).join("");
       JR.bindCards($("#col-grid"));
     };
     $("#f-sort").addEventListener("change", render);

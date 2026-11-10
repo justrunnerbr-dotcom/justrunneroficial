@@ -7,6 +7,7 @@
 // JROP-  Oferta Progressiva  (scripts/sync-yampi-oferta-progressiva.ts)
 // JRC-   Combos              (scripts/create-combos.ts + sync-yampi-combos.ts)
 // JROE-  Oferta Exclusiva    (R$ 147,90; título [JR OE])
+// JRL3-  Compre 1 Leve 3     (R$ 297 cada, 3 por R$ 297 pela regra da Yampi; título [JR L3])
 //
 // Prefixo novo TEM que ser adicionado em CATALOG_SKU_PREFIXES (src/lib/yampi/
 // so-products.ts), senão os pedidos dele são tratados como legado e nunca
