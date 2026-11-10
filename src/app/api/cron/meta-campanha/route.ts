@@ -542,7 +542,8 @@ export async function POST(request: Request) {
     teste?: boolean; ligar?: boolean; inicio?: string; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
     link: string; paginaId: string; instagramId?: string; texto: string; titulo: string
     // 10/11/2026: cada item é vídeo (videoId) OU estático já na conta (imageHash, vira link_data)
-    conjuntos: { nome: string; videos: { nome: string; videoId?: string; imageHash?: string }[] }[]
+    // adsetId (10/11): conjunto que já existe nesta campanha (ex.: anúncios recusados numa 1ª tentativa) — só cria os anúncios
+    conjuntos: { nome: string; adsetId?: string; videos: { nome: string; videoId?: string; imageHash?: string }[] }[]
   } } | null)?.conjuntosCopiaPublico
   if (ccp) {
     const num = /^\d+$/
@@ -597,7 +598,12 @@ export async function POST(request: Request) {
     for (const c of ccp.conjuntos) {
       const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
       try {
-        const adset = await postar(`act_${ccp.conta}/adsets`, {
+        if (c.adsetId) {
+          const ex = await ler(`${c.adsetId}?fields=campaign_id`) as { campaign_id?: string }
+          if (ex.campaign_id !== campanhaId) throw new Error('adsetId não pertence à campanha')
+          r.adsetId = c.adsetId
+        }
+        const adset = r.adsetId ? { id: r.adsetId } : await postar(`act_${ccp.conta}/adsets`, {
           name: c.nome, campaign_id: campanhaId, daily_budget: Math.round(ccp.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
           targeting: modelo.targeting, promoted_object: modelo.promoted_object, optimization_goal: modelo.optimization_goal,
           billing_event: modelo.billing_event, attribution_spec: modelo.attribution_spec, status: nasceAtivo ? 'ACTIVE' : 'PAUSED',
