@@ -38,11 +38,29 @@ window.JR = window.JR || {};
     : `<a href="${h}" class="${c || ""}">${t}</a>`;
   const logo = `<a href="/" class="logo" aria-label="Just Runner — início"><img src="fotos/logo.png" alt="Just Runner" width="96" height="38"></a>`;
 
+  /* 10/11 (pedido do dono, igual à barra da JHF em modo diário): barra de contagem no topo. O prazo é a próxima
+     meia-noite de Brasília, o MESMO para todo visitante (nunca por sessão/localStorage), e renova sozinho na virada.
+     O texto diz "condições de hoje até a meia-noite", não "termina": a oferta segue enquanto o dono não avisar.
+     Desligar: JR.PROMO.ativo = false. */
+  JR.PROMO = { ativo: true, titulo: "Black November Just Runner", link: "colecao.html?cat=l3" };
+  const meiaNoiteBRT = () => {
+    const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).split("-").map(Number);
+    return new Date(`${new Date(Date.UTC(hoje[0], hoje[1] - 1, hoje[2] + 1)).toISOString().slice(0, 10)}T00:00:00-03:00`).getTime();
+  };
+  const tickPromo = () => {
+    const box = document.getElementById("promo-cd-blocos"); if (!box) return;
+    const t = Math.max(0, Math.floor((meiaNoiteBRT() - Date.now()) / 1000));
+    const v = { h: Math.floor(t / 3600), min: Math.floor((t % 3600) / 60), seg: t % 60 };
+    box.querySelectorAll("[data-pc]").forEach(el => { el.textContent = String(v[el.dataset.pc]).padStart(2, "0"); });
+  };
+  setInterval(tickPromo, 1000);
+
   function renderHeader() {
     const el = $("#header");
     if (!el) return;
     el.outerHTML = `
       <!-- 06/11: a pedido do dono, a faixa preta "Compre 1, Leve 2 por R$ 297" saiu e a faixa de benefícios (marquee) subiu pro topo, acima do logo. -->
+      ${JR.PROMO && JR.PROMO.ativo ? `<a class="promo-cd" href="${JR.PROMO.link}" aria-label="${JR.PROMO.titulo}"><span class="pc-tit">${JR.PROMO.titulo}</span><span class="pc-sub">Condições de hoje até a meia-noite</span><span class="pc-blocos" id="promo-cd-blocos">${["h", "min", "seg"].map(r => `<span class="pc-b"><b data-pc="${r}">--</b><i>${r}</i></span>`).join("")}</span></a>` : ""}
       <div class="marquee" aria-label="Benefícios"><div class="marquee-track">${Array(2).fill([
         ["truck", "Frete grátis acima de R$ 200"], ["card", "Parcele em até 3x sem juros"], ["swap", "Troca em até 7 dias"],
         ["polar", "Lentes polarizadas UV400"], ["lock", "Checkout seguro Yampi"]
@@ -370,7 +388,7 @@ window.JR = window.JR || {};
 
   /* ---------- Boot ---------- */
   JR.boot = function () {
-    renderHeader(); renderFooter(); renderCart(); bindCards(); reveal();
+    renderHeader(); tickPromo(); renderFooter(); renderCart(); bindCards(); reveal();
     const header = $("#site-header");
     const onScroll = () => header.classList.toggle("scrolled", scrollY > 10);
     addEventListener("scroll", onScroll, { passive: true }); onScroll();

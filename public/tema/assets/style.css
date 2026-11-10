@@ -147,6 +147,20 @@ input { font: inherit; }
 .mobile-nav a { padding: 14px 4px; border-bottom: 1px solid var(--line); font-weight: 600; }
 
 /* Faixa rolante de benefícios */
+/* 10/11: barra de contagem da Black (JR.PROMO em app.js), mesmo desenho da barra da JHF: título + blocos brancos */
+.promo-cd { display: flex; align-items: center; justify-content: center; gap: 14px; background: #0b0c0e; color: #fff; padding: 8px var(--gutter); text-decoration: none; border-bottom: 2px solid #d4ff3a; }
+.promo-cd .pc-tit { font: 800 14px/1.1 var(--body); letter-spacing: .04em; text-transform: uppercase; color: #d4ff3a; }
+.promo-cd .pc-sub { font: 600 12px/1.1 var(--body); opacity: .8; }
+.promo-cd .pc-blocos { display: flex; gap: 6px; }
+.promo-cd .pc-b { background: #fff; border-radius: 8px; min-width: 38px; padding: 3px 0 2px; text-align: center; line-height: 1.1; }
+.promo-cd .pc-b b { display: block; font: 800 15px/1.1 var(--body); color: #111; font-variant-numeric: tabular-nums; }
+.promo-cd .pc-b i { display: block; font: 600 8.5px/1.1 var(--body); color: #888; text-transform: uppercase; letter-spacing: .03em; font-style: normal; }
+@media (max-width: 600px) {
+  .promo-cd { gap: 8px; padding: 7px 10px; }
+  .promo-cd .pc-tit { font-size: 11px; max-width: 120px; }
+  .promo-cd .pc-sub { display: none; }
+  .promo-cd .pc-b { min-width: 30px; }
+}
 .marquee { background: #fff; color: #0b0c0e; overflow: hidden; border-bottom: 1px solid var(--paper-line); }
 .marquee-track { display: flex; width: max-content; animation: marquee 28s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
