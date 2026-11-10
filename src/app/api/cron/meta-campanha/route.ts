@@ -541,7 +541,8 @@ export async function POST(request: Request) {
   const ccp = (corpo as { conjuntosCopiaPublico?: {
     teste?: boolean; ligar?: boolean; inicio?: string; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string; orcamentoDia: number
     link: string; paginaId: string; instagramId?: string; texto: string; titulo: string
-    conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
+    // 10/11/2026: cada item é vídeo (videoId) OU estático já na conta (imageHash, vira link_data)
+    conjuntos: { nome: string; videos: { nome: string; videoId?: string; imageHash?: string }[] }[]
   } } | null)?.conjuntosCopiaPublico
   if (ccp) {
     const num = /^\d+$/
@@ -549,7 +550,7 @@ export async function POST(request: Request) {
       || (ccp.inicio !== undefined && !(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-03:00$/.test(ccp.inicio) && new Date(ccp.inicio).getTime() > Date.now()))
       || !/^https:\/\/justrunner\.com\.br\//.test(ccp.link) || !(ccp.orcamentoDia >= 6 && ccp.orcamentoDia <= 500) || !ccp.texto || !ccp.titulo
       || !Array.isArray(ccp.conjuntos) || !ccp.conjuntos.length || ccp.conjuntos.length > 10
-      || ccp.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
+      || ccp.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || (v.imageHash ? !/^[0-9a-f]{32}$/.test(v.imageHash) || !!v.videoId : !num.test(v.videoId ?? ''))))) {
       return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
     }
     if (!cfg.accounts.some(a => a.id === ccp.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
@@ -573,7 +574,7 @@ export async function POST(request: Request) {
     if (!dof) problemas.push('anúncio modelo sem degrees_of_freedom_spec')
     const capas: Record<string, string> = {}
     for (const v of ccp.conjuntos.flatMap(c => c.videos)) {
-      if (capas[v.videoId]) continue
+      if (!v.videoId || capas[v.videoId]) continue
       try { capas[v.videoId] = await getVideoThumbnail(cfg, v.videoId) } catch (e) { problemas.push(`${v.nome}: ${e instanceof Error ? e.message : 'sem capa (vídeo ainda processando?)'}`) }
     }
     if (ccp.teste || problemas.length) {
@@ -603,16 +604,20 @@ export async function POST(request: Request) {
         for (const v of c.videos) {
           const a: (typeof r.anuncios)[number] = { nome: v.nome }
           try {
-            if (!criativos[v.videoId]) {
-              criativos[v.videoId] = String((await postar(`act_${ccp.conta}/adcreatives`, {
+            const chave = v.videoId ?? v.imageHash!
+            if (!criativos[chave]) {
+              const midia = v.videoId
+                ? { video_data: { video_id: v.videoId, image_url: capas[v.videoId], message: ccp.texto, title: ccp.titulo,
+                    call_to_action: { type: 'SHOP_NOW', value: { link: ccp.link } } } }
+                : { link_data: { image_hash: v.imageHash, link: ccp.link, message: ccp.texto, name: ccp.titulo,
+                    call_to_action: { type: 'SHOP_NOW', value: { link: ccp.link } } } }
+              criativos[chave] = String((await postar(`act_${ccp.conta}/adcreatives`, {
                 name: v.nome,
-                object_story_spec: { page_id: ccp.paginaId, ...(ccp.instagramId ? { instagram_user_id: ccp.instagramId } : {}),
-                  video_data: { video_id: v.videoId, image_url: capas[v.videoId], message: ccp.texto, title: ccp.titulo,
-                    call_to_action: { type: 'SHOP_NOW', value: { link: ccp.link } } } },
+                object_story_spec: { page_id: ccp.paginaId, ...(ccp.instagramId ? { instagram_user_id: ccp.instagramId } : {}), ...midia },
                 degrees_of_freedom_spec: dof, url_tags: urlTags,
               })).id)
             }
-            a.adId = String((await postar(`act_${ccp.conta}/ads`, { name: v.nome, adset_id: r.adsetId, creative: { creative_id: criativos[v.videoId] }, status: nasceAtivo ? 'ACTIVE' : 'PAUSED' })).id)
+            a.adId = String((await postar(`act_${ccp.conta}/ads`, { name: v.nome, adset_id: r.adsetId, creative: { creative_id: criativos[chave] }, status: nasceAtivo ? 'ACTIVE' : 'PAUSED' })).id)
           } catch (e) { a.erro = e instanceof Error ? e.message : 'erro' }
           r.anuncios.push(a)
         }
