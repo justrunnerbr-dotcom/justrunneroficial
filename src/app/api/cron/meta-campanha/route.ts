@@ -570,6 +570,9 @@ export async function POST(request: Request) {
     if (camp.daily_budget) problemas.push('campanha é CBO (orçamento na campanha); este modo é pra ABO')
     const modelo = await ler(`${ccp.modeloConjunto}?fields=name,targeting,promoted_object,optimization_goal,billing_event,attribution_spec,destination_type`) as Record<string, unknown> & { name?: string }
     if (!modelo.targeting || !modelo.promoted_object) problemas.push('conjunto modelo sem público/pixel')
+    // 10/11/2026: a Meta passou a recusar explore_home sem explore ("Você também deve selecionar o Explorar do Instagram").
+    { const t = modelo.targeting as { instagram_positions?: string[] } | undefined
+      if (t?.instagram_positions?.includes('explore_home') && !t.instagram_positions.includes('explore')) t.instagram_positions = [...t.instagram_positions, 'explore'] }
     const dof = (await ler(`${ccp.modeloAnuncio}?fields=creative{degrees_of_freedom_spec}`) as { creative?: { degrees_of_freedom_spec?: unknown } }).creative?.degrees_of_freedom_spec
     if (!dof) problemas.push('anúncio modelo sem degrees_of_freedom_spec')
     const capas: Record<string, string> = {}
