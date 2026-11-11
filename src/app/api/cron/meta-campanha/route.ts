@@ -219,6 +219,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: res.every(r => !r.erro), videos: res })
   }
 
+  // subirImagens (10/11/2026): artes PNG de pasta pública do Drive pra biblioteca de imagens da conta.
+  // Devolve o hash de cada uma (usado como imageHash no conjuntosCopiaPublico).
+  const si2 = (corpo as { subirImagens?: { conta: string; imagens: { nome: string; driveId: string }[] } } | null)?.subirImagens
+  if (si2) {
+    if (!/^\d+$/.test(si2.conta) || !Array.isArray(si2.imagens) || !si2.imagens.length || si2.imagens.length > 20
+      || si2.imagens.some(v => !v.nome || !/^[A-Za-z0-9_-]{20,60}$/.test(v.driveId))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === si2.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const res = []
+    for (const v of si2.imagens) {
+      const r: Record<string, unknown> = { nome: v.nome }
+      try {
+        const b = await baixarArte(v.driveId)
+        r.hash = (await uploadAdImage(cfg, { base64: b.toString('base64'), filename: `${v.nome}.png`, accountId: si2.conta })).hash
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      res.push(r)
+    }
+    return NextResponse.json({ ok: res.every(r => !r.erro), imagens: res })
+  }
+
   // agendarInicio (16/10/2026): data/hora de início (start_time) dos conjuntos de UMA campanha. Lê de volta.
   const ai = (corpo as { agendarInicio?: { campanhaId: string; ids: string[]; inicio: string } } | null)?.agendarInicio
   if (ai) {
