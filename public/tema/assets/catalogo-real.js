@@ -56,7 +56,7 @@
   /* ---------- Preço: igual ao site no ar ----------
      JR- R$ 297 com "Leve 2 pelo preço de 1": entre os óculos elegíveis, do mais caro pro mais barato, cada 2º sai grátis
      (src/lib/cart-store.ts, discount). Combos JRC- (3 óculos por R$ 327) não entram nessa conta. */
-  JR.PRICE = { one: 297, pair: 297, combo: 327, freeShipping: 200, installments: 12 };
+  JR.PRICE = { one: 237, pair: 237, combo: 327, freeShipping: 200, installments: 12 };
   /* op = item da Oferta Progressiva (SKU JROP-, R$ 175): mesma cor/lente, outro id na Yampi. */
   JR.opOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.op; };
   /* oe = item da Oferta Exclusiva (SKU JROE-, R$ 147,90, 26/10): mesma ideia, só nos modelos escolhidos pelo dono, sem desconto por quantidade. */
@@ -72,7 +72,9 @@
   /* 19/10 (pedido do dono): preço de entrada R$ 175 em todo o site. Vende a versão JROP (Oferta Progressiva:
      1 por R$ 175, 2 por R$ 297 com R$ 53 de desconto aplicado pela Yampi). Combos e Kit de Lentes (sem JROP) seguem no preço deles.
      Desligar = false volta tudo pro R$ 297 com 2º grátis. "pedido" = escolha explícita (true/false); sem ela vale o padrão. */
-  JR.OP_PADRAO = true;
+  /* 11/11 (pedido do dono): oferta passa a ser COMPRE 1 LEVE 2 POR R$ 237 — JR- a R$ 237 com o 2º grátis ("2X1" da Yampi).
+     O R$ 175 (JROP) saiu do padrão; a categoria Oferta Progressiva saiu do menu. */
+  JR.OP_PADRAO = false;
   JR.querOp = (slug, vIdx, lens, pedido) => !!((pedido ?? JR.OP_PADRAO) && !JR.isCombo(slug) && JR.opOf(slug, vIdx, lens));
   /* Mesmas contas do src/lib/cart-store.ts: Leve 2 (JR-, cada 2º grátis, do mais caro pro mais barato; combo fora)
      + Oferta Progressiva (JROP-, desconto fixo de R$ 53 a partir de 2 óculos). */

@@ -68,8 +68,11 @@ export async function GET() {
   // é o que o cliente paga levando 1, e é o preço que a página mostra. O item do
   // feed continua com o SKU JR- (os product sets dos anúncios filtram por "JR-"),
   // mas com esse preço de venda (decisão do dono em 26/10/2026; antes ia R$297).
+  // 11/11/2026: oferta virou "Compre 1 Leve 2 por R$237" (JR- a R$237, 2º grátis) e o
+  // site não vende mais o R$175 → o feed volta a usar o preço do próprio JR-.
+  const USAR_PRECO_OP = false
   const precoUm = new Map<string, number>()
-  for (const p of products) {
+  for (const p of USAR_PRECO_OP ? products : []) {
     if (p.collection?.slug !== 'oferta-progressiva' || !p.slug.endsWith('-op')) continue
     for (const v of p.variants) if (v.price > 0) precoUm.set(`${p.slug.slice(0, -3)}|${v.name}`, v.price)
   }
