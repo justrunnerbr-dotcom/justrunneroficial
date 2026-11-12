@@ -41,6 +41,13 @@
       else fetch("/api/track", { method: "POST", body: corpo, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(() => {});
     } catch (e) { /* nunca quebra a página */ }
   };
+  /* 12/11: Live View do admin conta quem fez algo nos últimos 10 min; quem fica lendo ou vendo vídeo sumia da contagem.
+     Com a aba visível, avisa a cada 1 min que a pessoa continua aqui (só atualiza o Live View, não vira evento). Para depois de 30 min. */
+  if (!local) {
+    let batidas = 0;
+    const bate = () => { if (document.visibilityState === "visible" && batidas++ < 30) JR.track("heartbeat", { product_slug: (location.pathname.match(/^\/produto\/([^/?#]+)/) || [])[1] }); };
+    setInterval(bate, 60000);
+  }
   const registra = (name, data) => {
     const tipo = NOMES[name]; if (!tipo) return;
     const d = data || {};

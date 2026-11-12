@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { CATALOGO_PATH } from '@/lib/tema/catalogo'
 import { revalidatePath } from 'next/cache'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getYampiCredentialsFromEnv, syncVariantNameToYampi, logYampiCatalogSync } from '@/lib/yampi/catalog'
@@ -73,6 +74,7 @@ export async function PATCH(
   if (productSlug)    revalidatePath(`/produto/${productSlug}`)
   if (collectionSlug) revalidatePath(`/colecao/${collectionSlug}`)
   revalidatePath('/')
+  revalidatePath(CATALOGO_PATH)   // site (tema novo) lê o catálogo daqui
 
   const nameChanged = 'name' in updates && previousName !== null && previousName !== data.name
   let yampi: { attempted: boolean; ok?: boolean; error?: string } = { attempted: false }

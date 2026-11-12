@@ -1,6 +1,8 @@
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getMetaLiveSpend } from '@/lib/admin/meta-ads'
 import { ROTINAS } from '@/lib/admin/rotinas'
+import { getStories } from '@/lib/ig/stories'
+import { getFila as getFilaReels } from '@/lib/ig/feed'
 
 // Alertas proativos.
 //
@@ -181,17 +183,46 @@ async function checarRotinas(): Promise<Alerta[]> {
   return alertas
 }
 
+// ── Fila do Instagram acabando ───────────────────────────────────────────────
+// Stories e reels saem sozinhos da fila; quando o material acaba, o perfil
+// para de postar sem aviso. Avisa com 3 dias de folga (crítico com 1 dia).
+async function checarFilaInstagram(): Promise<Alerta[]> {
+  const [stories, reels] = await Promise.all([getStories().catch(() => null), getFilaReels().catch(() => null)])
+  const alertas: Alerta[] = []
+  const agora = Date.now()
+  for (const [nome, itens, link] of [['stories', stories, '/admin/instagram/stories'], ['reels', reels, '/admin/instagram/reels']] as const) {
+    if (!itens) continue
+    const futuros = itens.filter(i => (i.status === 'aprovado' || i.status === 'rascunho') && new Date(i.agendadoPara).getTime() > agora)
+    const ultimo = futuros.reduce((m, i) => Math.max(m, new Date(i.agendadoPara).getTime()), 0)
+    // Fila nunca usada (nada publicado): não é alerta.
+    if (!futuros.length && !itens.some(i => i.status === 'publicado')) continue
+    const dias = ultimo ? (ultimo - agora) / 86_400_000 : 0
+    if (dias >= 3) continue
+    const rascunhos = futuros.filter(i => i.status === 'rascunho').length
+    alertas.push({
+      chave:      `fila-ig-${nome}`,
+      severidade: dias < 1 ? 'critico' : 'atencao',
+      titulo:     futuros.length ? `Fila de ${nome} do Instagram acaba em ${dias < 1 ? 'menos de 1 dia' : `${Math.floor(dias)} dia(s)`}` : `Fila de ${nome} do Instagram vazia`,
+      detalhe:    futuros.length
+        ? `Último ${nome === 'reels' ? 'reel' : 'story'} agendado: ${new Date(ultimo).toLocaleString('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}${rascunhos ? ` (${rascunhos} ainda em rascunho, não saem sem aprovação)` : ''}. Depois disso o perfil para de postar. Mandar material novo e montar a fila em ${link}.`
+        : `Nada agendado: o perfil parou de postar ${nome}. Mandar material novo e montar a fila em ${link}.`,
+    })
+  }
+  return alertas
+}
+
 export async function detectarAlertas(): Promise<Alerta[]> {
   const agora   = agoraSP()
   const hoje    = isoDiaSP(agora)
   const amanhaD = new Date(agora); amanhaD.setDate(amanhaD.getDate() + 1)
   const amanha  = isoDiaSP(amanhaD)
 
-  const [fontes, ritmo, rotinas] = await Promise.all([
+  const [fontes, ritmo, rotinas, filaIg] = await Promise.all([
     checarFontes(hoje, amanha),
     checarRitmo(hoje, amanha),
     checarRotinas(),
+    checarFilaInstagram(),
   ])
 
-  return [...rotinas, ...fontes, ...ritmo]
+  return [...rotinas, ...fontes, ...ritmo, ...filaIg]
 }

@@ -119,9 +119,7 @@ const categorias = colTodas.filter(c => modelosDaColecao[c.slug] && !['combos', 
 // Vitrines curadas do site no ar (mesmos arquivos que a home usa).
 const ids = txt => [...txt.matchAll(/variantId: '([0-9a-f-]{36})'/g)].map(x => x[1])
 const lancTxt = readFileSync(join(ROOT, 'src/lib/lancamentos.ts'), 'utf8')
-const homeTxt = readFileSync(join(ROOT, 'src/app/(store)/page.tsx'), 'utf8')
-const c1l2Ini = homeTxt.indexOf('= [', homeTxt.indexOf('C1L2_FEATURED_FIRST'))
-const c1l2Bloco = homeTxt.slice(c1l2Ini, homeTxt.indexOf('\n]', c1l2Ini))
+const c1l2Bloco = readFileSync(join(ROOT, 'src/lib/c1l2-destaques.ts'), 'utf8')   // mesma lista da home (12/11: saiu de page.tsx)
 const resolve = list => list.map(id => porVariante[id]).filter(Boolean)
 const vitrines = { lancamentos: resolve(ids(lancTxt)), leve2Destaque: resolve(ids(c1l2Bloco)) }
 

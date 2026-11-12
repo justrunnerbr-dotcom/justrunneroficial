@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { CATALOGO_PATH } from '@/lib/tema/catalogo'
 import { revalidatePath } from 'next/cache'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { getYampiCredentialsFromEnv, syncVariantNamesForProduct, logYampiCatalogSync } from '@/lib/yampi/catalog'
@@ -51,6 +52,7 @@ export async function PATCH(
   revalidatePath(`/produto/${data.slug}`)
   if (data.collection?.slug) revalidatePath(`/colecao/${data.collection.slug}`)
   revalidatePath('/')
+  revalidatePath(CATALOGO_PATH)   // site (tema novo) lê o catálogo daqui
 
   const nameChanged = 'name' in updates && previousName !== null && previousName !== data.name
   let yampi: { attempted: boolean; synced?: number; failed?: number; errors?: string[] } = { attempted: false }
@@ -121,5 +123,6 @@ export async function DELETE(
   const { error } = await db.from('products').delete().eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  revalidatePath(CATALOGO_PATH)   // site (tema novo) lê o catálogo daqui
   return NextResponse.json({ ok: true })
 }

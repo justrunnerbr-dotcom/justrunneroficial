@@ -10,6 +10,7 @@ import { SocialProof } from '@/components/store/social-proof'
 import { resolveVariantImages } from '@/lib/product-image'
 import { sortByBestSellers } from '@/lib/best-sellers'
 import { LANCAMENTOS, LANCAMENTOS_BANNER, LANCAMENTOS_SLUG, LANCAMENTOS_TITLE } from '@/lib/lancamentos'
+import { C1L2_DESTAQUES } from '@/lib/c1l2-destaques'
 import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/store/json-ld'
 
 export const revalidate = 300
@@ -51,15 +52,8 @@ export function buildOrderedCards(
     .filter((p): p is NonNullable<typeof p> => p !== undefined)
 }
 
-// Primeiros cards da grade "Leve 2 pelo preço de 1" — curadoria manual pedida
-// pelo usuário (2026-10-06, substitui a de 2026-07-08).
-const C1L2_FEATURED_FIRST: OrderEntry[] = [
-  { collectionSlug: 'radar', productSlug: 'radar-ev-preta', variantId: 'b4438460-26dc-433f-a45e-c8876f7ffa08' }, // Lente Ruby
-  { collectionSlug: 'minute', productSlug: 'minute-preta', variantId: 'a8b304d0-c7b6-42de-a5ba-695df1e3389b' }, // Lente Preta
-  { collectionSlug: 'flak', productSlug: 'flak-preta', variantId: '18140f3d-94e8-4459-af13-8895162167b7' }, // Lente Espelhada
-  { collectionSlug: 'eye-jacket', productSlug: 'eye-jacket-redux', variantId: '0d909e84-cc78-4e4a-ad17-4a76f54e2f9b' }, // Cinza · Lente Preta
-  { collectionSlug: 'plantaris', productSlug: 'plantaris-podpah', variantId: '40430303-69ef-4390-9e93-72fbc3ed2350' }, // Único
-]
+// Lista em src/lib/c1l2-destaques.ts (também usada pelo catálogo do tema novo).
+const C1L2_FEATURED_FIRST: OrderEntry[] = C1L2_DESTAQUES
 
 // ── Seções de categoria única (Home) — 1 por categoria real da Just Runner ────
 // Mostra a categoria inteira (todos os produtos, direto de `collectionsWithProducts`).

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { CATALOGO_PATH } from '@/lib/tema/catalogo'
+import { revalidatePath } from 'next/cache'
 import { getAdminSupabase } from '@/lib/admin-client'
 import { checkAuth } from '@/lib/admin/auth'
 
@@ -54,5 +56,6 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  revalidatePath(CATALOGO_PATH)   // site (tema novo) lê o catálogo daqui
   return NextResponse.json(data, { status: 201 })
 }

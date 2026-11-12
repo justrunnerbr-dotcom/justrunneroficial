@@ -39,6 +39,17 @@ export async function POST(request: Request) {
     const geoLat     = geoLatRaw ? parseFloat(geoLatRaw) : null
     const geoLon     = geoLonRaw ? parseFloat(geoLonRaw) : null
 
+    // 12/11/2026: "ainda estou aqui" do tema (a cada 1 min com a aba visível).
+    // Só renova o Live View: não vira evento nem sessão (não infla o funil).
+    if (event_type === 'heartbeat') {
+      await db.from('live_visitors').upsert(
+        { session_id, store_id: STORE_ID, page: page || null, product_slug: product_slug || null, device: device || null, last_seen: now,
+          geo_country: geoCountry, geo_state: geoState, geo_city: geoCity, geo_lat: geoLat, geo_lon: geoLon },
+        { onConflict: 'session_id' },
+      )
+      return NextResponse.json({ ok: true })
+    }
+
     await Promise.allSettled([
       db.from('events').insert({
         store_id: STORE_ID,
