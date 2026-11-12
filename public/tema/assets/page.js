@@ -116,7 +116,7 @@
       trail:     { nome: "Trail",        banner: "fotos/banner-cat-trail.jpg",     alt: "Trail" },
       beach:     { nome: "Beach Sports", banner: "fotos/banner-cat-beach.jpg",     alt: "Beach sports: leveza e conforto para jogar na areia" },
       lifestyle: { nome: "Lifestyle",    banner: "fotos/banner-cat-lifestyle.jpg", alt: "Lifestyle" },
-      leve2:       { nome: "Compre 1 Leve 2", banner: "fotos/hero-atual.jpg", alt: "Compre 1 Leve 2", lista: () => JR.SHOWCASE.leve2 },
+      leve2:       { nome: "Compre 1 Leve 2", banner: "fotos/banner-c1l2-237.jpg", alt: "Compre 1, leve 2: adicione 2 óculos no carrinho e o desconto entra automaticamente", bannerInteiro: true,   /* 12/11: hero-atual dizia R$ 297 */ lista: () => JR.SHOWCASE.leve2 },
       leve3:       { nome: "Combos", banner: "fotos/cat-banner-combos.jpg?v=bf1", bannerMob: "fotos/cat-banner-combos-mobile.jpg?v=bf1", alt: "Compre 1 Leve 3: trail, run e bike", lista: () => JR.SHOWCASE.combos },
       lancamentos: { nome: "Lançamentos", banner: "fotos/cat-banner-lancamentos.jpg?v=bf1", alt: "Lançamentos Just Runner", lista: () => JR.SHOWCASE.lancamentos },
       "mais-vendidos": { nome: "Mais vendidos", banner: "fotos/cat-banner-mais-vendidos.jpg?v=bf1", bannerMob: "fotos/cat-banner-mais-vendidos-mobile.jpg?v=bf1", alt: "Mais vendidos: os favoritos da Just Runner", lista: () => JR.SHOWCASE.maisVendidosTodos || JR.SHOWCASE.maisVendidos },
