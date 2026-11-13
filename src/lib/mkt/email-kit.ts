@@ -72,6 +72,8 @@ export type BlocoEmail =
   | { tipo: 'cupom'; codigo: string; texto: string; validade?: string }
   | { tipo: 'avaliacoes'; titulo?: string; itens: AvaliacaoEmail[]; link?: string }
   | { tipo: 'beneficios'; itens?: { titulo: string; texto: string }[] }
+  /** depoimentos em texto com 5 estrelas (os mesmos do carrinho do site / checkout da Yampi) */
+  | { tipo: 'depoimentos'; titulo?: string; itens: { texto: string; nome: string }[] }
   | { tipo: 'imagem'; src: string; alt: string; link?: string; /** versão do celular (troca por @media; sem <style>, fica a de computador) */ srcMobile?: string; semMargem?: boolean }
   | { tipo: 'divisor' }
   | { tipo: 'espaco'; altura?: number }
@@ -238,6 +240,20 @@ ${itens.map(a => `<!--[if mso]><td width="178" valign="top"><![endif]-->${card(a
 ${b.link ? linha(`<p style="margin:0;text-align:center;font-family:${FONTE_TEXTO};font-size:13px;"><a href="${escUrl(b.link)}" target="_blank" style="color:${COR.titulo};font-weight:700;">Ver mais avaliações</a></p>`, '6px 32px 10px') : ''}`
 }
 
+function depoimentos(b: Extract<BlocoEmail, { tipo: 'depoimentos' }>): string {
+  const itens = b.itens.slice(0, 3)
+  if (!itens.length) return ''
+  const card = (d: { texto: string; nome: string }) => linha(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${COR.borda};border-radius:14px;background:#ffffff;">
+  <tr><td style="padding:16px 18px;">
+    <p style="margin:0 0 6px;font-size:15px;line-height:1;color:#f5a623;letter-spacing:2px;" aria-label="5 de 5 estrelas">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+    <p style="margin:0;font-family:${FONTE_TEXTO};font-size:14px;line-height:1.5;color:${COR.texto};">&ldquo;${esc(d.texto)}&rdquo;</p>
+    <p style="margin:8px 0 0;font-family:${FONTE_TITULO};font-size:13px;font-weight:700;color:${COR.titulo};">${esc(d.nome)}</p>
+  </td></tr>
+</table>`, '6px 32px')
+  return `${titulo({ tipo: 'titulo', sobretitulo: 'avaliações de clientes', texto: b.titulo ?? 'Quem corre de Just Runner' })}
+${itens.map(card).join('\n')}`
+}
+
 const BENEFICIOS_PADRAO = [
   // mesmos fatos da barra do site (public/tema/assets/app.js)
   { titulo: 'Frete grátis', texto: 'acima de R$ 200' },
@@ -297,6 +313,7 @@ function bloco(b: BlocoEmail): string {
     case 'cupom': return cupom(b)
     case 'avaliacoes': return avaliacoes(b)
     case 'beneficios': return beneficios(b)
+    case 'depoimentos': return depoimentos(b)
     case 'imagem': return imagem(b)
     case 'divisor': return linha(`<div style="height:1px;line-height:1px;background:${COR.borda};">&nbsp;</div>`, '14px 32px')
     case 'espaco': return `<tr><td style="background:${COR.card};height:${b.altura ?? 16}px;line-height:${b.altura ?? 16}px;font-size:0;">&nbsp;</td></tr>`
