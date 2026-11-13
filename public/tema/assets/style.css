@@ -1879,3 +1879,8 @@ body:has(.drawer.open) .toast.show { transform: translate(-50%, 0); }
   .cm-selos { font-size: 11px; margin-top: 0; }
 }
 @media (max-width: 760px) and (max-height: 700px) { .cm-label { display: none; } .cm-aval-ver { display: none; } .cm-aval-txt { min-height: 0; } .cm-selos { display: none; } }
+
+/* 13/11: caixa do carrinho só com o frete grátis (texto em cima, maior) */
+.cm-frete.cm-frete-so { font-size: 14px; color: var(--paper-ink, #0b0c0e); }
+.cm-frete.cm-frete-so b { color: #157a3c; }
+.cm-frete-so + .track { margin: 8px 0 2px; }

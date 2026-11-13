@@ -218,9 +218,9 @@ window.JR = window.JR || {};
       : tt.l3Qtd ? `✅ <b>Compre 1 Leve 3</b> aplicado: 3 óculos por R$ 297`
       : tt.opQtd === 1 && segundo > 0 ? `🎁 Adicione mais 1 por só <b>${brl(segundo)}</b> e ganhe <b>frete grátis</b>`
       : tt.opQtd === 2 ? `✅ <b>2 óculos por R$ 297</b> aplicado: sai ${brl(148.5)} cada` : tt.opQtd > 2 ? `✅ <b>2 por R$ 297</b> aplicado` : tt.oculos % 2 === 1 ? `🎁 Escolha mais 1: o <b>2º óculos sai grátis</b> (2 por R$ 237)` : tt.oculos ? `✅ <b>Compre 1 Leve 2</b> aplicado: 2 óculos por R$ 237` : temOe ? `🔥 <b>Oferta Exclusiva</b>: R$ 147,90 cada` : "";
-    const frete = free ? `🚚 <b>Frete grátis</b> garantido` : `🚚 Faltam <b>${brl(falta)}</b> para frete grátis`;
+    const frete = free ? `🚚 Você ganhou <b>frete grátis</b>!` : `🚚 Faltam <b>${brl(falta)}</b> para ganhar <b>frete grátis</b>`;
     meter.hidden = !n;
-    meter.innerHTML = n ? `<div class="cm-box">${promo ? `<div class="cm-promo">${promo}</div>` : ""}<div class="track"><i style="width:${Math.min(100, (total / JR.PRICE.freeShipping) * 100)}%"></i></div><div class="cm-frete">${frete}</div></div>` : "";
+    meter.innerHTML = n ? `<div class="cm-box">${/* 13/11 (print do dono): caixa só com o frete grátis, sem a linha da promoção */ ""}<div class="cm-frete cm-frete-so">${frete}</div><div class="track"><i style="width:${Math.min(100, (total / JR.PRICE.freeShipping) * 100)}%"></i></div></div>` : "";
     if (!n) {
       body.innerHTML = `<div class="empty">${JR.glasses({ shape: "shield", lens: "Espelhada" })}<p>Seu carrinho está vazio.<br>Escolha. Coloque. Vá.</p><a class="btn btn-dark" href="/#oferta">Escolher meu estilo ${JR.icon.arrow}</a></div>`;
       foot.innerHTML = "";
