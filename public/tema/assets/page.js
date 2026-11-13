@@ -51,7 +51,7 @@
     /* Arte do hero: ícone da página em anel de lente + 3 sinais reais (desenha uma vez ao abrir) */
     const ART = {
       faq: ["help", [["lens", "Lentes"], ["card", "Parcele em até 3x sem juros"], ["swap", "Trocas"]]],
-      frete: ["truck", [["check", "Grátis acima de R$ 297"], ["search", "Rastreio"], ["pin", "Todo o Brasil"]]],
+      frete: ["truck", [["check", "Grátis acima de R$ 267"], ["search", "Rastreio"], ["pin", "Todo o Brasil"]]],
       trocas: ["swap", [["clock", "7 dias corridos"], ["box", "Sem uso"], ["chat", "WhatsApp"]]],
       contato: ["chat", [["clock", C.hours], ["mail", "E-mail"], ["insta", "@" + C.instagram]]],
       privacidade: ["lock", [["shield", "Não vendemos dados"], ["cookie", "Cookies"], ["eye", "Seus direitos"]]]
@@ -173,7 +173,7 @@
         ["Como funciona o checkout?", "Ao clicar em \"Comprar Agora\" ou \"Finalizar Compra\", você será redirecionado para nossa plataforma de pagamento segura (Yampi), onde poderá pagar com cartão de crédito, boleto ou Pix."]
       ],
       "Frete e entrega": [
-        ["O frete é grátis?", "Sim, em compras acima de R$ 297. Abaixo disso, o frete é calculado no checkout."],
+        ["O frete é grátis?", "Sim, em compras acima de R$ 267. Abaixo disso, o frete é calculado no checkout."],
         ["Qual o prazo de entrega?", JR.POLICY.deliveryLong],
         ["Como rastrear meu pedido?", "Você receberá o código de rastreio por e-mail e WhatsApp assim que o pedido for despachado."]
       ],

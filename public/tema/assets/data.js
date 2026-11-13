@@ -3,7 +3,7 @@
    definido em catalogo-real.js (R$ 297, Leve 2 pelo preço de 1; combos 3 por R$ 327). */
 window.JR = window.JR || {};
 
-JR.PRICE = { one: 175, pair: 297, freeShipping: 297, installments: 6 };
+JR.PRICE = { one: 175, pair: 297, freeShipping: 267, installments: 6 };
 
 /* Política oficial: fonte .agents/rules/product-catalog-rules.md (prazo do FAQ). Todo texto de prazo/troca lê daqui. */
 JR.POLICY = {

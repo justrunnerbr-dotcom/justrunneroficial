@@ -56,7 +56,7 @@
   /* ---------- Preço: igual ao site no ar ----------
      JR- R$ 297 com "Leve 2 pelo preço de 1": entre os óculos elegíveis, do mais caro pro mais barato, cada 2º sai grátis
      (src/lib/cart-store.ts, discount). Combos JRC- (3 óculos por R$ 327) não entram nessa conta. */
-  JR.PRICE = { one: 237, pair: 237, combo: 327, freeShipping: 297, installments: 12 };
+  JR.PRICE = { one: 237, pair: 237, combo: 327, freeShipping: 267, installments: 12 };
   /* op = item da Oferta Progressiva (SKU JROP-, R$ 175): mesma cor/lente, outro id na Yampi. */
   JR.opOf = (slug, vIdx, lens) => { const l = JR.realLens(slug, vIdx, lens); return l && l.op; };
   /* oe = item da Oferta Exclusiva (SKU JROE-, R$ 147,90, 26/10): mesma ideia, só nos modelos escolhidos pelo dono, sem desconto por quantidade. */

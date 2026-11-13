@@ -130,7 +130,7 @@
 
   /* Redução de risco: só sinais reais e documentados */
   $("#risk-grid").innerHTML = [
-    ["truck", "Frete grátis acima de R$ 297", "Envio com código de rastreio."],
+    ["truck", "Frete grátis acima de R$ 267", "Envio com código de rastreio."],
     ["swap", "Troca em até 7 dias", "Não gostou de como ficou? Dá para trocar em até 7 dias corridos após o recebimento (produto sem uso, na embalagem)."],
     ["lock", "Checkout seguro Yampi", "Parcele em até 3x sem juros no cartão."],
     ["chat", "Dúvida antes de comprar?", "Fale com a gente no WhatsApp."]

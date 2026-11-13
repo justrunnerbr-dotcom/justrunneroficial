@@ -32,7 +32,7 @@
   { const tg = document.querySelector(".tag-row .tag"); if (tg) tg.textContent = product.combo ? "Combo · 3 óculos" : qs.get("l3") === "1" ? "Compre 1 Leve 3" : qs.get("oe") === "1" ? "Oferta Exclusiva" : qs.get("op") === "1" && !JR.OP_PADRAO ? "Oferta Progressiva" : "Compre 1 Leve 2"; }
 
   /* (b) confiança junto do botão: só sinais reais */
-  $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 3x sem juros"], ["truck", "Frete grátis acima de R$ 297"]]
+  $("#buy-trust").innerHTML = [["swap", `Troca em até ${JR.POLICY.exchangeDays} dias`], ["lock", "Checkout seguro Yampi"], ["card", "Parcele em até 3x sem juros"], ["truck", "Frete grátis acima de R$ 267"]]
     .map(([i, t]) => `<li>${icon[i]}${t}</li>`).join("");
 
   /* (c) prazo por CEP: mostra a política oficial; valor exato do frete fica no checkout */
@@ -46,7 +46,7 @@
       const out = $("#cep-out");
       if (d.length !== 8) { out.textContent = "Digite os 8 números do CEP."; out.className = "err"; cepIn.focus(); return; }
       out.className = "";
-      out.innerHTML = `<b>${JR.POLICY.delivery}</b> após a confirmação do pagamento. Frete grátis acima de R$ 297; abaixo disso, o valor aparece no checkout.`;
+      out.innerHTML = `<b>${JR.POLICY.delivery}</b> após a confirmação do pagamento. Frete grátis acima de R$ 267; abaixo disso, o valor aparece no checkout.`;
     });
   }
   /* Preço do site no ar (12/10): o da cor e lente escolhidas, com o "de" riscado; combos são kit de 3 a R$ 327.

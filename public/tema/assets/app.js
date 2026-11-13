@@ -62,7 +62,7 @@ window.JR = window.JR || {};
       <!-- 06/11: a pedido do dono, a faixa preta "Compre 1, Leve 2 por R$ 297" saiu e a faixa de benefícios (marquee) subiu pro topo, acima do logo. -->
       ${JR.PROMO && JR.PROMO.ativo ? `<a class="promo-cd" href="${JR.PROMO.link}" aria-label="${JR.PROMO.titulo}"><span class="pc-tit">${JR.PROMO.titulo}</span><span class="pc-sub">Condições de hoje até a meia-noite</span><span class="pc-blocos" id="promo-cd-blocos">${["h", "min", "seg"].map(r => `<span class="pc-b"><b data-pc="${r}">--</b><i>${r}</i></span>`).join("")}</span></a>` : ""}
       <div class="marquee" aria-label="Benefícios"><div class="marquee-track">${Array(2).fill([
-        ["truck", "Frete grátis acima de R$ 297"], ["card", "Parcele em até 3x sem juros"], ["swap", "Troca em até 7 dias"],
+        ["truck", "Frete grátis acima de R$ 267"], ["card", "Parcele em até 3x sem juros"], ["swap", "Troca em até 7 dias"],
         ["polar", "Lentes polarizadas UV400"], ["lock", "Checkout seguro Yampi"]
       ].map(([i, t]) => `<span>${JR.icon[i]}${t}</span>`).join("")).join("")}</div></div>
       <header class="header" id="site-header">
@@ -201,7 +201,7 @@ window.JR = window.JR || {};
     /* Mesma conta do site no ar (JR.cartTotals): 2º óculos grátis, combos fora da promoção. */
     const tt = JR.cartTotals ? JR.cartTotals(cart) : { subtotal: n * JR.PRICE.one, total: JR.total(n), desconto: n * JR.PRICE.one - JR.total(n), oculos: n };
     const full = tt.subtotal, total = tt.total, saving = tt.desconto;
-    const free = total >= JR.PRICE.freeShipping;   /* 13/11: frete grátis acima de R$ 297 (pedido do dono; só o texto do site, a regra real fica na Yampi) */
+    const free = total >= JR.PRICE.freeShipping;   /* 13/11: frete grátis acima de R$ 267 (pedido do dono; só o texto do site, a regra real fica na Yampi) */
     /* 15/10: quanto falta pro frete grátis (Oferta Progressiva de R$ 175 fica abaixo dos R$ 200) */
     const falta = Math.max(0, JR.PRICE.freeShipping - total);
     /* 26/10 (print do dono, carrinho da JHF): caixa de progresso no topo (2 por R$ 297 + frete grátis), item limpo com preço e lixeira,
