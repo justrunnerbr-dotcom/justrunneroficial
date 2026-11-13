@@ -1,0 +1,53 @@
+/* E-mail marketing — reaproveita dashboard.css e stories.css; aqui só o que é desta página. */
+.eml-tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.eml-tabs a { font-size: .85rem; font-weight: 650; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 99px; border: 1px solid transparent; }
+.eml-tabs a:hover { color: var(--fg); }
+.eml-tabs a[aria-current='page'] { color: var(--fg); background: var(--panel-solid); border-color: var(--border); }
+.eml-ok { padding: 10px 14px; border-radius: var(--radius-sm); font-size: .88rem; background: color-mix(in srgb, #059669 12%, transparent); border: 1px solid color-mix(in srgb, #059669 35%, transparent); color: var(--fg); }
+.eml-note { font-size: .78rem; color: var(--muted); }
+.eml-meta { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.eml-meta b { color: var(--fg); font-weight: 600; }
+
+.eml-new > summary { cursor: pointer; list-style: none; }
+.eml-new > summary::-webkit-details-marker { display: none; }
+.eml-form { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
+.eml-form label, .eml-inline label { display: flex; flex-direction: column; gap: 5px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+.eml-form input, .eml-form select, .eml-form textarea, .eml-inline input {
+  font: inherit; font-size: .85rem; color: var(--fg); background: var(--panel-solid); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; width: 100%; min-width: 0;
+}
+.eml-form label.eml-check { flex-direction: row; align-items: center; gap: 8px; }
+.eml-form label.eml-check input { width: auto; }
+.eml-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.eml-code { font-family: var(--mono, ui-monospace, monospace) !important; font-size: .76rem !important; line-height: 1.45; resize: vertical; }
+.eml-inline { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 12px; }
+.eml-inline label { flex: 1 1 240px; }
+
+.eml-camp-h { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.eml-stats { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+.eml-stats div { background: var(--panel-solid); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; }
+.eml-stats small { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.eml-stats b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.eml-stats b.bad { color: var(--bad); }
+.eml-stats i { font-style: normal; font-size: .7rem; color: var(--muted); }
+
+.eml-split { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.eml-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.eml-list li > a { display: flex; flex-direction: column; padding: 8px 10px; border-radius: 8px; text-decoration: none; color: var(--fg); border: 1px solid transparent; }
+.eml-list li > a:hover, .eml-list li[aria-current='true'] > a { background: var(--panel-solid); border-color: var(--border); }
+.eml-list small { font-size: .74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eml-list-wide li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.eml-list-wide li > div { display: flex; flex-direction: column; min-width: 0; }
+.eml-count { font-size: 1.1rem; font-weight: 750; }
+
+.eml-previews { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.eml-previews figure { margin: 0; display: flex; flex-direction: column; gap: 6px; flex: 1 1 380px; min-width: 0; }
+.eml-previews figure:first-child { flex: 0 0 auto; }
+.eml-previews figcaption { font-size: .74rem; color: var(--muted); font-weight: 600; }
+.eml-frame { width: 100%; height: 720px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.eml-frame-m { width: 375px; max-width: 100%; }
+
+@media (max-width: 900px) {
+  .eml-split { grid-template-columns: 1fr; }
+  .eml-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .eml-row2 { grid-template-columns: 1fr; }
+}
