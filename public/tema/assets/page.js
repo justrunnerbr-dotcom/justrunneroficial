@@ -51,7 +51,7 @@
     /* Arte do hero: ícone da página em anel de lente + 3 sinais reais (desenha uma vez ao abrir) */
     const ART = {
       faq: ["help", [["lens", "Lentes"], ["card", "Parcele em até 3x sem juros"], ["swap", "Trocas"]]],
-      frete: ["truck", [["check", "Grátis acima de R$ 200"], ["search", "Rastreio"], ["pin", "Todo o Brasil"]]],
+      frete: ["truck", [["check", "Grátis acima de R$ 297"], ["search", "Rastreio"], ["pin", "Todo o Brasil"]]],
       trocas: ["swap", [["clock", "7 dias corridos"], ["box", "Sem uso"], ["chat", "WhatsApp"]]],
       contato: ["chat", [["clock", C.hours], ["mail", "E-mail"], ["insta", "@" + C.instagram]]],
       privacidade: ["lock", [["shield", "Não vendemos dados"], ["cookie", "Cookies"], ["eye", "Seus direitos"]]]
@@ -173,7 +173,7 @@
         ["Como funciona o checkout?", "Ao clicar em \"Comprar Agora\" ou \"Finalizar Compra\", você será redirecionado para nossa plataforma de pagamento segura (Yampi), onde poderá pagar com cartão de crédito, boleto ou Pix."]
       ],
       "Frete e entrega": [
-        ["O frete é grátis?", "Sim, em compras acima de R$ 200 (a partir de 2 óculos). Abaixo disso, o frete é calculado no checkout."],
+        ["O frete é grátis?", "Sim, em compras acima de R$ 297. Abaixo disso, o frete é calculado no checkout."],
         ["Qual o prazo de entrega?", JR.POLICY.deliveryLong],
         ["Como rastrear meu pedido?", "Você receberá o código de rastreio por e-mail e WhatsApp assim que o pedido for despachado."]
       ],
@@ -233,7 +233,7 @@
   if (page === "frete-e-entrega") {
     const P = JR.PRICE, max = P.pair;
     $("#sm-rows").innerHTML = [[1, JR.total(1)], [2, JR.total(2)]].map(([n, v]) => {
-      const free = v > P.freeShipping;
+      const free = v >= P.freeShipping;
       return `<div class="sm-row ${free ? "free" : ""}"><span class="sm-label"><b>${n} óculos</b>${JR.brl(v)}</span>
         <span class="sm-track"><i style="--to:${(v / max).toFixed(3)}"></i><u style="left:${(P.freeShipping / max * 100).toFixed(1)}%"><small>${JR.brl(P.freeShipping)}</small></u></span>
         <span class="sm-result">${free ? icon.check + "Frete grátis" : "Frete calculado no checkout"}</span></div>`;

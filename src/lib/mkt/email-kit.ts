@@ -256,7 +256,7 @@ ${itens.map(card).join('\n')}`
 
 const BENEFICIOS_PADRAO = [
   // mesmos fatos da barra do site (public/tema/assets/app.js)
-  { titulo: 'Frete grátis', texto: 'acima de R$ 200' },
+  { titulo: 'Frete grátis', texto: 'acima de R$ 297' },
   { titulo: 'Até 3x sem juros', texto: 'no cartão, ou Pix' },
   { titulo: 'Troca fácil', texto: 'em até 7 dias' },
 ]
