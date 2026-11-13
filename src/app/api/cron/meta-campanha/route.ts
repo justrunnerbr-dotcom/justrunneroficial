@@ -47,11 +47,14 @@ interface Estaticos {
 }
 
 /** Baixa uma arte de pasta pública do Drive. Só aceita PNG (o cabeçalho dá a proporção pra conferir feed × stories). */
+const extensaoArte = (b: Buffer) => (b[0] === 0xff && b[1] === 0xd8 ? 'jpg' : 'png')
+
 async function baixarArte(driveId: string): Promise<Buffer> {
   const res = await fetch(`https://drive.google.com/uc?export=download&id=${driveId}`, { cache: 'no-store', signal: AbortSignal.timeout(60000) })
   if (!res.ok) throw new Error(`Drive HTTP ${res.status}`)
   const b = Buffer.from(await res.arrayBuffer())
-  if (b.length < 1000 || b.readUInt32BE(0) !== 0x89504e47) throw new Error('não é PNG (pasta sem acesso público?)')
+  // 13/11/2026: aceita JPG também (as "Cópia de 0X.jpg" da pasta de teste); a extensão do nome sai de extensaoArte.
+  if (b.length < 1000 || (b.readUInt32BE(0) !== 0x89504e47 && (b[0] !== 0xff || b[1] !== 0xd8))) throw new Error('não é PNG nem JPG (pasta sem acesso público?)')
   if (b.length > 8 * 1024 * 1024) throw new Error('arte acima de 8 MB')
   return b
 }
@@ -233,7 +236,7 @@ export async function POST(request: Request) {
       const r: Record<string, unknown> = { nome: v.nome }
       try {
         const b = await baixarArte(v.driveId)
-        r.hash = (await uploadAdImage(cfg, { base64: b.toString('base64'), filename: `${v.nome}.png`, accountId: si2.conta })).hash
+        r.hash = (await uploadAdImage(cfg, { base64: b.toString('base64'), filename: `${v.nome}.${extensaoArte(b)}`, accountId: si2.conta })).hash
       } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
       res.push(r)
     }
