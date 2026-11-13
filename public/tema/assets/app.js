@@ -269,7 +269,12 @@ window.JR = window.JR || {};
       </div>`;
     }
     const parcela = total >= 100 ? `em até 3x sem juros no cartão` : "";
-    foot.innerHTML = `
+    /* 13/11 (pedido do dono): case de volta como order bump, R$ 40, acima do total; some quando já está no carrinho. */
+    const temCase = cart.some(i => i.slug === "case");
+    const bump = !temCase && JR.CASE ? `<div class="order-bump"><img src="${JR.CASE.foto}" alt="" loading="lazy">
+        <div><strong>Case protetor</strong><span>+ ${brl(JR.CASE.price)}</span></div>
+        <button class="btn btn-outline-dark" data-case aria-label="Adicionar case protetor por ${brl(JR.CASE.price)}">+ Adicionar</button></div>` : "";
+    foot.innerHTML = bump + `
       <div class="row"><span>${n} ${n > 1 ? "itens" : "item"}</span><span>${brl(full)}</span></div>
       ${tt.desconto - (tt.descontoL3 || 0) ? `<div class="row save"><span>Compre 1 Leve 2</span><span>− ${brl(tt.desconto - (tt.descontoL3 || 0))}</span></div>` : ""}
       ${tt.descontoL3 ? `<div class="row save"><span>Compre 1 Leve 3</span><span>− ${brl(tt.descontoL3)}</span></div>` : ""}
