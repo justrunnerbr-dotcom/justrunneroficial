@@ -678,6 +678,7 @@ export async function POST(request: Request) {
   const seg = (corpo as { seguidores?: {
     teste?: boolean; ligar?: boolean; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string
     orcamentoDia: number; paginaId: string; instagramId: string; instagramUsuario: string; texto: string
+    engajamento?: boolean // OUTCOME_ENGAGEMENT + PROFILE_AND_PAGE_ENGAGEMENT em vez de tráfego
     conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
   } } | null)?.seguidores
   if (seg) {
@@ -701,7 +702,7 @@ export async function POST(request: Request) {
     const problemas: string[] = []
     if (seg.campanhaId) {
       const c = await ler(`${seg.campanhaId}?fields=account_id,objective,daily_budget`) as { account_id?: string; objective?: string; daily_budget?: string }
-      if (c.account_id !== seg.conta || c.objective !== 'OUTCOME_TRAFFIC' || c.daily_budget) problemas.push('campanhaId não é campanha de tráfego ABO desta conta')
+      if (c.account_id !== seg.conta || c.objective !== (seg.engajamento ? 'OUTCOME_ENGAGEMENT' : 'OUTCOME_TRAFFIC') || c.daily_budget) problemas.push('campanhaId não é campanha de tráfego ABO desta conta')
     }
     const modelo = await ler(`${seg.modeloConjunto}?fields=name,targeting`) as { name?: string; targeting?: Record<string, unknown> }
     if (!modelo.targeting) problemas.push('conjunto modelo sem público')
@@ -722,7 +723,7 @@ export async function POST(request: Request) {
     const criados: { conjunto: string; adsetId?: string; anuncios: { nome: string; adId?: string; erro?: string }[]; erro?: string }[] = []
     let campanhaId = seg.campanhaId
     try {
-      if (!campanhaId) campanhaId = String((await postar(`act_${seg.conta}/campaigns`, { name: seg.novaCampanha, objective: 'OUTCOME_TRAFFIC', status: 'PAUSED',
+      if (!campanhaId) campanhaId = String((await postar(`act_${seg.conta}/campaigns`, { name: seg.novaCampanha, objective: seg.engajamento ? 'OUTCOME_ENGAGEMENT' : 'OUTCOME_TRAFFIC', status: 'PAUSED',
         special_ad_categories: [], is_adset_budget_sharing_enabled: false })).id)
       const perfil = `https://www.instagram.com/${seg.instagramUsuario}`
       for (const c of seg.conjuntos) {
@@ -730,7 +731,7 @@ export async function POST(request: Request) {
         try {
           r.adsetId = String((await postar(`act_${seg.conta}/adsets`, { name: c.nome, campaign_id: campanhaId, status: 'PAUSED',
             daily_budget: Math.round(seg.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP', billing_event: 'IMPRESSIONS',
-            optimization_goal: 'PROFILE_VISIT', destination_type: 'INSTAGRAM_PROFILE', promoted_object: { page_id: seg.paginaId }, targeting })).id)
+            optimization_goal: seg.engajamento ? 'PROFILE_AND_PAGE_ENGAGEMENT' : 'PROFILE_VISIT', destination_type: 'INSTAGRAM_PROFILE', promoted_object: { page_id: seg.paginaId }, targeting })).id)
           for (const v of c.videos) {
             const a: (typeof r.anuncios)[number] = { nome: v.nome }
             try {
