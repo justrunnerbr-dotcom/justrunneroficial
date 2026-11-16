@@ -670,6 +670,95 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: tudoOk, campanha: camp.name, campanhaId, criados, ligados: ligados.length, lido })
   }
 
+  // seguidores (16/11/2026): campanha de TRÁFEGO pro PERFIL DO INSTAGRAM (objetivo OUTCOME_TRAFFIC, otimização PROFILE_VISIT,
+  // destino INSTAGRAM_PROFILE, cobrança IMPRESSIONS; a Meta não tem otimização "seguidores" na API). ABO, N vídeos por conjunto
+  // (1 anúncio por vídeo, mesma copy, CTA "Ver perfil do Instagram"), público copiado de um conjunto modelo e restrito ao
+  // Instagram, degrees_of_freedom_spec de um anúncio modelo. Nasce PAUSADO; "ligar" liga tudo no fim; "teste" só confere.
+  // campanhaId reaproveita a campanha criada numa chamada anterior (máx. 10 conjuntos por chamada). Lê de volta.
+  const seg = (corpo as { seguidores?: {
+    teste?: boolean; ligar?: boolean; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string
+    orcamentoDia: number; paginaId: string; instagramId: string; instagramUsuario: string; texto: string
+    conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
+  } } | null)?.seguidores
+  if (seg) {
+    const num = /^\d+$/
+    if (!num.test(seg.conta) || (seg.novaCampanha ? !!seg.campanhaId : !num.test(seg.campanhaId ?? '')) || !num.test(seg.modeloConjunto) || !num.test(seg.modeloAnuncio)
+      || !num.test(seg.paginaId) || !num.test(seg.instagramId) || !/^[a-z0-9._]+$/i.test(seg.instagramUsuario ?? '')
+      || !(seg.orcamentoDia >= 6 && seg.orcamentoDia <= 500) || !seg.texto
+      || !Array.isArray(seg.conjuntos) || !seg.conjuntos.length || seg.conjuntos.length > 10
+      || seg.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
+      return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    }
+    if (!cfg.accounts.some(a => a.id === seg.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
+    const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json())
+    const postar = async (path: string, body: Record<string, unknown>) => {
+      const j = await fetch(`https://graph.facebook.com/v21.0/${path}`, { method: 'POST', cache: 'no-store',
+        headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(x => x.json()) as
+        { id?: string; success?: boolean; error?: { message?: string; error_user_title?: string; error_user_msg?: string } }
+      if (j.error) throw new Error([j.error.error_user_title, j.error.error_user_msg ?? j.error.message].filter(Boolean).join(': '))
+      return j
+    }
+    const problemas: string[] = []
+    if (seg.campanhaId) {
+      const c = await ler(`${seg.campanhaId}?fields=account_id,objective,daily_budget`) as { account_id?: string; objective?: string; daily_budget?: string }
+      if (c.account_id !== seg.conta || c.objective !== 'OUTCOME_TRAFFIC' || c.daily_budget) problemas.push('campanhaId não é campanha de tráfego ABO desta conta')
+    }
+    const modelo = await ler(`${seg.modeloConjunto}?fields=name,targeting`) as { name?: string; targeting?: Record<string, unknown> }
+    if (!modelo.targeting) problemas.push('conjunto modelo sem público')
+    // Só Instagram: quem segue é quem está no Instagram.
+    const targeting = { ...(modelo.targeting ?? {}) }
+    for (const k of ['facebook_positions', 'messenger_positions', 'audience_network_positions', 'threads_positions', 'device_platforms']) delete targeting[k]
+    Object.assign(targeting, { publisher_platforms: ['instagram'], instagram_positions: ['stream', 'story', 'reels', 'explore', 'explore_home', 'profile_feed'] })
+    const dof = (await ler(`${seg.modeloAnuncio}?fields=creative{degrees_of_freedom_spec}`) as { creative?: { degrees_of_freedom_spec?: unknown } }).creative?.degrees_of_freedom_spec
+    if (!dof) problemas.push('anúncio modelo sem degrees_of_freedom_spec')
+    const capas: Record<string, string> = {}
+    for (const v of seg.conjuntos.flatMap(c => c.videos)) {
+      if (capas[v.videoId]) continue
+      try { capas[v.videoId] = await getVideoThumbnail(cfg, v.videoId) } catch (e) { problemas.push(`${v.nome}: ${e instanceof Error ? e.message : 'sem capa'}`) }
+    }
+    if (seg.teste || problemas.length) return NextResponse.json({ ok: !problemas.length, teste: true, problemas, modelo: modelo.name, videosComCapa: Object.keys(capas).length })
+
+    const out: Record<string, unknown> = {}
+    const criados: { conjunto: string; adsetId?: string; anuncios: { nome: string; adId?: string; erro?: string }[]; erro?: string }[] = []
+    let campanhaId = seg.campanhaId
+    try {
+      if (!campanhaId) campanhaId = String((await postar(`act_${seg.conta}/campaigns`, { name: seg.novaCampanha, objective: 'OUTCOME_TRAFFIC', status: 'PAUSED',
+        special_ad_categories: [], is_adset_budget_sharing_enabled: false })).id)
+      const perfil = `https://www.instagram.com/${seg.instagramUsuario}`
+      for (const c of seg.conjuntos) {
+        const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
+        try {
+          r.adsetId = String((await postar(`act_${seg.conta}/adsets`, { name: c.nome, campaign_id: campanhaId, status: 'PAUSED',
+            daily_budget: Math.round(seg.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP', billing_event: 'IMPRESSIONS',
+            optimization_goal: 'PROFILE_VISIT', destination_type: 'INSTAGRAM_PROFILE', promoted_object: { page_id: seg.paginaId }, targeting })).id)
+          for (const v of c.videos) {
+            const a: (typeof r.anuncios)[number] = { nome: v.nome }
+            try {
+              const cr = String((await postar(`act_${seg.conta}/adcreatives`, { name: v.nome, degrees_of_freedom_spec: dof,
+                object_story_spec: { page_id: seg.paginaId, instagram_user_id: seg.instagramId,
+                  video_data: { video_id: v.videoId, image_url: capas[v.videoId], message: seg.texto,
+                    call_to_action: { type: 'VIEW_INSTAGRAM_PROFILE', value: { link: perfil } } } } })).id)
+              a.adId = String((await postar(`act_${seg.conta}/ads`, { name: v.nome, adset_id: r.adsetId, creative: { creative_id: cr }, status: 'PAUSED' })).id)
+            } catch (e) { a.erro = e instanceof Error ? e.message : 'erro' }
+            r.anuncios.push(a)
+          }
+        } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+        criados.push(r)
+      }
+    } catch (e) { out.erro = e instanceof Error ? e.message : 'erro' }
+    const tudoOk = !out.erro && criados.every(c => !c.erro && c.anuncios.every(a => !a.erro))
+    let ligados = 0
+    if (seg.ligar && tudoOk) {
+      for (const c of criados) {
+        for (const a of c.anuncios) { await postar(a.adId!, { status: 'ACTIVE' }); ligados++ }
+        await postar(c.adsetId!, { status: 'ACTIVE' }); ligados++
+      }
+      await postar(campanhaId!, { status: 'ACTIVE' }); ligados++
+    }
+    const lido = campanhaId ? await ler(`${campanhaId}?fields=name,objective,status,effective_status,adsets.limit(60){name,status,effective_status,daily_budget,optimization_goal,destination_type,targeting{publisher_platforms,instagram_positions,age_min,age_max},ads{name,status,effective_status}}`) : null
+    return NextResponse.json({ ok: tudoOk, campanhaId, ...out, criados, ligados, lido })
+  }
+
   // adicionarAnuncios (16/10/2026): põe mais vídeos (1 anúncio por vídeo, PAUSADO) em conjuntos que já existem numa campanha.
   // Cada conjunto precisa ser da campanha informada. Com "teste": true só confere conjuntos e capas. Lê de volta.
   const aa = (corpo as { adicionarAnuncios?: {
