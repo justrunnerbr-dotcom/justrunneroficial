@@ -682,7 +682,9 @@ export async function POST(request: Request) {
     // conjuntoBase (16/11): conjunto de visita ao perfil criado PELA TELA (a conta não é qualificada pela API). O 1º conjunto do
     // pedido usa ele (renomeado); os demais são cópias dele (POST /copies, sem anúncios). campanhaId = campanha dele.
     conjuntoBase?: string
-    conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
+    // adsetId (16/11): conjunto já existente nesta campanha (duplicado pela TELA). É renomeado, os anúncios que vieram na
+    // duplicação são PAUSADOS (não apagados) e entram os vídeos do pedido.
+    conjuntos: { nome: string; adsetId?: string; videos: { nome: string; videoId: string }[] }[]
   } } | null)?.seguidores
   if (seg) {
     const num = /^\d+$/
@@ -690,7 +692,7 @@ export async function POST(request: Request) {
       || !num.test(seg.paginaId) || !num.test(seg.instagramId) || !/^[a-z0-9._]+$/i.test(seg.instagramUsuario ?? '')
       || !(seg.orcamentoDia >= 6 && seg.orcamentoDia <= 500) || !seg.texto
       || !Array.isArray(seg.conjuntos) || !seg.conjuntos.length || seg.conjuntos.length > 10
-      || seg.conjuntos.some(c => !c.nome || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
+      || seg.conjuntos.some(c => !c.nome || (c.adsetId !== undefined && !num.test(c.adsetId)) || !Array.isArray(c.videos) || !c.videos.length || c.videos.length > 6 || c.videos.some(v => !v.nome || !num.test(v.videoId)))) {
       return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
     }
     if (!cfg.accounts.some(a => a.id === seg.conta)) return NextResponse.json({ ok: false, erro: 'conta fora das configuradas' }, { status: 400 })
@@ -737,7 +739,13 @@ export async function POST(request: Request) {
       for (const c of seg.conjuntos) {
         const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
         try {
-          if (seg.conjuntoBase) {
+          if (c.adsetId) {
+            const ex = await ler(`${c.adsetId}?fields=campaign_id,destination_type,ads.limit(50){id,status}`) as { campaign_id?: string; destination_type?: string; ads?: { data?: { id: string; status: string }[] } }
+            if (ex.campaign_id !== campanhaId || ex.destination_type !== 'INSTAGRAM_PROFILE') throw new Error('adsetId não é conjunto de visita ao perfil desta campanha')
+            r.adsetId = c.adsetId
+            await postar(r.adsetId, { name: c.nome, daily_budget: Math.round(seg.orcamentoDia * 100), status: 'PAUSED' })
+            for (const ad of ex.ads?.data ?? []) if (ad.status !== 'PAUSED') await postar(ad.id, { status: 'PAUSED' })
+          } else if (seg.conjuntoBase) {
             r.adsetId = criados.length === 0 ? seg.conjuntoBase
               : String((await postar(`${seg.conjuntoBase}/copies`, { deep_copy: false, status_option: 'PAUSED' }) as { copied_adset_id?: string }).copied_adset_id)
             await postar(r.adsetId, { name: c.nome, daily_budget: Math.round(seg.orcamentoDia * 100), status: 'PAUSED' })
