@@ -685,23 +685,23 @@ export async function POST(request: Request) {
 
   // trocarPublico (16/11/2026): põe públicos personalizados (remarketing) em conjuntos de UMA campanha, tira interesses e o
   // age_range sugerido e DESLIGA o Advantage+ público. Mantém idade, país e posicionamentos. Lê de volta.
-  const tp = (corpo as { trocarPublico?: { campanhaId: string; adsetIds: string[]; publicos: string[] } } | null)?.trocarPublico
-  if (tp) {
+  const tpub = (corpo as { trocarPublico?: { campanhaId: string; adsetIds: string[]; publicos: string[] } } | null)?.trocarPublico
+  if (tpub) {
     const num = /^\d+$/
-    if (!num.test(tp.campanhaId) || !Array.isArray(tp.adsetIds) || !tp.adsetIds.length || tp.adsetIds.length > 30 || tp.adsetIds.some(x => !num.test(x))
-      || !Array.isArray(tp.publicos) || !tp.publicos.length || tp.publicos.some(x => !num.test(x))) {
+    if (!num.test(tpub.campanhaId) || !Array.isArray(tpub.adsetIds) || !tpub.adsetIds.length || tpub.adsetIds.length > 30 || tpub.adsetIds.some(x => !num.test(x))
+      || !Array.isArray(tpub.publicos) || !tpub.publicos.length || tpub.publicos.some(x => !num.test(x))) {
       return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
     }
     const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json())
     const res = []
-    for (const id of tp.adsetIds) {
+    for (const id of tpub.adsetIds) {
       const r: Record<string, unknown> = { id }
       try {
         const a = await ler(`${id}?fields=campaign_id,account_id,targeting`) as { campaign_id?: string; account_id?: string; targeting?: Record<string, unknown> }
-        if (a.campaign_id !== tp.campanhaId || !cfg.accounts.some(x => x.id === a.account_id)) throw new Error('conjunto fora da campanha/conta')
+        if (a.campaign_id !== tpub.campanhaId || !cfg.accounts.some(x => x.id === a.account_id)) throw new Error('conjunto fora da campanha/conta')
         const t = { ...(a.targeting ?? {}) }
         for (const k of ['flexible_spec', 'interests', 'behaviors', 'custom_audiences', 'excluded_custom_audiences', 'exclusions', 'age_range']) delete t[k]
-        t.custom_audiences = tp.publicos.map(x => ({ id: x }))
+        t.custom_audiences = tpub.publicos.map(x => ({ id: x }))
         t.targeting_automation = { advantage_audience: 0 }
         const j = await fetch(`https://graph.facebook.com/v21.0/${id}`, { method: 'POST', cache: 'no-store',
           headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ targeting: t }) }).then(x => x.json()) as
@@ -712,7 +712,7 @@ export async function POST(request: Request) {
       } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
       res.push(r)
     }
-    return NextResponse.json({ ok: res.every(r => !r.erro && r.publicos === tp.publicos.length), itens: res })
+    return NextResponse.json({ ok: res.every(r => !r.erro && r.publicos === tpub.publicos.length), itens: res })
   }
 
   // seguidores (16/11/2026): campanha de TRÁFEGO pro PERFIL DO INSTAGRAM (objetivo OUTCOME_TRAFFIC, otimização PROFILE_VISIT,
