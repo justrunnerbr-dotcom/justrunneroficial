@@ -683,6 +683,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: tudoOk, campanha: camp.name, campanhaId, criados, ligados: ligados.length, lido })
   }
 
+  // excluirCampanhaVazia (16/11/2026): apaga campanha PAUSADA e SEM nenhum conjunto (sobra de teste). Lê de volta.
+  const ecv = (corpo as { excluirCampanhaVazia?: { ids: string[] } } | null)?.excluirCampanhaVazia
+  if (ecv) {
+    if (!Array.isArray(ecv.ids) || !ecv.ids.length || ecv.ids.length > 10 || ecv.ids.some(x => !/^\d+$/.test(x))) return NextResponse.json({ ok: false, erro: 'pedido inválido' }, { status: 400 })
+    const ler = (path: string) => fetch(`https://graph.facebook.com/v21.0/${path}`, { headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json())
+    const itens = []
+    for (const id of ecv.ids) {
+      const r: Record<string, unknown> = { id }
+      try {
+        const c = await ler(`${id}?fields=name,account_id,status,adsets.limit(1){id}`) as { name?: string; account_id?: string; status?: string; adsets?: { data?: unknown[] } }
+        r.nome = c.name
+        if (!cfg.accounts.some(a => a.id === c.account_id)) throw new Error('campanha fora da conta')
+        if (c.status !== 'PAUSED' || (c.adsets?.data?.length ?? 0) > 0) throw new Error('só apaga campanha pausada e sem conjuntos')
+        const j = await fetch(`https://graph.facebook.com/v21.0/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${cfg.token}` }, cache: 'no-store' }).then(x => x.json()) as { error?: { message?: string } }
+        if (j.error) throw new Error(j.error.message)
+        r.status = ((await ler(`${id}?fields=effective_status`)) as { effective_status?: string }).effective_status
+      } catch (e) { r.erro = e instanceof Error ? e.message : 'erro' }
+      itens.push(r)
+    }
+    return NextResponse.json({ ok: itens.every(i => i.status === 'DELETED'), itens })
+  }
+
   // trocarPublico (16/11/2026): põe públicos personalizados (remarketing) em conjuntos de UMA campanha, tira interesses e o
   // age_range sugerido e DESLIGA o Advantage+ público. Mantém idade, país e posicionamentos. Lê de volta.
   const tpub = (corpo as { trocarPublico?: { campanhaId: string; adsetIds: string[]; publicos: string[] } } | null)?.trocarPublico
