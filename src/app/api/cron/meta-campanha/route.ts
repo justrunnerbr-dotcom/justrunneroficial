@@ -679,6 +679,9 @@ export async function POST(request: Request) {
     teste?: boolean; ligar?: boolean; conta: string; campanhaId?: string; novaCampanha?: string; modeloConjunto: string; modeloAnuncio: string
     orcamentoDia: number; paginaId: string; instagramId: string; instagramUsuario: string; texto: string
     engajamento?: boolean // OUTCOME_ENGAGEMENT + PROFILE_AND_PAGE_ENGAGEMENT em vez de tráfego
+    // conjuntoBase (16/11): conjunto de visita ao perfil criado PELA TELA (a conta não é qualificada pela API). O 1º conjunto do
+    // pedido usa ele (renomeado); os demais são cópias dele (POST /copies, sem anúncios). campanhaId = campanha dele.
+    conjuntoBase?: string
     conjuntos: { nome: string; videos: { nome: string; videoId: string }[] }[]
   } } | null)?.seguidores
   if (seg) {
@@ -700,6 +703,11 @@ export async function POST(request: Request) {
       return j
     }
     const problemas: string[] = []
+    if (seg.conjuntoBase) {
+      const b = await ler(`${seg.conjuntoBase}?fields=campaign_id,destination_type,daily_budget`) as { campaign_id?: string; destination_type?: string; daily_budget?: string }
+      if (!num.test(seg.conjuntoBase) || b.campaign_id !== seg.campanhaId) problemas.push('conjuntoBase não é da campanhaId')
+      if (b.destination_type !== 'INSTAGRAM_PROFILE') problemas.push(`conjuntoBase com destino ${b.destination_type}, esperado INSTAGRAM_PROFILE`)
+    }
     if (seg.campanhaId) {
       const c = await ler(`${seg.campanhaId}?fields=account_id,objective,daily_budget`) as { account_id?: string; objective?: string; daily_budget?: string }
       if (c.account_id !== seg.conta || c.objective !== (seg.engajamento ? 'OUTCOME_ENGAGEMENT' : 'OUTCOME_TRAFFIC') || c.daily_budget) problemas.push('campanhaId não é campanha de tráfego ABO desta conta')
@@ -729,7 +737,11 @@ export async function POST(request: Request) {
       for (const c of seg.conjuntos) {
         const r: (typeof criados)[number] = { conjunto: c.nome, anuncios: [] }
         try {
-          r.adsetId = String((await postar(`act_${seg.conta}/adsets`, { name: c.nome, campaign_id: campanhaId, status: 'PAUSED',
+          if (seg.conjuntoBase) {
+            r.adsetId = criados.length === 0 ? seg.conjuntoBase
+              : String((await postar(`${seg.conjuntoBase}/copies`, { deep_copy: false, status_option: 'PAUSED' }) as { copied_adset_id?: string }).copied_adset_id)
+            await postar(r.adsetId, { name: c.nome, daily_budget: Math.round(seg.orcamentoDia * 100), status: 'PAUSED' })
+          } else r.adsetId = String((await postar(`act_${seg.conta}/adsets`, { name: c.nome, campaign_id: campanhaId, status: 'PAUSED',
             daily_budget: Math.round(seg.orcamentoDia * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP', billing_event: 'IMPRESSIONS',
             optimization_goal: seg.engajamento ? 'PROFILE_AND_PAGE_ENGAGEMENT' : 'PROFILE_VISIT', destination_type: 'INSTAGRAM_PROFILE', promoted_object: { page_id: seg.paginaId }, targeting })).id)
           for (const v of c.videos) {
