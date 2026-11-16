@@ -568,6 +568,9 @@ export async function POST(request: Request) {
     // 10/11/2026: cada item é vídeo (videoId) OU estático já na conta (imageHash, vira link_data)
     // adsetId (10/11): conjunto que já existe nesta campanha (ex.: anúncios recusados numa 1ª tentativa) — só cria os anúncios
     conjuntos: { nome: string; adsetId?: string; videos: { nome: string; videoId?: string; imageHash?: string }[] }[]
+    // publicosPersonalizados (16/11): troca o público do modelo por estes públicos personalizados (remarketing), sem interesses
+    // e com Advantage+ público DESLIGADO (senão a Meta expande pra fora da lista). Pixel/otimização/posicionamentos seguem do modelo.
+    publicosPersonalizados?: string[]
   } } | null)?.conjuntosCopiaPublico
   if (ccp) {
     const num = /^\d+$/
@@ -595,6 +598,16 @@ export async function POST(request: Request) {
     if (camp.daily_budget) problemas.push('campanha é CBO (orçamento na campanha); este modo é pra ABO')
     const modelo = await ler(`${ccp.modeloConjunto}?fields=name,targeting,promoted_object,optimization_goal,billing_event,attribution_spec,destination_type`) as Record<string, unknown> & { name?: string }
     if (!modelo.targeting || !modelo.promoted_object) problemas.push('conjunto modelo sem público/pixel')
+    if (ccp.publicosPersonalizados) {
+      if (!Array.isArray(ccp.publicosPersonalizados) || !ccp.publicosPersonalizados.length || ccp.publicosPersonalizados.some(x => !num.test(x))) problemas.push('publicosPersonalizados inválido')
+      else if (modelo.targeting) {
+        const t = { ...(modelo.targeting as Record<string, unknown>) }
+        for (const k of ['flexible_spec', 'interests', 'behaviors', 'custom_audiences', 'excluded_custom_audiences', 'exclusions']) delete t[k]
+        t.custom_audiences = ccp.publicosPersonalizados.map(id => ({ id }))
+        t.targeting_automation = { advantage_audience: 0 }
+        modelo.targeting = t
+      }
+    }
     // 10/11/2026: a Meta passou a recusar explore_home sem explore ("Você também deve selecionar o Explorar do Instagram").
     { const t = modelo.targeting as { instagram_positions?: string[] } | undefined
       if (t?.instagram_positions?.includes('explore_home') && !t.instagram_positions.includes('explore')) t.instagram_positions = [...t.instagram_positions, 'explore'] }
@@ -666,7 +679,7 @@ export async function POST(request: Request) {
       }
       if (ccp.novaCampanha) { await postar(campanhaId, { status: 'ACTIVE' }); ligados.push(campanhaId) }
     }
-    const lido = await Promise.all(criados.filter(c => c.adsetId).map(c => ler(`${c.adsetId}?fields=name,status,effective_status,daily_budget,start_time,targeting{flexible_spec,publisher_platforms,age_min,age_max},promoted_object,ads{name,status,effective_status}`)))
+    const lido = await Promise.all(criados.filter(c => c.adsetId).map(c => ler(`${c.adsetId}?fields=name,status,effective_status,daily_budget,start_time,targeting{flexible_spec,custom_audiences,targeting_automation,publisher_platforms,age_min,age_max},promoted_object,ads{name,status,effective_status}`)))
     return NextResponse.json({ ok: tudoOk, campanha: camp.name, campanhaId, criados, ligados: ligados.length, lido })
   }
 
