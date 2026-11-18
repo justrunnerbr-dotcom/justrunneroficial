@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
         { source: '/produto/:slug', destination: '/tema/produto.html' },
         { source: '/colecao', destination: '/tema/colecao.html' },
         { source: '/colecao/:slug', destination: '/tema/colecao.html' },
-        ...['faq', 'sobre', 'contato', 'trocas-e-devolucoes', 'politica-de-privacidade', 'frete-e-entrega']
+        ...['faq', 'sobre', 'contato', 'trocas-e-devolucoes', 'politica-de-privacidade', 'frete-e-entrega', 'entrega-uber']
           .map(pg => ({ source: `/${pg}`, destination: `/tema/${pg}.html` })),
       ],
       afterFiles: [
